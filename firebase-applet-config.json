@@ -1,0 +1,12 @@
+{
+  "projectId": "galle-taxi",
+  "appId": "1:226135884235:web:51a238ed78446c6dbc364e",
+  "apiKey": "AIzaSyBsj18KzRoeD2CcM6imAH5606-aWByrFZA",
+  "authDomain": "galle-taxi.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-galletaxi-95f66c1d-a68d-475b-a117-38bfaf092117",
+  "storageBucket": "galle-taxi.firebasestorage.app",
+  "messagingSenderId": "226135884235",
+  "measurementId": "",
+  "oAuthClientId": "226135884235-cp70erkjpq5rm32rsla2psm76edo6puv.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Galle Taxi",
+  "description": "Premium luxury taxi booking and fleet management platform in Galle, Sri Lanka.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

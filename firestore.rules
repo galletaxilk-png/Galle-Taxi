@@ -1,0 +1,116 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default-deny all incoming operations
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        ('email' in request.auth.token && request.auth.token.email != null && request.auth.token.email.lower() == 'galletaxi.lk@gmail.com')
+        || ('email' in request.auth.token && request.auth.token.email != null)
+        || request.auth.uid != null
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Connection validation test document
+    match /test/{testId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Fare Rules collection
+    match /fareRules/{ruleId} {
+      allow read: if true;
+      allow write: if isValidId(ruleId);
+    }
+
+    // Vehicles collection
+    match /vehicles/{vehicleId} {
+      allow read: if true;
+      allow write: if isValidId(vehicleId);
+    }
+
+    // Bookings collection
+    match /bookings/{bookingId} {
+      allow get: if isValidId(bookingId);
+      allow list: if true;
+      allow create: if isValidId(bookingId);
+      allow update: if isValidId(bookingId);
+      allow delete: if isValidId(bookingId);
+    }
+
+    // Drivers collection
+    match /drivers/{driverId} {
+      allow read: if true;
+      allow write: if isValidId(driverId);
+    }
+
+    // Services collection
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isValidId(serviceId);
+    }
+
+    // Tours collection (Private Day Tours CMS)
+    match /tours/{tourId} {
+      allow read: if true;
+      allow write: if isValidId(tourId);
+    }
+
+    // Service Areas collection
+    match /serviceAreas/{areaId} {
+      allow read: if true;
+      allow write: if isValidId(areaId);
+    }
+
+    // Site Settings
+    match /siteSettings/{settingId} {
+      allow read: if true;
+      allow write: if isValidId(settingId);
+    }
+
+    // Taxi Hubs collection (Southern Coast Hubs CMS)
+    match /taxi_hubs/{hubId} {
+      allow read: if true;
+      allow write: if isValidId(hubId);
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isValidId(logId);
+      allow create: if isValidId(logId);
+      allow update, delete: if false;
+    }
+
+    // Admin collection
+    match /admins/{adminId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

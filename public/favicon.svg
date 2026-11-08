@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE27A" />
+      <stop offset="50%" stop-color="#F5B91B" />
+      <stop offset="100%" stop-color="#C68A04" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0B0B0D" />
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="url(#goldGrad)" stroke-width="2" stroke-opacity="0.6" />
+  
+  <!-- Car Silhouette / Luxury Taxi Emblem -->
+  <path d="M16 38 L19 28 C20 25 22 23 25 23 L39 23 C42 23 44 25 45 28 L48 38 C50 38.5 51 40 51 42 L51 45 C51 46 50 47 49 47 L47 47 C46 47 45 46 45 45 L45 44 L19 44 L19 45 C19 46 18 47 17 47 L15 47 C14 47 13 46 13 45 L13 42 C13 40 14 38.5 16 38 Z" fill="url(#goldGrad)" />
+  <!-- Windshield -->
+  <path d="M21 28.5 L24 25.5 L40 25.5 L43 28.5 Z" fill="#0B0B0D" />
+  <!-- Headlights -->
+  <circle cx="19" cy="39" r="2.5" fill="#FFFFFF" />
+  <circle cx="45" cy="39" r="2.5" fill="#FFFFFF" />
+  <!-- Taxi Crown / Light -->
+  <rect x="28" y="19" width="8" height="3" rx="1" fill="#FFFFFF" />
+  <!-- GT text or emblem -->
+  <text x="32" y="56" fill="#F5B91B" font-family="'Outfit', sans-serif" font-weight="900" font-size="9" text-anchor="middle" letter-spacing="1">GALLE</text>
+</svg>

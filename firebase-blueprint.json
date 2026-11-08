@@ -1,0 +1,288 @@
+{
+  "entities": {
+    "booking": {
+      "title": "Booking",
+      "description": "Customer taxi and airport transfer booking record",
+      "type": "object",
+      "properties": {
+        "bookingReference": {
+          "type": "string",
+          "maxLength": 32,
+          "pattern": "^GT-[0-9]{4}-[0-9]{4}$",
+          "description": "Unique booking reference number"
+        },
+        "customerName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Full name of the passenger"
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 20,
+          "description": "Contact phone or WhatsApp number"
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Optional email for receipts and confirmation"
+        },
+        "pickupLocation": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 200,
+          "description": "Pickup address, hotel or airport terminal"
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 200,
+          "description": "Drop-off destination in Sri Lanka"
+        },
+        "pickupDate": {
+          "type": "string",
+          "maxLength": 10,
+          "description": "Date in YYYY-MM-DD format"
+        },
+        "pickupTime": {
+          "type": "string",
+          "maxLength": 5,
+          "description": "Time in HH:MM format"
+        },
+        "vehicleCategoryId": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Selected vehicle category identifier"
+        },
+        "vehicleCategoryName": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Vehicle display category name"
+        },
+        "passengerCount": {
+          "type": "number",
+          "description": "Number of passengers (1 to 20)"
+        },
+        "luggageCount": {
+          "type": "number",
+          "description": "Luggage item count"
+        },
+        "specialInstructions": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Flight number, child seat, or custom requests"
+        },
+        "estimatedFare": {
+          "type": "number",
+          "description": "Authoritatively calculated fare estimate in LKR"
+        },
+        "finalFare": {
+          "type": "number",
+          "description": "Confirmed final charged fare in LKR"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Pending",
+            "Confirmed",
+            "Driver Assigned",
+            "Driver En Route",
+            "Picked Up",
+            "Completed",
+            "Cancelled"
+          ],
+          "description": "Current lifecycle status of the trip"
+        },
+        "driverId": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Assigned driver document ID"
+        },
+        "driverName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Assigned driver name"
+        },
+        "driverPhone": {
+          "type": "string",
+          "maxLength": 20,
+          "description": "Assigned driver phone number"
+        },
+        "vehiclePlate": {
+          "type": "string",
+          "maxLength": 30,
+          "description": "Assigned vehicle license plate"
+        },
+        "adminNotes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Internal dispatch and tracking notes"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last modification timestamp"
+        }
+      },
+      "required": [
+        "bookingReference",
+        "customerName",
+        "phone",
+        "pickupLocation",
+        "destination",
+        "pickupDate",
+        "pickupTime",
+        "vehicleCategoryId",
+        "passengerCount",
+        "estimatedFare",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "driver": {
+      "title": "Driver",
+      "description": "Galle Taxi chauffeur profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 20 },
+        "nicNumber": { "type": "string", "maxLength": 20 },
+        "licenseNumber": { "type": "string", "maxLength": 30 },
+        "assignedVehicleId": { "type": "string", "maxLength": 64 },
+        "rating": { "type": "number" },
+        "totalTrips": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "joinedAt": { "type": "string" }
+      },
+      "required": ["name", "phone", "nicNumber", "licenseNumber", "isActive"]
+    },
+    "vehicle": {
+      "title": "Vehicle",
+      "description": "Fleet vehicle registered in Galle Taxi",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 40 },
+        "plateNumber": { "type": "string", "maxLength": 30 },
+        "passengers": { "type": "number" },
+        "luggage": { "type": "number" },
+        "pricePerKm": { "type": "number" },
+        "baseFare": { "type": "number" },
+        "imageUrl": { "type": "string", "maxLength": 500 },
+        "isAvailable": { "type": "boolean" }
+      },
+      "required": ["name", "category", "plateNumber", "passengers", "pricePerKm", "isAvailable"]
+    },
+    "fareRules": {
+      "title": "FareRules",
+      "description": "Authoritative fare calculation parameters and fixed routes",
+      "type": "object",
+      "properties": {
+        "baseFare": { "type": "number" },
+        "perKmRate": { "type": "number" },
+        "minimumFare": { "type": "number" },
+        "waitingPerHour": { "type": "number" },
+        "nightSurchargePercent": { "type": "number" },
+        "additionalStopCharge": { "type": "number" }
+      },
+      "required": ["baseFare", "perKmRate", "minimumFare"]
+    },
+    "siteSettings": {
+      "title": "SiteSettings",
+      "description": "Global website content, contact info, and branding",
+      "type": "object",
+      "properties": {
+        "businessName": { "type": "string", "maxLength": 100 },
+        "tagline": { "type": "string", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "whatsappNumber": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 200 },
+        "heroHeadline": { "type": "string", "maxLength": 150 },
+        "heroSubtitle": { "type": "string", "maxLength": 250 }
+      },
+      "required": ["businessName", "phone", "whatsappNumber"]
+    },
+    "auditLog": {
+      "title": "AuditLog",
+      "description": "Immutable administrative audit event",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string", "maxLength": 100 },
+        "performedBy": { "type": "string", "maxLength": 100 },
+        "targetId": { "type": "string", "maxLength": 64 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["action", "performedBy", "timestamp"]
+    },
+    "tour": {
+      "title": "Tour",
+      "description": "Private Day Tour package with tiered vehicle pricing, itinerary, and media",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 120 },
+        "slug": { "type": "string", "maxLength": 100 },
+        "duration": { "type": "string", "maxLength": 50 },
+        "shortDescription": { "type": "string", "maxLength": 300 },
+        "fullDescription": { "type": "string", "maxLength": 2000 },
+        "heroImage": { "type": "string", "maxLength": 1000 },
+        "isPublished": { "type": "boolean" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" }
+      },
+      "required": ["title", "slug", "duration", "isPublished", "heroImage"]
+    },
+    "taxiHub": {
+      "title": "TaxiHub",
+      "description": "Southern Coast regional taxi hub with local routes, pricing and FAQs",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "maxLength": 100 },
+        "townName": { "type": "string", "maxLength": 100 },
+        "pageTitle": { "type": "string", "maxLength": 150 },
+        "badge": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["slug", "townName"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "booking",
+      "description": "Collection of all passenger ride bookings"
+    },
+    "/drivers/{driverId}": {
+      "schema": "driver",
+      "description": "Collection of drivers and chauffeurs"
+    },
+    "/vehicles/{vehicleId}": {
+      "schema": "vehicle",
+      "description": "Fleet vehicle specifications and availability"
+    },
+    "/tours/{tourId}": {
+      "schema": "tour",
+      "description": "Collection of dynamically managed private day tours and pricing"
+    },
+    "/fareRules/current": {
+      "schema": "fareRules",
+      "description": "Current authoritative pricing rules"
+    },
+    "/siteSettings/current": {
+      "schema": "siteSettings",
+      "description": "Website hero, contact numbers and policy settings"
+    },
+    "/taxi_hubs/{hubId}": {
+      "schema": "taxiHub",
+      "description": "Regional town taxi hubs CMS content and route rates"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "auditLog",
+      "description": "Audit trail of admin operations and status changes"
+    }
+  }
+}
