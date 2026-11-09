@@ -182,7 +182,7 @@ export const SouthernHubsSection: React.FC = () => {
                     alt={`${hub.name} Sri Lanka`}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/src/assets/images/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png';
+                      (e.currentTarget as HTMLImageElement).src = '/assets/images/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png';
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/25 to-transparent pointer-events-none" />

@@ -100,6 +100,12 @@ service cloud.firestore {
       allow write: if isValidId(hubId);
     }
 
+    // Currencies collection (Multi-currency live exchange rates)
+    match /currencies/{currencyId} {
+      allow read: if true;
+      allow write: if isValidId(currencyId);
+    }
+
     // Audit Logs
     match /auditLogs/{logId} {
       allow read: if isValidId(logId);

@@ -57,7 +57,7 @@ export const AdminMedia: React.FC = () => {
       title: 'Homepage Main Hero Banner',
       category: 'banner',
       categoryLabel: 'Hero Banner',
-      imageUrl: siteSettings.heroImageUrl || '/src/assets/images/hero_galle_taxi_1793121940996.jpg',
+      imageUrl: siteSettings.heroImageUrl || '/assets/images/hero_galle_taxi_1793121940996.jpg',
       subtitle: 'Primary header visual on the customer homepage',
       sourceType: siteSettings.heroImageUrl?.startsWith('data:')
         ? 'Custom Upload'

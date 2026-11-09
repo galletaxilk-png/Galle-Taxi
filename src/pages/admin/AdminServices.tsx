@@ -26,7 +26,7 @@ export const AdminServices: React.FC = () => {
     setDescription('');
     setStartingFromLkr(25000);
     setFeaturesStr('Expressway Tolls Included, Flight Monitoring, Chauffeur Meet & Greet');
-    setImageUrl('/src/assets/images/service_airport_transfer_1793121941979.jpg');
+    setImageUrl('/assets/images/service_airport_transfer_1793121941979.jpg');
     setShowModal(true);
   };
 

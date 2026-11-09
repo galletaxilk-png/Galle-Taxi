@@ -20,42 +20,42 @@ export const SYSTEM_IMAGE_PRESETS: ImagePreset[] = [
   },
   {
     label: 'Down South Coastal Adventures & Palm Bays',
-    url: '/src/assets/images/regenerated_image_1794057460840.png',
+    url: '/assets/images/regenerated_image_1794057460840.png',
     category: 'Hubs',
   },
   {
     label: 'Budget Mini Car (Wagon R / Alto)',
-    url: '/src/assets/images/regenerated_image_1793161723258.png',
+    url: '/assets/images/regenerated_image_1793161723258.png',
     category: 'Vehicles',
   },
   {
     label: 'Executive Sedan (Premio / Prius)',
-    url: '/src/assets/images/regenerated_image_1793163512211.png',
+    url: '/assets/images/regenerated_image_1793163512211.png',
     category: 'Vehicles',
   },
   {
     label: 'VIP KDH High-Roof Commuter Van',
-    url: '/src/assets/images/vehicle_premium_van_1793121943671.jpg',
+    url: '/assets/images/vehicle_premium_van_1793121943671.jpg',
     category: 'Vehicles',
   },
   {
     label: 'Luxury Mercedes / BMW Sedan',
-    url: '/src/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
+    url: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
     category: 'Vehicles',
   },
   {
     label: 'Colombo Airport Highway Transfer',
-    url: '/src/assets/images/service_airport_transfer_1793121941979.jpg',
+    url: '/assets/images/service_airport_transfer_1793121941979.jpg',
     category: 'Services',
   },
   {
     label: 'Galle Fort & Coastal Scenic Tour',
-    url: '/src/assets/images/service_galle_tour_1793121943026.jpg',
+    url: '/assets/images/service_galle_tour_1793121943026.jpg',
     category: 'Services',
   },
   {
     label: 'Galle Coastline Main Hero Banner',
-    url: '/src/assets/images/hero_galle_taxi_1793121940996.jpg',
+    url: '/assets/images/hero_galle_taxi_1793121940996.jpg',
     category: 'Banners',
   },
   {
@@ -70,7 +70,7 @@ export const SYSTEM_IMAGE_PRESETS: ImagePreset[] = [
   },
   {
     label: 'Udawalawe Elephant Safari',
-    url: '/src/assets/images/regenerated_image_1793632543146.png',
+    url: '/assets/images/regenerated_image_1793632543146.png',
     category: 'Services',
   },
   {
@@ -548,7 +548,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             </button>
           </div>
           <p className="text-[10px] text-slate-500 font-mono">
-            Accepts any public image URL (https://...) or local workspace asset path (/src/assets/images/...)
+            Accepts any public image URL (https://...) or local workspace asset path (/assets/images/...)
           </p>
         </div>
       )}

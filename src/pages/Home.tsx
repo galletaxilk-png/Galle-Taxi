@@ -589,14 +589,6 @@ export const Home: React.FC = () => {
 
         {/* Mobile Slide Controls & Dots Indicator */}
         <div className="md:hidden flex items-center justify-between pt-2 px-1">
-          <div className="flex items-center gap-1.5 text-slate-400 text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F5B91B] animate-pulse" />
-            <span className="text-[11px] text-slate-400 font-medium">Swipe to slide</span>
-            <span className="font-mono text-[10px] text-slate-500">
-              ({activeRouteSlide + 1}/{fareRules.fixedRoutes.length})
-            </span>
-          </div>
-
           {/* Dots Indicator */}
           <div className="flex items-center gap-1.5">
             {fareRules.fixedRoutes.map((_, dotIdx) => (
@@ -785,7 +777,7 @@ export const Home: React.FC = () => {
                           !target.src.includes('regenerated_image') &&
                           !target.src.includes('vehicle_')
                         ) {
-                          target.src = '/src/assets/images/regenerated_image_1793163512211.png';
+                          target.src = '/assets/images/regenerated_image_1793163512211.png';
                         }
                       }}
                     />

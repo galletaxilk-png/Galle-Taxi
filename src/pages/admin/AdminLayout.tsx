@@ -28,7 +28,7 @@ import { useApp } from '../../lib/store';
 export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { adminUser, logoutAdmin, isFirebaseActive } = useApp();
+  const { adminUser, logoutAdmin, isFirebaseActive, firestoreQuotaExhausted, clearQuotaStatus } = useApp();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const navItems = [
@@ -176,6 +176,41 @@ export const AdminLayout: React.FC = () => {
 
         {/* Content Outlet */}
         <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
+          {firestoreQuotaExhausted && (
+            <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fadeIn">
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 text-[#F5B91B]">
+                  <Database className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-xs sm:text-sm font-['Outfit'] flex items-center gap-2">
+                    <span>Firebase Free Tier Daily Quota Limit Reached (50,000 reads/day)</span>
+                  </h4>
+                  <p className="text-[11px] text-amber-200/80 mt-0.5 leading-relaxed">
+                    Google Cloud has capped daily free read units on project <code className="text-[#F5B91B] font-mono px-1 py-0.5 rounded bg-black/40">galle-taxi</code> for today. The customer website is operating normally using cached local data. Quota resets at midnight PST, or you can switch to the Blaze Plan for unlimited traffic.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={clearQuotaStatus}
+                  className="px-3 py-1.5 rounded-xl bg-[#1A1A1E] hover:bg-[#27272A] border border-[#27272A] text-slate-300 hover:text-white font-medium text-xs transition-colors cursor-pointer"
+                >
+                  Retry Connection
+                </button>
+                <a
+                  href="https://console.firebase.google.com/project/galle-taxi/usage"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#F5B91B] hover:bg-[#E5A812] text-black font-extrabold text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <span>Firebase Console</span>
+                  <ExternalLink className="w-3.5 h-3.5 stroke-[2.5]" />
+                </a>
+              </div>
+            </div>
+          )}
           <Outlet />
         </main>
       </div>

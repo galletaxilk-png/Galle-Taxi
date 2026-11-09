@@ -57,19 +57,19 @@ export const SOUTHERN_HUB_IMAGE_PRESETS = [
   },
   {
     label: 'Galle Fort Coastal & Lighthouse Ocean Road',
-    url: '/src/assets/images/service_galle_tour_1793121943026.jpg',
+    url: '/assets/images/service_galle_tour_1793121943026.jpg',
     town: 'Galle / Hikkaduwa',
     tag: 'Heritage Fort',
   },
   {
     label: 'Colombo Highway & Expressway Fleet Transfer',
-    url: '/src/assets/images/service_airport_transfer_1793121941979.jpg',
+    url: '/assets/images/service_airport_transfer_1793121941979.jpg',
     town: 'Bentota / Highway',
     tag: 'Expressway',
   },
   {
     label: 'Galle Oceanfront Palm Beach Highway',
-    url: '/src/assets/images/hero_galle_taxi_1793121940996.jpg',
+    url: '/assets/images/hero_galle_taxi_1793121940996.jpg',
     town: 'Southern Coast',
     tag: 'Ocean Drive',
   },

@@ -73,22 +73,22 @@ export const VEHICLE_PHOTO_PRESETS = [
   {
     label: 'Hybrid Sedan (Prius / Premio)',
     category: 'Sedan',
-    url: '/src/assets/images/regenerated_image_1793163512211.png',
+    url: '/assets/images/regenerated_image_1793163512211.png',
   },
   {
     label: 'VIP KDH High-Roof Commuter Van',
     category: 'KDH High Roof',
-    url: '/src/assets/images/vehicle_premium_van_1793121943671.jpg',
+    url: '/assets/images/vehicle_premium_van_1793121943671.jpg',
   },
   {
     label: 'Budget Mini Hatchback (Wagon R / Alto)',
     category: 'Mini Car',
-    url: '/src/assets/images/regenerated_image_1793161723258.png',
+    url: '/assets/images/regenerated_image_1793161723258.png',
   },
   {
     label: 'Toyota KDH High-Roof VIP Commuter',
     category: 'KDH High Roof',
-    url: '/src/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
+    url: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
   },
   {
     label: 'Luxury Prado / Montero 4x4 SUV',
@@ -309,7 +309,7 @@ export const AdminVehicles: React.FC = () => {
     setDescription('Modern air-conditioned executive vehicle chauffeured by vetted professionals.');
     setPricePerKm(240);
     setBaseFare(1500);
-    setImageUrl('/src/assets/images/regenerated_image_1793163512211.png');
+    setImageUrl('/assets/images/regenerated_image_1793163512211.png');
     setIsAvailable(true);
     setHideCard(false);
     setIsFeatured(false);
@@ -480,7 +480,7 @@ export const AdminVehicles: React.FC = () => {
       description: description.trim(),
       pricePerKm: Number(pricePerKm) || editingVehicle?.pricePerKm || 0,
       baseFare: Number(baseFare) || editingVehicle?.baseFare || 0,
-      imageUrl: imageUrl || editingVehicle?.imageUrl || '/src/assets/images/regenerated_image_1793163512211.png',
+      imageUrl: imageUrl || editingVehicle?.imageUrl || '/assets/images/regenerated_image_1793163512211.png',
       isAvailable,
       hideCard,
       isFeatured,

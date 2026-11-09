@@ -25,7 +25,7 @@ export const SeasonalBannerSection: React.FC = () => {
     siteSettings.seasonalBannerImageUrl &&
     siteSettings.seasonalBannerImageUrl !== '/assets/aistudio/Down_South_Season_Coastal_Adventures.png'
       ? siteSettings.seasonalBannerImageUrl
-      : '/src/assets/images/regenerated_image_1794057460840.png';
+      : '/assets/images/regenerated_image_1794057460840.png';
   const bannerLink = siteSettings.seasonalBannerLink || '/general-taxi';
   const cleanWhatsApp = siteSettings.whatsappNumber.replace(/[^0-9]/g, '');
 
@@ -95,7 +95,7 @@ export const SeasonalBannerSection: React.FC = () => {
             onError={(e) => {
               const target = e.currentTarget;
               if (!target.src.includes('regenerated_image_1794057460840.png')) {
-                target.src = '/src/assets/images/regenerated_image_1794057460840.png';
+                target.src = '/assets/images/regenerated_image_1794057460840.png';
               }
             }}
           />

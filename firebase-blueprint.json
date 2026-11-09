@@ -249,6 +249,19 @@
         "badge": { "type": "string", "maxLength": 50 }
       },
       "required": ["slug", "townName"]
+    },
+    "currency": {
+      "title": "Currency",
+      "description": "Foreign currency exchange rate and display configuration",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string", "maxLength": 10 },
+        "name": { "type": "string", "maxLength": 50 },
+        "symbol": { "type": "string", "maxLength": 10 },
+        "rateFromLKR": { "type": "number" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["code", "name", "symbol", "rateFromLKR"]
     }
   },
   "firestore": {
@@ -279,6 +292,10 @@
     "/taxi_hubs/{hubId}": {
       "schema": "taxiHub",
       "description": "Regional town taxi hubs CMS content and route rates"
+    },
+    "/currencies/{currencyId}": {
+      "schema": "currency",
+      "description": "Live multi-currency foreign exchange rates"
     },
     "/auditLogs/{logId}": {
       "schema": "auditLog",

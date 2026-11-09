@@ -133,7 +133,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 2,
       handLuggage: 1,
       acLabel: 'Fully Air-Conditioned',
-      fallbackImage: '/src/assets/images/regenerated_image_1793161723258.png',
+      fallbackImage: '/assets/images/regenerated_image_1793161723258.png',
       category: 'Mini Car' as const,
     },
     {
@@ -145,7 +145,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 3,
       handLuggage: 2,
       acLabel: 'Dual-Zone Climate Control',
-      fallbackImage: '/src/assets/images/regenerated_image_1793163512211.png',
+      fallbackImage: '/assets/images/regenerated_image_1793163512211.png',
       category: 'SEDAN CAR' as const,
     },
     {
@@ -157,7 +157,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 5,
       handLuggage: 4,
       acLabel: 'Dual Air-Conditioned',
-      fallbackImage: '/src/assets/images/regenerated_image_1793465213680.png',
+      fallbackImage: '/assets/images/regenerated_image_1793465213680.png',
       category: 'Mini Van' as const,
     },
     {
@@ -169,7 +169,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 4,
       handLuggage: 3,
       acLabel: 'Tri-Zone Climate Control',
-      fallbackImage: '/src/assets/images/regenerated_image_1793464744920.png',
+      fallbackImage: '/assets/images/regenerated_image_1793464744920.png',
       category: 'SUV CAR' as const,
     },
     {
@@ -181,7 +181,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 6,
       handLuggage: 5,
       acLabel: 'Dual High-Capacity A/C',
-      fallbackImage: '/src/assets/images/vehicle_premium_van_1793121943671.jpg',
+      fallbackImage: '/assets/images/vehicle_premium_van_1793121943671.jpg',
       category: 'KDH FLAT ROOF' as const,
     },
     {
@@ -193,7 +193,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 8,
       handLuggage: 6,
       acLabel: 'Rear Climate Control A/C',
-      fallbackImage: '/src/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
+      fallbackImage: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
       category: 'KDH HIGH ROOF' as const,
     },
   ];
@@ -283,7 +283,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
         pricePerKm: dynamicPricePerKm,
         baseFare: dynamicBaseFare,
         pricingTiers: categoryTiers,
-        imageUrl: v.imageUrl || matchedSpec?.fallbackImage || '/src/assets/images/regenerated_image_1793163512211.png',
+        imageUrl: v.imageUrl || matchedSpec?.fallbackImage || '/assets/images/regenerated_image_1793163512211.png',
         isAvailable: v.isAvailable !== false,
         features:
           v.features && v.features.length > 0
@@ -558,7 +558,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                           !target.src.includes('regenerated_image') &&
                           !target.src.includes('vehicle_')
                         ) {
-                          target.src = '/src/assets/images/regenerated_image_1793163512211.png';
+                          target.src = '/assets/images/regenerated_image_1793163512211.png';
                         }
                       }}
                     />

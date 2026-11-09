@@ -62,7 +62,7 @@ export const VehiclesPage: React.FC = () => {
                         !target.src.includes('regenerated_image') &&
                         !target.src.includes('vehicle_')
                       ) {
-                        target.src = '/src/assets/images/regenerated_image_1793163512211.png';
+                        target.src = '/assets/images/regenerated_image_1793163512211.png';
                       }
                     }}
                   />
