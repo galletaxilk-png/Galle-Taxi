@@ -1,11 +1,10 @@
 /**
  * Galle Taxi - Firebase Cloud Functions
  * Automated server-side event triggers for notifications, audit logging, and status transitions.
+ * 
+ * Note: Deploy with Firebase CLI:
+ * firebase deploy --only functions
  */
-
-// Note: When deploying to Firebase Cloud Functions:
-// npm --prefix functions install firebase-admin firebase-functions
-// firebase deploy --only functions
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
@@ -40,14 +39,10 @@ exports.onBookingCreated = functions.firestore
       });
 
       // 2. Dispatch notification queue item
-      // External SMS / WhatsApp provider integration (Twilio / Meta Cloud API / SendGrid):
-      // Environment variables required:
-      // firebase functions:config:set whatsapp.token="TOKEN" whatsapp.phone_id="PHONE_ID"
       const whatsappToken = process.env.WHATSAPP_TOKEN || functions.config().whatsapp?.token;
 
       if (whatsappToken) {
         console.log(`[Galle Taxi Notification] Sending WhatsApp confirmation to ${booking.phone}`);
-        // Example implementation with WhatsApp Cloud API
       } else {
         console.info(
           `[Galle Taxi Notification] WhatsApp provider unconfigured. In-app confirmation active for ${booking.phone}.`
