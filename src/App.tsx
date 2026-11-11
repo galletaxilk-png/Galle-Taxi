@@ -68,9 +68,9 @@ const ScrollToTop: React.FC = () => {
  */
 const CustomerLayout: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-[#0B0B0D] text-slate-100">
+    <div className="flex flex-col min-h-screen bg-[#0B0B0D] text-slate-100 w-full max-w-full overflow-x-hidden">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden">
         <Outlet />
       </main>
       <Footer />

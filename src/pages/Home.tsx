@@ -333,7 +333,7 @@ export const Home: React.FC = () => {
       </section>
 
       {/* 2. INSTANT FARE CALCULATOR & QUICK BOOKING BAR (Full Available Browser Viewport) */}
-      <section className="relative z-20 w-full bg-[#111114] border-t border-b border-[#27272A] py-8 sm:py-12">
+      <section className="relative z-20 w-full bg-[#111114] border-t border-b border-[#27272A] py-8 sm:py-12 overflow-hidden">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#27272A] mb-5">
             <div className="flex items-center gap-2">
@@ -347,8 +347,8 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Quick Tab Selector Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-[#27272A]">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#27272A]">
+            <div className="w-full sm:w-auto grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
               {SERVICE_TABS.map((tab) => {
                 const isSelected = activeTab === tab.id;
                 return (
@@ -356,7 +356,7 @@ export const Home: React.FC = () => {
                     key={tab.id}
                     type="button"
                     onClick={() => handleTabChange(tab.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    className={`w-full sm:w-auto px-3 py-2.5 sm:py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-[#F5B91B] text-black shadow-md'
                         : 'bg-[#0B0B0D] hover:bg-[#1E1E22] text-slate-300 hover:text-white border border-[#27272A]'
@@ -373,7 +373,7 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Route & Schedule Quick Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-8 p-4 sm:p-5 rounded-2xl bg-[#0B0B0D] border border-[#27272A]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end mb-8 p-4 sm:p-5 rounded-2xl bg-[#0E0E12]/85 backdrop-blur-xl border border-white/25 ring-1 ring-white/10 shadow-[0_12px_36px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.22)] hover:border-white/35 transition-all">
             {/* Pickup */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center justify-between">
@@ -491,7 +491,7 @@ export const Home: React.FC = () => {
       </div>
 
       {/* 4. POPULAR SRI LANKA ROUTES & UPFRONT FIXED FARES */}
-      <section className="py-12 sm:py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 lg:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="space-y-3 sm:space-y-4 mb-8 sm:mb-12 text-center max-w-2xl mx-auto px-2">
           <div className="text-xs uppercase tracking-widest text-[#F5B91B] font-bold">
             Transparent Pricing

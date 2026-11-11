@@ -858,14 +858,15 @@ export const BookTaxiPage: React.FC = () => {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-300 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <Car className="w-3.5 h-3.5 text-[#F5B91B]" />
-                    <span>Price by Vehicle Category for this Trip (Click to select)</span>
+                    <span className="hidden sm:inline">Price by Vehicle Category for this Trip (Click to select)</span>
+                    <span className="sm:hidden">Vehicles (Swipe to select)</span>
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono">
                     Expressway Tolls + Fuel + Driver Included
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1 sm:mx-0 sm:px-0">
                   {vehicles.map((v) => {
                     const isSelected = v.id === vehicleId;
                     const vFare = getVehicleTripFare(v.id);
@@ -874,7 +875,7 @@ export const BookTaxiPage: React.FC = () => {
                         key={v.id}
                         type="button"
                         onClick={() => setVehicleId(v.id)}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        className={`shrink-0 w-[145px] sm:w-auto snap-start p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                           isSelected
                             ? 'bg-[#F5B91B]/20 border-[#F5B91B] ring-2 ring-[#F5B91B]/60 shadow-md'
                             : 'bg-[#0B0B0D] border-[#27272A] hover:border-slate-500 hover:bg-[#141418]'
@@ -966,14 +967,19 @@ export const BookTaxiPage: React.FC = () => {
 
             {/* Step 2: Vehicle Selection */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#27272A] text-sm font-bold text-white font-['Outfit']">
-                <span className="w-6 h-6 rounded-full bg-[#F5B91B] text-black font-extrabold flex items-center justify-center text-xs">
-                  2
+              <div className="flex items-center justify-between pb-2 border-b border-[#27272A]">
+                <div className="flex items-center gap-2 text-sm font-bold text-white font-['Outfit']">
+                  <span className="w-6 h-6 rounded-full bg-[#F5B91B] text-black font-extrabold flex items-center justify-center text-xs">
+                    2
+                  </span>
+                  <span>Select Vehicle Category</span>
+                </div>
+                <span className="sm:hidden text-[10px] text-[#F5B91B] font-mono flex items-center gap-1">
+                  Swipe vehicles →
                 </span>
-                <span>Select Vehicle Category</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1 sm:mx-0 sm:px-0">
                 {vehicles.map((v) => {
                   const isSelected = v.id === vehicleId;
                   const vFare = getVehicleTripFare(v.id);
@@ -982,7 +988,7 @@ export const BookTaxiPage: React.FC = () => {
                     <div
                       key={v.id}
                       onClick={() => setVehicleId(v.id)}
-                      className={`cursor-pointer rounded-xl p-4 border transition-all text-left flex flex-col justify-between ${
+                      className={`shrink-0 w-[270px] sm:w-auto snap-start cursor-pointer rounded-xl p-4 border transition-all text-left flex flex-col justify-between ${
                         isSelected
                           ? 'border-[#F5B91B] bg-[#F5B91B]/10 ring-2 ring-[#F5B91B] shadow-lg'
                           : 'border-[#27272A] bg-[#0B0B0D] hover:border-slate-500 hover:bg-[#141418]'

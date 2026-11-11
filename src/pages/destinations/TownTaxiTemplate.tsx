@@ -120,12 +120,12 @@ export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town }) => {
             </div>
 
             {/* Action CTAs */}
-            <div className="flex flex-wrap items-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-4 w-full sm:w-auto">
               <Link
                 to={`/book?pickup=${encodeURIComponent(town.defaultPickup)}&destination=${encodeURIComponent(
                   town.defaultDestination
                 )}&serviceType=TAXI+RIDE`}
-                className="px-6 py-3.5 rounded-xl bg-[#F5B91B] hover:bg-[#E5A812] text-black font-extrabold text-sm tracking-wide shadow-lg shadow-[#F5B91B]/20 transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
+                className="w-full sm:w-auto justify-center px-6 py-3.5 rounded-xl bg-[#F5B91B] hover:bg-[#E5A812] text-black font-extrabold text-sm tracking-wide shadow-lg shadow-[#F5B91B]/20 transition-all flex items-center gap-2 cursor-pointer transform hover:-translate-y-0.5"
               >
                 <span>Book {town.townName} Taxi Now</span>
                 <ArrowRight className="w-4 h-4" />
@@ -137,18 +137,10 @@ export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town }) => {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-5 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-sm tracking-wide shadow-lg shadow-[#25D366]/20 transition-all flex items-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto justify-center px-5 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-sm tracking-wide shadow-lg shadow-[#25D366]/20 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4 fill-current" />
                 <span>WhatsApp Dispatch</span>
-              </a>
-
-              <a
-                href={`tel:${siteSettings.phone.replace(/[^0-9+]/g, '')}`}
-                className="px-5 py-3.5 rounded-xl bg-[#141416] hover:bg-[#1A1A1E] text-slate-200 hover:text-white border border-[#27272A] font-semibold text-sm transition-all flex items-center gap-2"
-              >
-                <Phone className="w-4 h-4 text-[#F5B91B]" />
-                <span>{siteSettings.phone}</span>
               </a>
             </div>
           </div>
