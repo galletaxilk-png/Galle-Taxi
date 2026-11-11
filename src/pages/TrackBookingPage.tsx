@@ -131,37 +131,39 @@ export const TrackBookingPage: React.FC = () => {
         <div className="bg-[#141416] border border-[#27272A] rounded-2xl p-6 sm:p-8 shadow-2xl">
           <form onSubmit={(e) => handleSearch(e)} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
             <div className="sm:col-span-5 space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label htmlFor="track-booking-ref" className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Booking Reference
               </label>
               <input
+                id="track-booking-ref"
                 type="text"
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 placeholder="GT-2026-8941"
                 required
-                className="w-full px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white font-mono uppercase focus:outline-none focus:border-[#F5B91B]"
+                className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white font-mono uppercase focus:outline-none focus:border-[#F5B91B]"
               />
             </div>
 
             <div className="sm:col-span-4 space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label htmlFor="track-booking-phone" className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Phone Number
               </label>
               <input
+                id="track-booking-phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+94 77 123 4567"
                 required
-                className="w-full px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
               />
             </div>
 
             <div className="sm:col-span-3">
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-lg bg-[#F5B91B] hover:bg-[#E5A812] text-black font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-[#F5B91B]/20"
+                className="w-full min-h-[44px] py-2.5 rounded-lg bg-[#F5B91B] hover:bg-[#E5A812] text-black font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-[#F5B91B]/20 cursor-pointer"
               >
                 <Search className="w-4 h-4" />
                 <span>Search Ride</span>

@@ -596,56 +596,59 @@ export const BookTaxiPage: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                       {/* Arrival Date */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                        <label htmlFor="book-arrival-date" className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                           <span>Arrival Date</span>
                           <span className="text-red-400">*</span>
                         </label>
                         <div className="relative">
                           <Calendar className="w-4 h-4 text-[#F5B91B] absolute left-3 top-3.5 pointer-events-none" />
                           <input
+                            id="book-arrival-date"
                             type="date"
                             value={date}
                             min={todayStr}
                             onChange={(e) => setDate(e.target.value)}
                             required
-                            className="w-full pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
                           />
                         </div>
                       </div>
 
                       {/* Arrival Time */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                        <label htmlFor="book-arrival-time" className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                           <span>Arrival Time</span>
                           <span className="text-red-400">*</span>
                         </label>
                         <div className="relative">
                           <Clock className="w-4 h-4 text-[#F5B91B] absolute left-3 top-3.5 pointer-events-none" />
                           <input
+                            id="book-arrival-time"
                             type="time"
                             value={time}
                             onChange={(e) => setTime(e.target.value)}
                             required
-                            className="w-full pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
                           />
                         </div>
                       </div>
 
                       {/* Flight Number */}
                       <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                        <label htmlFor="book-flight-number" className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                           <span>Flight Number</span>
                           <span className="text-red-400">*</span>
                         </label>
                         <div className="relative">
                           <Plane className="w-4 h-4 text-[#F5B91B] absolute left-3 top-3.5 pointer-events-none" />
                           <input
+                            id="book-flight-number"
                             type="text"
                             value={flightNumber}
                             onChange={(e) => setFlightNumber(e.target.value.toUpperCase())}
                             placeholder="e.g. UL 504 / EK 652"
                             required
-                            className="w-full pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white uppercase placeholder:normal-case font-mono font-bold focus:outline-none focus:border-[#F5B91B]"
+                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white uppercase placeholder:normal-case font-mono font-bold focus:outline-none focus:border-[#F5B91B]"
                           />
                         </div>
                       </div>
@@ -680,7 +683,7 @@ export const BookTaxiPage: React.FC = () => {
                           {/* Name on Board Input */}
                           <div className="space-y-1.5">
                             <div className="flex items-center justify-between">
-                              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                              <label htmlFor="book-nameboard-text" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                                 <UserCheck className="w-3.5 h-3.5 text-[#F5B91B]" />
                                 <span>Customer's Name on Board</span>
                                 <span className="text-red-400">*</span>
@@ -697,11 +700,12 @@ export const BookTaxiPage: React.FC = () => {
                             </div>
                             <div className="relative">
                               <input
+                                id="book-nameboard-text"
                                 type="text"
                                 value={nameboardText}
                                 onChange={(e) => setNameboardText(e.target.value)}
                                 placeholder={customerName.trim() ? `e.g. ${customerName.trim()} & Family` : 'e.g. Mr. John Smith & Family / Alex Turner'}
-                                className="w-full px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                                className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
                               />
                             </div>
                             <p className="text-[11px] text-slate-400">
@@ -744,34 +748,36 @@ export const BookTaxiPage: React.FC = () => {
                 ) : (
                   <>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300">
+                      <label htmlFor="book-pickup-date" className="text-xs font-semibold text-slate-300">
                         Pickup Date <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 pointer-events-none" />
                         <input
+                          id="book-pickup-date"
                           type="date"
                           value={date}
                           min={todayStr}
                           onChange={(e) => setDate(e.target.value)}
                           required
-                          className="w-full pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                          className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300">
+                      <label htmlFor="book-pickup-time" className="text-xs font-semibold text-slate-300">
                         Pickup Time (24h) <span className="text-red-400">*</span>
                       </label>
                       <div className="relative">
                         <Clock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5 pointer-events-none" />
                         <input
+                          id="book-pickup-time"
                           type="time"
                           value={time}
                           onChange={(e) => setTime(e.target.value)}
                           required
-                          className="w-full pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                          className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
                         />
                       </div>
                     </div>
@@ -1040,25 +1046,27 @@ export const BookTaxiPage: React.FC = () => {
               {/* Passengers & Luggage count */}
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Passenger Count</label>
+                  <label htmlFor="book-passenger-count" className="text-xs font-semibold text-slate-300">Passenger Count</label>
                   <input
+                    id="book-passenger-count"
                     type="number"
                     min={1}
                     max={selectedVehicle.passengers}
                     value={passengerCount}
                     onChange={(e) => setPassengerCount(parseInt(e.target.value) || 1)}
-                    className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white"
+                    className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Luggage Items</label>
+                  <label htmlFor="book-luggage-count" className="text-xs font-semibold text-slate-300">Luggage Items</label>
                   <input
+                    id="book-luggage-count"
                     type="number"
                     min={0}
                     max={selectedVehicle.luggage}
                     value={luggageCount}
                     onChange={(e) => setLuggageCount(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white"
+                    className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white"
                   />
                 </div>
               </div>
@@ -1075,16 +1083,17 @@ export const BookTaxiPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-300">
+                  <label htmlFor="book-customer-name" className="text-xs font-semibold text-slate-300">
                     Lead Passenger Name <span className="text-red-400">*</span>
                   </label>
                   <input
+                    id="book-customer-name"
                     type="text"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="e.g. John Doe"
                     required
-                    className="w-full px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                    className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
                   />
                 </div>
 
@@ -1102,18 +1111,19 @@ export const BookTaxiPage: React.FC = () => {
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-300">
+                    <label htmlFor="book-customer-email" className="text-xs font-semibold text-slate-300">
                       Passenger Email Address <span className="text-red-400">*</span>
                     </label>
                     <span className="text-[10px] text-[#F5B91B] font-mono font-bold">For Instant Confirmation Email</span>
                   </div>
                   <input
+                    id="book-customer-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="john@example.com"
                     required
-                    className="w-full px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                    className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
                   />
                   <p className="text-[11px] text-slate-400">
                     Official booking reference and chauffeur voucher will be emailed to this address.

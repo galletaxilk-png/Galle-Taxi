@@ -220,20 +220,20 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-10 pt-8 border-t border-[#1F1F23] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="mt-10 pt-8 border-t border-[#1F1F23] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
             © {new Date().getFullYear()} Galle Taxi. All rights reserved. Sri Lanka Tourism Chauffeur Network.
           </div>
           <div className="flex items-center gap-6">
-            <Link to="/privacy" className="hover:text-slate-300 transition-colors">
+            <Link to="/privacy" className="hover:text-white transition-colors py-1">
               Privacy Policy
             </Link>
             <span aria-hidden="true">·</span>
-            <Link to="/terms" className="hover:text-slate-300 transition-colors">
+            <Link to="/terms" className="hover:text-white transition-colors py-1">
               Terms & Conditions
             </Link>
             <span aria-hidden="true">·</span>
-            <Link to="/track-booking" className="hover:text-slate-300 transition-colors">
+            <Link to="/track-booking" className="hover:text-white transition-colors py-1">
               Track Ride
             </Link>
           </div>

@@ -313,6 +313,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
           id={id}
           type="text"
           value={inputValue}
+          aria-label={placeholder}
           onChange={(e) => {
             setInputValue(e.target.value);
             onChange(e.target.value);
@@ -329,7 +330,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
           autoComplete="off"
           className={
             className ||
-            'w-full pl-9 pr-9 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5B91B] transition-colors shadow-inner'
+            'w-full min-h-[44px] pl-9 pr-9 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#F5B91B] transition-colors shadow-inner'
           }
         />
 
@@ -339,10 +340,10 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
             <button
               type="button"
               onClick={handleClear}
-              className="text-slate-500 hover:text-slate-300 focus:outline-none cursor-pointer p-0.5 rounded"
-              aria-label="Clear address"
+              className="text-slate-400 hover:text-white focus:outline-none cursor-pointer p-1 rounded min-w-[28px] min-h-[28px] flex items-center justify-center"
+              aria-label="Clear address input"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>

@@ -566,34 +566,37 @@ export const TourDetailPage: React.FC = () => {
                 {/* 2. Date & Time */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Travel Date</label>
+                    <label htmlFor="tour-travel-date" className="text-xs font-semibold text-slate-300">Travel Date</label>
                     <input
+                      id="tour-travel-date"
                       type="date"
                       required
                       value={travelDate}
                       onChange={(e) => setTravelDate(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                      className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Pickup Time</label>
+                    <label htmlFor="tour-pickup-time" className="text-xs font-semibold text-slate-300">Pickup Time</label>
                     <input
+                      id="tour-pickup-time"
                       type="time"
                       required
                       value={pickupTime}
                       onChange={(e) => setPickupTime(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                      className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                     />
                   </div>
                 </div>
 
                 {/* 3. Passengers */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Number of Passengers</label>
+                  <label htmlFor="tour-passenger-count" className="text-xs font-semibold text-slate-300">Number of Passengers</label>
                   <select
+                    id="tour-passenger-count"
                     value={passengerCount}
                     onChange={(e) => setPassengerCount(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                    className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                       <option key={num} value={num} className="bg-[#141416]">
@@ -617,38 +620,41 @@ export const TourDetailPage: React.FC = () => {
                 {/* 5. Contact Details */}
                 <div className="space-y-3 pt-2 border-t border-[#27272A]">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Lead Passenger Full Name</label>
+                    <label htmlFor="tour-customer-name" className="text-xs font-semibold text-slate-300">Lead Passenger Full Name</label>
                     <input
+                      id="tour-customer-name"
                       type="text"
                       required
                       placeholder="e.g. James Wilson"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                      className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Email Address (for voucher)</label>
+                    <label htmlFor="tour-customer-email" className="text-xs font-semibold text-slate-300">Email Address (for voucher)</label>
                     <input
+                      id="tour-customer-email"
                       type="email"
                       required
                       placeholder="e.g. james@example.com"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                      className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">WhatsApp Mobile Number</label>
+                    <label htmlFor="tour-customer-phone" className="text-xs font-semibold text-slate-300">WhatsApp Mobile Number</label>
                     <input
+                      id="tour-customer-phone"
                       type="tel"
                       required
                       placeholder="+44 7123 456789 or +94 77 123 4567"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white font-mono focus:outline-none focus:border-[#F5B91B]"
+                      className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-xs text-white font-mono focus:outline-none focus:border-[#F5B91B]"
                     />
                   </div>
 

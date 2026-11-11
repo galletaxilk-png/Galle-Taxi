@@ -346,27 +346,29 @@ export const AirportPickupPage: React.FC = () => {
 
                 <div className="space-y-3.5">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <label htmlFor="pickup-arrival-airport" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                       <PlaneLanding className="w-3.5 h-3.5 text-[#F5B91B]" />
                       <span>Arrival Airport</span>
                     </label>
                     <input
+                      id="pickup-arrival-airport"
                       type="text"
                       disabled
                       value="Bandaranaike International Airport (CMB) — Arrival Lobby"
-                      className="w-full px-3 py-2.5 bg-[#0B0B0D]/60 border border-[#27272A] rounded-xl text-xs text-slate-300 font-medium cursor-not-allowed"
+                      className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D]/60 border border-[#27272A] rounded-xl text-xs text-slate-300 font-medium cursor-not-allowed"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <label htmlFor="pickup-destination-select" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-[#F5B91B]" />
                       <span>South Coast Destination (Hotel, Resort, or Villa)</span>
                     </label>
                     <select
+                      id="pickup-destination-select"
                       value={selectedDestination}
                       onChange={(e) => setSelectedDestination(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                      className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                     >
                       <option value="Galle Dutch Fort">Galle Dutch Fort (Historic Fort / Lighthouse)</option>
                       <option value="Unawatuna Beach">Unawatuna (Beach / Yaddehimulla / Jungle Beach)</option>
@@ -383,54 +385,58 @@ export const AirportPickupPage: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <label htmlFor="pickup-landing-date" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-[#F5B91B]" />
                         <span>Landing Date</span>
                       </label>
                       <input
+                        id="pickup-landing-date"
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                        className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <label htmlFor="pickup-landing-time" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-[#F5B91B]" />
                         <span>Estimated Landing Time</span>
                       </label>
                       <input
+                        id="pickup-landing-time"
                         type="time"
                         value={landingTime}
                         onChange={(e) => setLandingTime(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                        className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <label htmlFor="pickup-flight-number" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Plane className="w-3.5 h-3.5 text-[#F5B91B]" />
                         <span>Inbound Flight No. (Optional)</span>
                       </label>
                       <input
+                        id="pickup-flight-number"
                         type="text"
                         placeholder="e.g. UL 504 / EK 652"
                         value={flightNumber}
                         onChange={(e) => setFlightNumber(e.target.value.toUpperCase())}
-                        className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#F5B91B]"
+                        className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:border-[#F5B91B]"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <label htmlFor="pickup-passengers-select" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-[#F5B91B]" />
                         <span>Passengers</span>
                       </label>
                       <select
+                        id="pickup-passengers-select"
                         value={passengerCount}
                         onChange={(e) => setPassengerCount(Number(e.target.value))}
-                        className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                        className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                       >
                         <option value={1}>1 Passenger</option>
                         <option value={2}>2 Passengers</option>

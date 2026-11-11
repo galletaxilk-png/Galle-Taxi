@@ -385,7 +385,7 @@ export const Navbar: React.FC = () => {
             <CurrencySelector variant="navbar" className="shrink-0" />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-[#171719] border border-[#27272A] cursor-pointer"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-[#171719] border border-[#27272A] cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

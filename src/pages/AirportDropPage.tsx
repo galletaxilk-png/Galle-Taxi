@@ -364,41 +364,44 @@ export const AirportDropPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                    <label htmlFor="drop-destination-airport" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                       <PlaneTakeoff className="w-3.5 h-3.5 text-[#F5B91B]" />
                       <span>Destination Airport</span>
                     </label>
                     <input
+                      id="drop-destination-airport"
                       type="text"
                       disabled
                       value="Bandaranaike International Airport (CMB) — Departure Terminal"
-                      className="w-full px-3 py-2.5 bg-[#0B0B0D]/60 border border-[#27272A] rounded-xl text-xs text-slate-300 font-medium cursor-not-allowed"
+                      className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D]/60 border border-[#27272A] rounded-xl text-xs text-slate-300 font-medium cursor-not-allowed"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <label htmlFor="drop-pickup-date" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-[#F5B91B]" />
                         <span>Pickup Date</span>
                       </label>
                       <input
+                        id="drop-pickup-date"
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                        className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                      <label htmlFor="drop-pickup-time" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 text-[#F5B91B]" />
                         <span>Pickup Time</span>
                       </label>
                       <input
+                        id="drop-pickup-time"
                         type="time"
                         value={selectedTime}
                         onChange={(e) => setSelectedTime(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
+                        className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                       />
                     </div>
                   </div>

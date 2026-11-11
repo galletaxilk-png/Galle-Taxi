@@ -418,24 +418,29 @@ export const Home: React.FC = () => {
 
             {/* Pickup Date & Time */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Date & Time (24h)
-              </label>
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-300">
+                <label htmlFor="quick-pickup-date">Date</label>
+                <label htmlFor="quick-pickup-time">Time (24h)</label>
+              </div>
               <div className="grid grid-cols-2 gap-1.5">
                 <input
+                  id="quick-pickup-date"
                   type="date"
+                  aria-label="Pickup Date"
                   value={quickDate}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setQuickDate(e.target.value)}
                   required
-                  className="w-full px-2 py-2.5 bg-[#141416] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#FFC400]"
+                  className="w-full min-h-[44px] px-2.5 py-2.5 bg-[#141416] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#FFC400]"
                 />
                 <input
+                  id="quick-pickup-time"
                   type="time"
+                  aria-label="Pickup Time (24h)"
                   value={quickTime}
                   onChange={(e) => setQuickTime(e.target.value)}
                   required
-                  className="w-full px-2 py-2.5 bg-[#141416] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#FFC400]"
+                  className="w-full min-h-[44px] px-2.5 py-2.5 bg-[#141416] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#FFC400]"
                 />
               </div>
             </div>
