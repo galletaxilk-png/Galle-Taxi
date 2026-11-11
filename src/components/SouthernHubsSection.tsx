@@ -240,9 +240,9 @@ export const SouthernHubsSection: React.FC = () => {
                         {formatFare(hub.sedanLkr)}{' '}
                         <span className="text-[9.5px] font-normal text-slate-400">/ Sedan</span>
                       </div>
-                      <div className="text-[11px] sm:text-xs font-bold text-[#F5B91B] font-mono">
+                      <div className="text-[11px] sm:text-xs font-bold text-white font-mono">
                         {formatFare(hub.vanLkr)}{' '}
-                        <span className="text-[8.5px] font-normal text-slate-400">/ VIP Van</span>
+                        <span className="text-[8.5px] font-normal text-slate-400">/ Van</span>
                       </div>
                     </div>
                   </div>

@@ -359,7 +359,7 @@ export const BookTaxiPage: React.FC = () => {
   const cleanWhatsApp = siteSettings.whatsappNumber.replace(/[^0-9]/g, '');
 
   return (
-    <div className="min-h-screen bg-[#0B0B0D] py-6 sm:py-8 px-4 sm:px-8 lg:px-12 xl:px-16 2xl:px-20 w-full">
+    <div className="min-h-screen bg-[#0B0B0D] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-10 w-full">
       <div className="w-full space-y-6">
         
         {/* Navigation Back Button */}
@@ -480,7 +480,7 @@ export const BookTaxiPage: React.FC = () => {
         <form onSubmit={handleSubmit} className={currentStep === 3 ? "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full" : "w-full"}>
           
           {/* Main Form Fields: 7 cols on Step 3, full width across viewport on Step 1 & 2 */}
-          <div className={`${currentStep === 3 ? 'lg:col-span-7' : 'w-full'} bg-[#141416] border border-[#27272A] rounded-2xl p-6 sm:p-8 lg:p-10 space-y-8 shadow-xl`}>
+          <div className={`${currentStep === 3 ? 'lg:col-span-7 space-y-6' : 'w-full space-y-8'}`}>
             {currentStep === 1 ? (
               <>
                 {/* Service Category Tabs: AIRPORT DROP | AIRPORT PICK UP | TAXI RIDE | TOURS */}
@@ -556,11 +556,11 @@ export const BookTaxiPage: React.FC = () => {
                       setPickup(destination);
                       setDestination(temp);
                     }}
-                    className="px-3.5 py-1.5 rounded-full bg-[#1A1A20] hover:bg-[#F5B91B] hover:text-black text-slate-300 border border-[#2E2E36] hover:border-[#F5B91B] text-xs font-bold flex items-center gap-2 transition-all shadow-md group cursor-pointer"
+                    aria-label="Swap Pickup and Destination locations (ස්ථාන මාරු කරන්න)"
+                    className="w-8 h-8 rounded-full bg-[#1A1A20] hover:bg-[#F5B91B] hover:text-black text-slate-300 border border-[#2E2E36] hover:border-[#F5B91B] flex items-center justify-center transition-all shadow-md group cursor-pointer"
                     title="Swap Pickup and Destination locations (ස්ථාන මාරු කරන්න)"
                   >
-                    <ArrowUpDown className="w-3.5 h-3.5 text-[#F5B91B] group-hover:text-black transition-transform group-hover:rotate-180" />
-                    <span>Swap Locations (උඩ / යට මාරු කරන්න)</span>
+                    <ArrowUpDown className="w-4 h-4 text-[#F5B91B] group-hover:text-black transition-transform group-hover:rotate-180" />
                   </button>
                 </div>
 
