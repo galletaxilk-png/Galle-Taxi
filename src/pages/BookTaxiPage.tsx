@@ -544,6 +544,7 @@ export const BookTaxiPage: React.FC = () => {
                     placeholder="e.g. Add your location (or Airport / Hotel)"
                     required
                     iconColor="text-[#F5B91B]"
+                    className="w-full min-h-[44px] pl-9 pr-9 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                   />
                 </div>
 
@@ -574,6 +575,7 @@ export const BookTaxiPage: React.FC = () => {
                     placeholder="e.g. Galle Dutch Fort, Mirissa Beach, or Ella"
                     required
                     iconColor="text-emerald-400"
+                    className="w-full min-h-[44px] pl-9 pr-9 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                   />
                 </div>
 
@@ -609,7 +611,7 @@ export const BookTaxiPage: React.FC = () => {
                             min={todayStr}
                             onChange={(e) => setDate(e.target.value)}
                             required
-                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                           />
                         </div>
                       </div>
@@ -628,7 +630,7 @@ export const BookTaxiPage: React.FC = () => {
                             value={time}
                             onChange={(e) => setTime(e.target.value)}
                             required
-                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                           />
                         </div>
                       </div>
@@ -648,7 +650,7 @@ export const BookTaxiPage: React.FC = () => {
                             onChange={(e) => setFlightNumber(e.target.value.toUpperCase())}
                             placeholder="e.g. UL 504 / EK 652"
                             required
-                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white uppercase placeholder:normal-case font-mono font-bold focus:outline-none focus:border-[#F5B91B]"
+                            className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white uppercase placeholder:normal-case font-mono font-bold focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                           />
                         </div>
                       </div>
@@ -760,7 +762,7 @@ export const BookTaxiPage: React.FC = () => {
                           min={todayStr}
                           onChange={(e) => setDate(e.target.value)}
                           required
-                          className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                          className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                         />
                       </div>
                     </div>
@@ -777,7 +779,7 @@ export const BookTaxiPage: React.FC = () => {
                           value={time}
                           onChange={(e) => setTime(e.target.value)}
                           required
-                          className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                          className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                         />
                       </div>
                     </div>
@@ -881,10 +883,10 @@ export const BookTaxiPage: React.FC = () => {
                         key={v.id}
                         type="button"
                         onClick={() => setVehicleId(v.id)}
-                        className={`shrink-0 w-[145px] sm:w-auto snap-start p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        className={`shrink-0 w-[145px] sm:w-auto snap-start p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between backdrop-blur-md ${
                           isSelected
-                            ? 'bg-[#F5B91B]/20 border-[#F5B91B] ring-2 ring-[#F5B91B]/60 shadow-md'
-                            : 'bg-[#0B0B0D] border-[#27272A] hover:border-slate-500 hover:bg-[#141418]'
+                            ? 'bg-[#F5B91B]/20 border-white/40 ring-2 ring-[#F5B91B]/70 shadow-[0_4px_16px_rgba(245,185,27,0.25),inset_0_1px_0_rgba(255,255,255,0.3)]'
+                            : 'bg-[#121216]/80 border-white/25 hover:border-white/45 ring-1 ring-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.18)] hover:bg-[#181820]/90'
                         }`}
                       >
                         <div>
@@ -994,10 +996,10 @@ export const BookTaxiPage: React.FC = () => {
                     <div
                       key={v.id}
                       onClick={() => setVehicleId(v.id)}
-                      className={`shrink-0 w-[270px] sm:w-auto snap-start cursor-pointer rounded-xl p-4 border transition-all text-left flex flex-col justify-between ${
+                      className={`shrink-0 w-[270px] sm:w-auto snap-start cursor-pointer rounded-2xl p-4 border transition-all text-left flex flex-col justify-between backdrop-blur-xl ${
                         isSelected
-                          ? 'border-[#F5B91B] bg-[#F5B91B]/10 ring-2 ring-[#F5B91B] shadow-lg'
-                          : 'border-[#27272A] bg-[#0B0B0D] hover:border-slate-500 hover:bg-[#141418]'
+                          ? 'bg-[#16161D]/90 border border-white/45 ring-2 ring-[#F5B91B]/70 shadow-[0_14px_40px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.3)] scale-[1.01]'
+                          : 'bg-[#121216]/80 hover:bg-[#181820]/85 border border-white/25 hover:border-white/45 ring-1 ring-white/10 shadow-[0_10px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.3)]'
                       }`}
                     >
                       <div>
@@ -1020,7 +1022,7 @@ export const BookTaxiPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="mt-3 pt-2.5 border-t border-[#1F1F23] flex items-center justify-between">
+                      <div className="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between">
                         <div>
                           <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 block">
                             Trip Total Fare
@@ -1054,7 +1056,7 @@ export const BookTaxiPage: React.FC = () => {
                     max={selectedVehicle.passengers}
                     value={passengerCount}
                     onChange={(e) => setPassengerCount(parseInt(e.target.value) || 1)}
-                    className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white"
+                    className="w-full min-h-[44px] px-3.5 py-2 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1066,7 +1068,7 @@ export const BookTaxiPage: React.FC = () => {
                     max={selectedVehicle.luggage}
                     value={luggageCount}
                     onChange={(e) => setLuggageCount(parseInt(e.target.value) || 0)}
-                    className="w-full min-h-[44px] px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white"
+                    className="w-full min-h-[44px] px-3.5 py-2 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                   />
                 </div>
               </div>
@@ -1093,7 +1095,7 @@ export const BookTaxiPage: React.FC = () => {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="e.g. John Doe"
                     required
-                    className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                    className="w-full min-h-[44px] px-3.5 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                   />
                 </div>
 
@@ -1123,7 +1125,7 @@ export const BookTaxiPage: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="john@example.com"
                     required
-                    className="w-full min-h-[44px] px-3 py-2.5 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                    className="w-full min-h-[44px] px-3.5 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                   />
                   <p className="text-[11px] text-slate-400">
                     Official booking reference and chauffeur voucher will be emailed to this address.
@@ -1139,7 +1141,7 @@ export const BookTaxiPage: React.FC = () => {
                     value={specialInstructions}
                     onChange={(e) => setSpecialInstructions(e.target.value)}
                     placeholder="e.g. Flight QR664 arriving 14:15, need child seat, or surf board storage"
-                    className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-lg text-sm text-white focus:outline-none focus:border-[#F5B91B]"
+                    className="w-full px-3.5 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                   />
                 </div>
               </div>
@@ -1227,7 +1229,7 @@ export const BookTaxiPage: React.FC = () => {
             </div>
 
             {/* Service & Route Card */}
-            <div className="p-4 sm:p-5 rounded-xl bg-[#0B0B0D] border border-[#27272A] space-y-3.5">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#141418]/80 backdrop-blur-xl border border-white/25 hover:border-white/40 ring-1 ring-white/10 shadow-[0_10px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] space-y-3.5 transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#F5B91B]">Service Category</span>
                 <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-[#F5B91B]/10 text-[#F5B91B] border border-[#F5B91B]/30 font-mono">
@@ -1291,7 +1293,7 @@ export const BookTaxiPage: React.FC = () => {
 
             {/* Vehicle & Passenger Card */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-[#0B0B0D] border border-[#27272A] space-y-2">
+              <div className="p-4 rounded-2xl bg-[#141418]/80 backdrop-blur-xl border border-white/25 hover:border-white/40 ring-1 ring-white/10 shadow-[0_10px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] space-y-2 transition-all">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <Car className="w-3.5 h-3.5 text-[#F5B91B]" />
                   <span>Selected Vehicle</span>
@@ -1312,7 +1314,7 @@ export const BookTaxiPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#0B0B0D] border border-[#27272A] space-y-2">
+              <div className="p-4 rounded-2xl bg-[#141418]/80 backdrop-blur-xl border border-white/25 hover:border-white/40 ring-1 ring-white/10 shadow-[0_10px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] space-y-2 transition-all">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-[#F5B91B]" />
                   <span>Passenger Information</span>
@@ -1340,7 +1342,7 @@ export const BookTaxiPage: React.FC = () => {
                   setCurrentStep(2);
                   window.scrollTo({ top: 100, behavior: 'smooth' });
                 }}
-                className="w-full sm:w-1/2 px-4 py-3 rounded-xl border border-[#27272A] hover:border-slate-500 bg-[#0B0B0D] hover:bg-[#1A1A1E] text-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full sm:w-1/2 px-4 py-3 rounded-xl border border-white/25 hover:border-white/45 ring-1 ring-white/10 bg-[#141418]/80 hover:bg-[#1c1c22] backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.18)] text-slate-200 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back: Step 2 (Vehicle & Pax)</span>
@@ -1352,7 +1354,7 @@ export const BookTaxiPage: React.FC = () => {
                   setCurrentStep(1);
                   window.scrollTo({ top: 100, behavior: 'smooth' });
                 }}
-                className="w-full sm:w-1/2 px-4 py-3 rounded-xl border border-[#27272A] hover:border-slate-500 bg-[#0B0B0D] hover:bg-[#1A1A1E] text-slate-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full sm:w-1/2 px-4 py-3 rounded-xl border border-white/25 hover:border-white/45 ring-1 ring-white/10 bg-[#141418]/80 hover:bg-[#1c1c22] backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.18)] text-slate-200 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back: Step 1 (Ride Details)</span>
@@ -1365,7 +1367,7 @@ export const BookTaxiPage: React.FC = () => {
       {/* Step 3: Trip & Fare Summary Live Authoritative Card (Right Column) */}
       {currentStep === 3 && (
         <div className="lg:col-span-5 space-y-6">
-            <div className="bg-[#141416] border border-[#27272A] rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-xl sticky top-28">
+            <div className="bg-[#141418]/85 backdrop-blur-xl border border-white/25 hover:border-white/40 ring-1 ring-white/10 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 shadow-[0_14px_40px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.22)] sticky top-28 transition-all">
               <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-[#27272A]">
                 <div>
                   <h3 className="font-bold text-white text-sm sm:text-base font-['Outfit']">Trip Final Price</h3>
@@ -1377,7 +1379,7 @@ export const BookTaxiPage: React.FC = () => {
               </div>
 
               {/* Vehicle Preview Card */}
-              <div className="flex items-center gap-3 sm:gap-4 p-3 bg-[#0B0B0D] border border-[#27272A] rounded-xl">
+              <div className="flex items-center gap-3 sm:gap-4 p-3.5 bg-[#0D0D10]/80 backdrop-blur-md border border-white/20 hover:border-white/35 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all">
                 <img
                   src={selectedVehicle.imageUrl}
                   alt={selectedVehicle.name}

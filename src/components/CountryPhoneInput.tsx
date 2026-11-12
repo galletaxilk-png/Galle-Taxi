@@ -187,13 +187,13 @@ export const CountryPhoneInput: React.FC<CountryPhoneInputProps> = ({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      <div className="flex items-center rounded-lg border border-[#27272A] bg-[#0B0B0D] focus-within:border-[#F5B91B] focus-within:ring-1 focus-within:ring-[#F5B91B] transition-colors overflow-visible">
+      <div className="flex items-center rounded-xl border border-white/25 hover:border-white/40 bg-[#141418]/80 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] focus-within:border-[#F5B91B] focus-within:ring-1 focus-within:ring-[#F5B91B]/40 transition-all overflow-visible">
         {/* Country Selector Button */}
         <button
           type="button"
           disabled={disabled}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="flex items-center gap-1.5 px-3 py-2.5 bg-[#141416] hover:bg-[#1C1C20] border-r border-[#27272A] text-slate-200 text-sm font-medium transition-colors shrink-0 cursor-pointer select-none rounded-l-lg group focus:outline-none"
+          className="flex items-center gap-1.5 px-3 py-2.5 bg-transparent hover:bg-white/[0.06] border-r border-white/20 text-slate-200 text-sm font-medium transition-colors shrink-0 cursor-pointer select-none rounded-l-xl group focus:outline-none"
           title={`Selected country: ${selectedCountry.name} (${selectedCountry.dialCode})`}
           aria-haspopup="listbox"
           aria-expanded={isOpen}

@@ -356,10 +356,10 @@ export const Home: React.FC = () => {
                     key={tab.id}
                     type="button"
                     onClick={() => handleTabChange(tab.id)}
-                    className={`w-full sm:w-auto px-3 py-2.5 sm:py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center transition-all cursor-pointer ${
+                    className={`w-full sm:w-auto px-3.5 py-2.5 sm:py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#F5B91B] text-black shadow-md'
-                        : 'bg-[#0B0B0D] hover:bg-[#1E1E22] text-slate-300 hover:text-white border border-[#27272A]'
+                        ? 'bg-[#F5B91B] text-black border border-[#F5B91B] shadow-[0_0_20px_rgba(245,185,27,0.35)] font-extrabold'
+                        : 'bg-[#141418]/80 hover:bg-[#1C1C22] text-slate-300 hover:text-white border border-white/25 hover:border-white/45 ring-1 ring-white/10 backdrop-blur-md shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]'
                     }`}
                   >
                     {tab.label}
@@ -531,7 +531,7 @@ export const Home: React.FC = () => {
             return (
               <div
                 key={`mobile-route-${route.id}`}
-                className="snap-center shrink-0 w-[85vw] max-w-[340px] bg-[#141416] border border-[#27272A] rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xl hover:border-[#F5B91B]/40 transition-all flex flex-col justify-between select-none"
+                className="snap-center shrink-0 w-[85vw] max-w-[340px] bg-[#141418]/85 backdrop-blur-xl border border-white/25 hover:border-white/45 ring-1 ring-white/10 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.22)] transition-all flex flex-col justify-between select-none"
               >
                 <div className="space-y-1.5">
                   <div className="flex items-start justify-between gap-2">
@@ -556,24 +556,24 @@ export const Home: React.FC = () => {
                 {/* Pricing Grid per Vehicle Category */}
                 <div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#1F1F23]">
                   {/* SEDAN CAR */}
-                  <div className="p-2.5 rounded-xl bg-[#0B0B0D] border border-[#27272A] col-span-2">
+                  <div className="p-2.5 rounded-xl bg-[#0D0D10]/80 backdrop-blur-md border border-white/20 hover:border-white/35 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] col-span-2 transition-all">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-slate-300 font-semibold uppercase tracking-wider">SEDAN CAR (4 Pax)</span>
                       <div className="text-sm font-mono font-bold text-white">{formatFare(route.sedanPrice)}</div>
                     </div>
                   </div>
                   {/* SUV CAR */}
-                  <div className="p-2.5 rounded-xl bg-[#0B0B0D] border border-[#27272A]">
+                  <div className="p-2.5 rounded-xl bg-[#0D0D10]/80 backdrop-blur-md border border-white/20 hover:border-white/35 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all">
                     <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">SUV CAR (4 Pax)</div>
                     <div className="text-xs font-mono font-bold text-slate-200 mt-0.5">{formatFare(suvPrice)}</div>
                   </div>
                   {/* KDH FLAT ROOF */}
-                  <div className="p-2.5 rounded-xl bg-[#0B0B0D] border border-[#27272A]">
+                  <div className="p-2.5 rounded-xl bg-[#0D0D10]/80 backdrop-blur-md border border-white/20 hover:border-white/35 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all">
                     <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">KDH FLAT ROOF (8 Pax)</div>
                     <div className="text-xs font-mono font-bold text-slate-200 mt-0.5">{formatFare(kdhFlatPrice)}</div>
                   </div>
                   {/* KDH HIGH ROOF */}
-                  <div className="p-2.5 rounded-xl bg-[#0B0B0D] border border-[#27272A] col-span-2">
+                  <div className="p-2.5 rounded-xl bg-[#0D0D10]/80 backdrop-blur-md border border-white/20 hover:border-white/35 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] col-span-2 transition-all">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">KDH HIGH ROOF (10 Pax)</span>
                       <span className="text-xs font-mono font-bold text-slate-200">{formatFare(kdhHighPrice)}</span>
