@@ -1119,6 +1119,36 @@ app.post('/api/upload-hub-image', (req, res) => {
 });
 
 /**
+ * Dedicated routes for /sitemap.xml and /robots.txt
+ * Guarantees pure XML and plain text delivery with proper headers, preventing SPA HTML fallback.
+ */
+app.get(['/sitemap.xml', '/sitemap'], (_req, res) => {
+  const publicSitemap = path.resolve(__dirname, 'public', 'sitemap.xml');
+  const distSitemap = path.resolve(__dirname, 'dist', 'sitemap.xml');
+  const targetPath = fs.existsSync(publicSitemap) ? publicSitemap : fs.existsSync(distSitemap) ? distSitemap : null;
+
+  if (targetPath) {
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    return res.sendFile(targetPath);
+  }
+  return res.status(404).type('text/plain').send('sitemap.xml not found');
+});
+
+app.get('/robots.txt', (_req, res) => {
+  const publicRobots = path.resolve(__dirname, 'public', 'robots.txt');
+  const distRobots = path.resolve(__dirname, 'dist', 'robots.txt');
+  const targetPath = fs.existsSync(publicRobots) ? publicRobots : fs.existsSync(distRobots) ? distRobots : null;
+
+  if (targetPath) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    return res.sendFile(targetPath);
+  }
+  return res.status(404).type('text/plain').send('robots.txt not found');
+});
+
+/**
  * Launch Server: Mount Vite in development, static files in production
  */
 async function startServer() {

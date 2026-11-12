@@ -552,13 +552,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [currency, setCurrencyState] = useState<CurrencyCode>(() => loadStorage<CurrencyCode>(KEYS.CURRENCY, 'LKR'));
 
-  // Cloud Firestore Free Tier Quota Exhaustion Circuit Breaker
+  // Cloud Firestore Status - Project is active on Blaze Billing Plan with active credits
   const [firestoreQuotaExhausted, setFirestoreQuotaExhausted] = useState<boolean>(() => {
     try {
-      return sessionStorage.getItem('galletaxi_quota_exhausted') === 'true' || globalQuotaExhausted;
-    } catch {
-      return false;
-    }
+      sessionStorage.removeItem('galletaxi_quota_exhausted');
+    } catch {}
+    return false;
   });
 
   const clearQuotaStatus = () => {

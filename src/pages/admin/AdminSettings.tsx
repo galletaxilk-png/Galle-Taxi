@@ -375,7 +375,7 @@ export const AdminSettings: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#1F1F23]">
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-[#F5B91B]" />
-              <span className="font-bold text-white text-sm">Firestore Quotas & Database Plan (galle-taxi)</span>
+              <span className="font-bold text-white text-sm">Firestore Database Plan (galle-taxi)</span>
             </div>
             <a
               href="https://console.firebase.google.com/project/galle-taxi/usage"
@@ -383,29 +383,29 @@ export const AdminSettings: React.FC = () => {
               rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-lg bg-[#F5B91B]/10 hover:bg-[#F5B91B]/20 text-[#F5B91B] border border-[#F5B91B]/30 flex items-center gap-1.5 font-bold transition-all w-fit"
             >
-              <span>View Live Usage & Upgrade Plan</span>
+              <span>Firebase Usage Console</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-3.5 rounded-xl bg-[#141416] border border-[#27272A] space-y-2">
+            <div className="p-3.5 rounded-xl bg-[#141416] border border-emerald-500/40 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Spark Plan (Free Tier)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">20,000 writes/day</span>
+                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Blaze Plan (Active)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 font-mono border border-emerald-800/60">Active With Credits</span>
               </div>
-              <p className="text-slate-400 text-[11px] leading-relaxed">
-                Google Cloud's free tier allows 20,000 document writes and 50,000 reads per 24-hour cycle. If frequent admin testing or updates exhaust this limit, Firestore returns a <code className="text-[#F5B91B] font-mono">resource-exhausted</code> error until the quota resets at midnight UTC.
+              <p className="text-slate-300 text-[11px] leading-relaxed">
+                Your Firebase project <code className="text-[#F5B91B] font-mono px-1 py-0.5 rounded bg-black/40">galle-taxi</code> is active on the Blaze (pay as you go) plan. Daily quota caps are lifted with unlimited document writes and reads supported.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[#141416] border border-[#27272A] space-y-2">
+            <div className="p-3.5 rounded-xl bg-[#141416] border border-[#27272A] space-y-2 opacity-75">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Blaze Plan (Pay as you go)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 font-mono border border-emerald-800/50">Unlimited Writes</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Spark Plan (Previous Tier)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">Replaced</span>
               </div>
               <p className="text-slate-400 text-[11px] leading-relaxed">
-                Upgrading to the Blaze plan eliminates the 20,000 daily write restriction. The first 20,000 writes/day and 50,000 reads/day remain <strong className="text-white">100% free</strong> every day; additional writes cost less than ~$0.18 per 100,000 writes.
+                The Spark free tier limit of 50,000 daily read units is no longer restricting traffic. First 20,000 writes and 50,000 reads remain completely free daily under Google Cloud terms.
               </p>
             </div>
           </div>
