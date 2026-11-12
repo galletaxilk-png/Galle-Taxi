@@ -386,6 +386,7 @@ export const Home: React.FC = () => {
                 placeholder="e.g. Add your pickup location"
                 required
                 iconColor="text-[#FFC400]"
+                className="w-full min-h-[44px] pl-9 pr-9 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
               />
             </div>
 
@@ -413,6 +414,7 @@ export const Home: React.FC = () => {
                 placeholder="e.g. Galle Fort, Airport, Mirissa"
                 required
                 iconColor="text-emerald-400"
+                className="w-full min-h-[44px] pl-9 pr-9 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
               />
             </div>
 
@@ -431,7 +433,7 @@ export const Home: React.FC = () => {
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setQuickDate(e.target.value)}
                   required
-                  className="w-full min-h-[44px] px-2.5 py-2.5 bg-[#141416] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#FFC400]"
+                  className="w-full min-h-[44px] px-2.5 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                 />
                 <input
                   id="quick-pickup-time"
@@ -440,7 +442,7 @@ export const Home: React.FC = () => {
                   value={quickTime}
                   onChange={(e) => setQuickTime(e.target.value)}
                   required
-                  className="w-full min-h-[44px] px-2.5 py-2.5 bg-[#141416] border border-[#27272A] rounded-lg text-xs text-white focus:outline-none focus:border-[#FFC400]"
+                  className="w-full min-h-[44px] px-2.5 py-2.5 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
                 />
               </div>
             </div>
@@ -450,7 +452,7 @@ export const Home: React.FC = () => {
               <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Expressway & Rates
               </label>
-              <div className="h-[42px] px-3.5 rounded-lg bg-[#141416] border border-[#27272A] flex items-center justify-between text-xs">
+              <div className="h-[44px] px-3.5 rounded-xl bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 flex items-center justify-between text-xs shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all">
                 <span className="text-emerald-400 font-bold flex items-center gap-1.5 truncate">
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">

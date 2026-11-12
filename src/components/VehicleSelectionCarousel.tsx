@@ -528,10 +528,10 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                     onSelectVehicle(veh.id);
                   }
                 }}
-                className={`snap-start shrink-0 w-[82vw] sm:w-[260px] lg:w-full rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300 relative select-none cursor-pointer ${
+                className={`snap-start shrink-0 w-[82vw] sm:w-[260px] lg:w-full rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-300 relative select-none cursor-pointer backdrop-blur-xl ${
                   isSelected
-                    ? 'bg-[#18181E] border border-white/30 shadow-[0_12px_32px_rgba(0,0,0,0.7)] scale-[1.01]'
-                    : 'bg-[#141417] hover:bg-[#1A1A20] border border-[#27272A] hover:border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.5)]'
+                    ? 'bg-[#16161D]/90 border border-white/45 ring-1 ring-white/25 shadow-[0_14px_40px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.3)] scale-[1.01]'
+                    : 'bg-[#121216]/80 hover:bg-[#181820]/85 border border-white/25 hover:border-white/45 ring-1 ring-white/10 shadow-[0_10px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.3)]'
                 }`}
               >
                 {/* Selected Top Tag */}
@@ -544,7 +544,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
 
                 <div className="space-y-3">
                   {/* Vehicle Image Container */}
-                  <div className="relative h-[105px] w-full rounded-xl overflow-hidden bg-[#1A1A1E] flex items-center justify-center p-2 border border-[#27272A]">
+                  <div className="relative h-[105px] w-full rounded-xl overflow-hidden bg-[#16161A]/80 backdrop-blur-md flex items-center justify-center p-2 border border-white/15">
                     <img
                       src={veh.imageUrl}
                       alt={veh.name}
@@ -613,7 +613,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                   </div>
 
                   {/* Currency Estimates Grid - Clearly Readable */}
-                  <div className="bg-[#0C0C0E] border border-[#27272A] rounded-xl px-2.5 py-2 text-[10px] font-mono shadow-inner">
+                  <div className="bg-[#0D0D10]/80 backdrop-blur-md border border-white/15 rounded-xl px-2.5 py-2 text-[10px] font-mono shadow-inner">
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                       <div className="flex justify-between items-center text-slate-300">
                         <span className="text-slate-400 font-semibold text-[9.5px]">USD</span>
@@ -643,7 +643,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                   </div>
 
                   {/* Clear Capacities (Pax, Large Bag, Hand Bag) */}
-                  <div className="flex items-center justify-around py-2 rounded-xl bg-[#0C0C0E] border border-[#27272A] text-[11px] font-medium">
+                  <div className="flex items-center justify-around py-2 rounded-xl bg-[#0D0D10]/80 backdrop-blur-md border border-white/15 text-[11px] font-medium">
                     <div className="flex items-center gap-1.5" title="Passengers">
                       <Users className="w-3.5 h-3.5 text-[#FFC400]" />
                       <span className="font-bold text-white text-xs">{veh.passengers}</span>
