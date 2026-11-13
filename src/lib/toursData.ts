@@ -60,13 +60,7 @@ export interface DayTourProduct {
   updatedAt?: string;
 }
 
-const getTourImage = (id: string, defaultUrl: string): string => {
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = localStorage.getItem(`custom_tour_img_${id}`);
-      if (stored) return stored;
-    } catch (e) {}
-  }
+const getTourImage = (_id: string, defaultUrl: string): string => {
   return defaultUrl;
 };
 

@@ -114,8 +114,7 @@ interface ImageUploaderProps {
  * Utility to optimize and format image file before emitting as dataURL.
  * Uses fast URL.createObjectURL for instant decoding.
  * Preserves 100% transparency for PNG vehicle cutouts.
- * Generates an ultra-lightweight (15KB–35KB) dataURL so it saves instantly to
- * localStorage and Firestore without exceeding storage quotas.
+ * Generates an ultra-lightweight (15KB–35KB) dataURL for instant upload and real-time Cloud Firestore synchronization.
  */
 const compressImageFile = (file: File): Promise<string> => {
   return new Promise((resolve) => {

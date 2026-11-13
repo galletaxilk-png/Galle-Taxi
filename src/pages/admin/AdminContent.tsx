@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileEdit,
   Save,
@@ -57,6 +57,35 @@ export const AdminContent: React.FC = () => {
   );
 
   const [saved, setSaved] = useState(false);
+
+  // Sync form inputs when live Firestore siteSettings updates arrive
+  useEffect(() => {
+    setBusinessName(siteSettings.businessName);
+    setTagline(siteSettings.tagline);
+    setPhone(siteSettings.phone);
+    setWhatsappNumber(siteSettings.whatsappNumber);
+    setEmail(siteSettings.email);
+    setAddress(siteSettings.address);
+    setOperatingHours(siteSettings.operatingHours);
+    setHeroHeadline(siteSettings.heroHeadline);
+    setHeroSubtitle(siteSettings.heroSubtitle);
+    setHeroImageUrl(siteSettings.heroImageUrl);
+    setAboutStory(siteSettings.aboutStory);
+    setAnnouncement(siteSettings.announcement || '');
+    if (siteSettings.seasonalBannerImageUrl) {
+      setSeasonalBannerImageUrl(siteSettings.seasonalBannerImageUrl);
+    }
+    if (siteSettings.seasonalBannerTitle !== undefined) {
+      setSeasonalBannerTitle(siteSettings.seasonalBannerTitle);
+    }
+    if (siteSettings.seasonalBannerSubtitle !== undefined) {
+      setSeasonalBannerSubtitle(siteSettings.seasonalBannerSubtitle);
+    }
+    if (siteSettings.seasonalBannerLink !== undefined) {
+      setSeasonalBannerLink(siteSettings.seasonalBannerLink);
+    }
+    setIsSeasonalBannerVisible(siteSettings.isSeasonalBannerVisible !== false);
+  }, [siteSettings]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

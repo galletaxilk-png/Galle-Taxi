@@ -228,37 +228,20 @@ function loadStorage<T>(key: string, fallback: T): T {
   }
 }
 
-function cleanExcessStorage() {
+function cleanLegacyStorageKeys() {
   if (typeof window === 'undefined') return;
   try {
-    // Purge non-critical oversized caches
     localStorage.removeItem('galletaxi_v1_tours_cache');
     localStorage.removeItem('galle_taxi_email_dispatches');
 
-    // Clean any oversized temporary or custom tour/vehicle image keys
-    try {
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && (k.startsWith('custom_tour_img_') || k.startsWith('galle_taxi_temp_') || k.startsWith('galle_veh_img_'))) {
-          keysToRemove.push(k);
-        }
-      }
-      keysToRemove.forEach((k) => localStorage.removeItem(k));
-    } catch {}
-
-    // Trim audit log if bloated
-    const rawAudit = localStorage.getItem(KEYS.AUDIT);
-    if (rawAudit) {
-      try {
-        const parsed = JSON.parse(rawAudit);
-        if (Array.isArray(parsed) && parsed.length > 5) {
-          localStorage.setItem(KEYS.AUDIT, JSON.stringify(parsed.slice(0, 5)));
-        }
-      } catch {
-        localStorage.removeItem(KEYS.AUDIT);
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('custom_tour_img_') || k.startsWith('galle_taxi_temp_') || k.startsWith('galle_veh_img_'))) {
+        keysToRemove.push(k);
       }
     }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
   } catch {}
 }
 
@@ -284,7 +267,7 @@ function sanitizePayloadForStorage(key: string, data: any): any {
   }
 
   if (key === KEYS.AUDIT && Array.isArray(data)) {
-    return data.slice(0, 15);
+    return data;
   }
 
   if (key === KEYS.TOURS && Array.isArray(data)) {
@@ -321,6 +304,17 @@ function sanitizePayloadForStorage(key: string, data: any): any {
   return data;
 }
 
+function broadcastLiveSync(key: string, data: any) {
+  if (typeof window === 'undefined') return;
+  try {
+    if ('BroadcastChannel' in window) {
+      const ch = new BroadcastChannel('galletaxi_live_sync');
+      ch.postMessage({ key, data });
+      ch.close();
+    }
+  } catch {}
+}
+
 function saveStorage<T>(key: string, data: T) {
   if (typeof window === 'undefined') return;
 
@@ -335,14 +329,11 @@ function saveStorage<T>(key: string, data: T) {
 
   try {
     localStorage.setItem(key, serialized);
-  } catch (e) {
-    console.warn(`[Storage Quota Managed] Exceeded quota while persisting "${key}". Initiating safe recovery.`);
-    cleanExcessStorage();
-
+  } catch {
+    cleanLegacyStorageKeys();
     try {
       localStorage.setItem(key, serialized);
     } catch {
-      // Graceful fallback to sessionStorage so the application never errors out
       try {
         sessionStorage.setItem(key, serialized);
       } catch {}
@@ -402,19 +393,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const allTours = Array.from(tourMap.values());
     return allTours.map((t) => {
-      let heroImage = t.heroImage;
-      try {
-        const customImg = localStorage.getItem(`custom_tour_img_${t.id}`);
-        if (customImg && customImg.trim()) {
-          heroImage = customImg;
-        }
-      } catch {}
-
       if (t.id === 'udawalawe-elephant-safari') {
         if (
-          !heroImage ||
-          heroImage.includes('photo-1557050543-4d5f4e07ef46') ||
-          !heroImage.includes('regenerated_image_1793632543146')
+          !t.heroImage ||
+          t.heroImage.includes('photo-1557050543-4d5f4e07ef46') ||
+          !t.heroImage.includes('regenerated_image_1793632543146')
         ) {
           const gallery = [...(t.galleryImages || [])];
           gallery[0] = '/assets/images/regenerated_image_1793632543146.png';
@@ -425,7 +408,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           };
         }
       }
-      return { ...t, heroImage };
+      return t;
     });
   });
   const [fareRules, setFareRules] = useState<FareRules>(() => {
@@ -441,15 +424,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
     const loaded = loadStorage<SiteSettings>(KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
     const merged: SiteSettings = { ...INITIAL_SITE_SETTINGS, ...loaded };
-    if (!merged.email || merged.email === 'info@galletaxi.lk' || merged.email === 'galletaxi.lk@gmail.com') {
-      merged.email = 'support@galletaxi.lk';
+    if (!merged.email) {
+      merged.email = INITIAL_SITE_SETTINGS.email;
     }
-    if (!merged.seasonalBannerImageUrl || merged.seasonalBannerImageUrl === '/assets/aistudio/Down_South_Season_Coastal_Adventures.png') {
+    if (!merged.seasonalBannerImageUrl) {
       merged.seasonalBannerImageUrl = '/assets/images/regenerated_image_1794057460840.png';
-      merged.seasonalBannerTitle = INITIAL_SITE_SETTINGS.seasonalBannerTitle;
-      merged.seasonalBannerSubtitle = INITIAL_SITE_SETTINGS.seasonalBannerSubtitle;
-      merged.seasonalBannerLink = INITIAL_SITE_SETTINGS.seasonalBannerLink;
-      merged.isSeasonalBannerVisible = true;
     }
     return merged;
   });
@@ -458,7 +437,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [taxiHubs, setTaxiHubs] = useState<Record<string, TownTaxiConfig>>(() => {
     const loaded = loadStorage<Record<string, TownTaxiConfig>>(KEYS.TAXI_HUBS, TOWNS_DATA);
     const merged = { ...TOWNS_DATA, ...loaded };
-    if (merged['ahangama-taxi']) {
+    if (merged['ahangama-taxi'] && !merged['ahangama-taxi'].heroImage) {
       merged['ahangama-taxi'] = {
         ...merged['ahangama-taxi'],
         heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
@@ -535,9 +514,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => saveStorage(KEYS.CURRENCIES_LIST, currencies), [currencies]);
   useEffect(() => saveStorage(KEYS.TOURS, tours), [tours]);
 
-  // Proactive storage cleanup on initialization and tour event sync
+  // Clean up legacy temporary keys on boot and listen for tour updates
   useEffect(() => {
-    cleanExcessStorage();
+    cleanLegacyStorageKeys();
     try {
       sessionStorage.removeItem('galletaxi_quota_exhausted');
     } catch {}
@@ -558,7 +537,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => window.removeEventListener('galletaxi_tour_updated', handleTourUpdated);
   }, []);
 
-  // Record an audit log (capped at 20 recent entries)
+  // Record an audit log (retaining 50 most recent entries)
   const recordAudit = (action: string, targetId: string, details: string) => {
     const newLog: AuditLog = {
       id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -568,7 +547,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       details,
       timestamp: new Date().toISOString(),
     };
-    setAuditLogs((prev) => [newLog, ...prev.slice(0, 19)]);
+    setAuditLogs((prev) => [newLog, ...prev.slice(0, 49)]);
   };
 
   /**
@@ -758,9 +737,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             // Sort descending by creation date
             liveBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-            if (liveBookings.length > 0) {
-              setBookings(liveBookings);
-            }
+            setBookings(liveBookings);
             setIsFirestoreSyncing(false);
           },
           (err) => {
@@ -783,6 +760,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const cleanupPromise = attachBookingListener();
 
+    return () => {
+      isMounted = false;
+      cleanupPromise.then((unsub) => {
+        if (typeof unsub === 'function') unsub();
+      });
+    };
+  }, [isFirebaseConfigured, authReady, firebaseUser, adminUser]);
+
+  /**
+   * Real-time Firestore Sync for Drivers (Authenticated Admin Sessions)
+   */
+  useEffect(() => {
+    const firestoreDb = db;
+    if (!isFirebaseConfigured || !firestoreDb || !authReady || !firebaseUser || !adminUser) {
+      return;
+    }
+
+    let isMounted = true;
+    const attachDriversListener = async () => {
+      try {
+        const { collection, onSnapshot } = await import('firebase/firestore');
+        const unsub = onSnapshot(
+          collection(firestoreDb, 'drivers'),
+          (snapshot) => {
+            if (!isMounted) return;
+            const liveDrivers: Driver[] = [];
+            snapshot.forEach((docSnap) => {
+              liveDrivers.push({ ...(docSnap.data() as Driver), id: docSnap.id });
+            });
+            if (liveDrivers.length > 0) {
+              setDrivers(liveDrivers);
+              saveStorage(KEYS.DRIVERS, liveDrivers);
+            }
+          },
+          (err) => {
+            console.warn('[Firestore Drivers Warning]:', err);
+          }
+        );
+        return unsub;
+      } catch (err) {
+        console.warn('Error attaching drivers listener:', err);
+      }
+    };
+
+    const cleanupPromise = attachDriversListener();
     return () => {
       isMounted = false;
       cleanupPromise.then((unsub) => {
@@ -895,25 +917,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   /**
-   * Real-time Firestore Sync for Vehicles and Fare Rules & Cross-Tab Persistence Sync
+   * Real-time Firestore Sync & Instant Cross-Tab Synchronization
    */
   useEffect(() => {
-    // Cross-tab broadcast listener for instant multi-tab sync
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === KEYS.FARES && e.newValue) {
-        try {
-          const updatedFares = JSON.parse(e.newValue);
-          setFareRules(updatedFares);
-        } catch {}
+    const applySyncedKey = (key: string, parsed: any) => {
+      if (!parsed) return;
+      if (key === KEYS.FARES) setFareRules(parsed);
+      else if (key === KEYS.VEHICLES && Array.isArray(parsed)) {
+        const normalized = sortVehiclesByDisplayOrder(
+          parsed.filter((v: any) => v && typeof v.id === 'string').map((v: any) => normalizeVehicleRecord(v))
+        );
+        (window as any).__GALLE_TAXI_VEHICLES__ = normalized;
+        setVehicles(normalized);
       }
-      if (e.key === KEYS.VEHICLES && e.newValue) {
-        try {
-          const updatedVehicles = JSON.parse(e.newValue);
-          setVehicles(updatedVehicles);
-        } catch {}
-      }
+      else if (key === KEYS.SETTINGS) setSiteSettings((prev) => ({ ...prev, ...parsed }));
+      else if (key === KEYS.TOURS && Array.isArray(parsed)) setTours(parsed);
+      else if (key === KEYS.TAXI_HUBS && typeof parsed === 'object') setTaxiHubs(parsed);
+      else if (key === KEYS.CURRENCIES_LIST && typeof parsed === 'object') setCurrencies(parsed);
+      else if (key === KEYS.SERVICES && Array.isArray(parsed)) setServices(parsed);
+      else if (key === KEYS.AREAS && Array.isArray(parsed)) setServiceAreas(parsed);
     };
-    // Custom event broadcast listeners for immediate same-tab / multi-component sync
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.key || !e.newValue) return;
+      try {
+        applySyncedKey(e.key, JSON.parse(e.newValue));
+      } catch {}
+    };
+
+    let syncChannel: BroadcastChannel | null = null;
+    try {
+      if ('BroadcastChannel' in window) {
+        syncChannel = new BroadcastChannel('galletaxi_live_sync');
+        syncChannel.onmessage = (event) => {
+          if (event?.data?.key) {
+            applySyncedKey(event.data.key, event.data.data);
+          }
+        };
+      }
+    } catch {}
+
     const handleFareCustomEvent = (e: any) => {
       if (e.detail) {
         setFareRules(e.detail);
@@ -924,8 +967,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setVehicles(e.detail);
       }
     };
+    const handleSettingsCustomEvent = (e: any) => {
+      if (e.detail) {
+        setSiteSettings(e.detail);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('galle_taxi_fare_rules_updated', handleFareCustomEvent);
     window.addEventListener('galle_taxi_vehicle_updated', handleVehCustomEvent);
+    window.addEventListener('galle_taxi_site_settings_updated', handleSettingsCustomEvent);
 
     const firestoreDb = db;
     if (!isFirebaseConfigured || !firestoreDb) {
@@ -933,6 +984,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         window.removeEventListener('storage', handleStorageChange);
         window.removeEventListener('galle_taxi_fare_rules_updated', handleFareCustomEvent);
         window.removeEventListener('galle_taxi_vehicle_updated', handleVehCustomEvent);
+        window.removeEventListener('galle_taxi_site_settings_updated', handleSettingsCustomEvent);
+        try {
+          syncChannel?.close();
+        } catch {}
       };
     }
 
@@ -1114,6 +1169,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('galle_taxi_fare_rules_updated', handleFareCustomEvent);
       window.removeEventListener('galle_taxi_vehicle_updated', handleVehCustomEvent);
+      window.removeEventListener('galle_taxi_site_settings_updated', handleSettingsCustomEvent);
+      try {
+        syncChannel?.close();
+      } catch {}
       unsubs.forEach((unsub) => {
         try {
           unsub();
@@ -1772,6 +1831,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id,
     });
 
+    setVehicles((prev) => {
+      const next = sortVehiclesByDisplayOrder([...prev, newVehicle]);
+      saveStorage(KEYS.VEHICLES, next);
+      broadcastLiveSync(KEYS.VEHICLES, next);
+      syncFleetToServerCache(next);
+      try {
+        window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
+      } catch {}
+      return next;
+    });
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1783,21 +1853,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    setVehicles((prev) => {
-      const next = sortVehiclesByDisplayOrder([...prev, newVehicle]);
-      saveStorage(KEYS.VEHICLES, next);
-      syncFleetToServerCache(next);
-      try {
-        window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
-      } catch {}
-      return next;
-    });
     recordAudit('VEHICLE_ADDED', id, `Added vehicle to fleet: ${newVehicle.name} (${newVehicle.plateNumber})`);
     return newVehicle;
   };
 
   const updateVehicle = async (vehicle: Vehicle) => {
     const normalizedVehicle = normalizeVehicleRecord(vehicle);
+
+    setVehicles((prev) => {
+      const exists = prev.some((v) => v.id === normalizedVehicle.id);
+      const updatedList = exists
+        ? prev.map((v) => (v.id === normalizedVehicle.id ? normalizedVehicle : v))
+        : [...prev, normalizedVehicle];
+      const next = sortVehiclesByDisplayOrder(updatedList);
+      saveStorage(KEYS.VEHICLES, next);
+      broadcastLiveSync(KEYS.VEHICLES, next);
+      syncFleetToServerCache(next);
+      try {
+        window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
+      } catch {}
+      return next;
+    });
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1808,24 +1885,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.error('Vehicle update error in Firestore:', e);
       }
     }
+    recordAudit('VEHICLE_UPDATED', normalizedVehicle.id, `Updated vehicle: ${normalizedVehicle.name}`);
+  };
+
+  const deleteVehicle = async (id: string) => {
+    const targetVehicle = vehicles.find((v) => v.id === id);
+
     setVehicles((prev) => {
-      const exists = prev.some((v) => v.id === normalizedVehicle.id);
-      const updatedList = exists
-        ? prev.map((v) => (v.id === normalizedVehicle.id ? normalizedVehicle : v))
-        : [...prev, normalizedVehicle];
-      const next = sortVehiclesByDisplayOrder(updatedList);
+      const next = sortVehiclesByDisplayOrder(prev.filter((v) => v.id !== id));
       saveStorage(KEYS.VEHICLES, next);
+      broadcastLiveSync(KEYS.VEHICLES, next);
       syncFleetToServerCache(next);
       try {
         window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
       } catch {}
       return next;
     });
-    recordAudit('VEHICLE_UPDATED', normalizedVehicle.id, `Updated vehicle: ${normalizedVehicle.name}`);
-  };
 
-  const deleteVehicle = async (id: string) => {
-    const targetVehicle = vehicles.find((v) => v.id === id);
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1836,15 +1912,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.error('Vehicle delete error in Firestore:', e);
       }
     }
-    setVehicles((prev) => {
-      const next = sortVehiclesByDisplayOrder(prev.filter((v) => v.id !== id));
-      saveStorage(KEYS.VEHICLES, next);
-      syncFleetToServerCache(next);
-      try {
-        window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
-      } catch {}
-      return next;
-    });
     recordAudit('VEHICLE_DELETED', id, `Removed vehicle from fleet: ${targetVehicle?.name || id}`);
   };
 
@@ -1852,6 +1919,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateFareRules = async (rules: FareRules) => {
     setFareRules(rules);
     saveStorage(KEYS.FARES, rules);
+    broadcastLiveSync(KEYS.FARES, rules);
     try {
       window.dispatchEvent(new CustomEvent('galle_taxi_fare_rules_updated', { detail: rules }));
       window.dispatchEvent(new Event('storage'));
@@ -1872,6 +1940,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateSiteSettings = async (settings: SiteSettings) => {
+    setSiteSettings(settings);
+    saveStorage(KEYS.SETTINGS, settings);
+    broadcastLiveSync(KEYS.SETTINGS, settings);
+    try {
+      window.dispatchEvent(new CustomEvent('galle_taxi_site_settings_updated', { detail: settings }));
+    } catch {}
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1882,12 +1957,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.error('Site settings write error:', e);
       }
     }
-    setSiteSettings(settings);
-    saveStorage(KEYS.SETTINGS, settings);
     recordAudit('SITE_SETTINGS_UPDATED', 'siteSettings', 'Updated contact numbers and brand copy');
   };
 
   const updateService = async (service: Service) => {
+    setServices((prev) => {
+      const next = prev.map((s) => (s.id === service.id ? service : s));
+      saveStorage(KEYS.SERVICES, next);
+      broadcastLiveSync(KEYS.SERVICES, next);
+      return next;
+    });
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1898,17 +1978,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Service update error in Firestore:', e);
       }
     }
-    setServices((prev) => {
-      const next = prev.map((s) => (s.id === service.id ? service : s));
-      saveStorage(KEYS.SERVICES, next);
-      return next;
-    });
     recordAudit('SERVICE_UPDATED', service.id, `Updated service: ${service.title}`);
   };
 
   const addService = async (serviceInput: Omit<Service, 'id'>): Promise<Service> => {
     const id = `svc-${Date.now()}`;
     const newService: Service = { ...serviceInput, id };
+
+    setServices((prev) => {
+      const next = [...prev, newService];
+      saveStorage(KEYS.SERVICES, next);
+      broadcastLiveSync(KEYS.SERVICES, next);
+      return next;
+    });
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1919,16 +2002,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Service add error in Firestore:', e);
       }
     }
-    setServices((prev) => {
-      const next = [...prev, newService];
-      saveStorage(KEYS.SERVICES, next);
-      return next;
-    });
     recordAudit('SERVICE_ADDED', id, `Added transport service: ${newService.title}`);
     return newService;
   };
 
   const updateServiceArea = async (area: ServiceArea) => {
+    setServiceAreas((prev) => {
+      const next = prev.map((a) => (a.id === area.id ? area : a));
+      saveStorage(KEYS.AREAS, next);
+      broadcastLiveSync(KEYS.AREAS, next);
+      return next;
+    });
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1939,17 +2024,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Service area update error in Firestore:', e);
       }
     }
-    setServiceAreas((prev) => {
-      const next = prev.map((a) => (a.id === area.id ? area : a));
-      saveStorage(KEYS.AREAS, next);
-      return next;
-    });
     recordAudit('SERVICE_AREA_UPDATED', area.id, `Updated coverage: ${area.name}`);
   };
 
   const addServiceArea = async (areaInput: Omit<ServiceArea, 'id'>): Promise<ServiceArea> => {
     const id = `area-${Date.now()}`;
     const newArea: ServiceArea = { ...areaInput, id };
+
+    setServiceAreas((prev) => {
+      const next = [...prev, newArea];
+      saveStorage(KEYS.AREAS, next);
+      broadcastLiveSync(KEYS.AREAS, next);
+      return next;
+    });
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -1960,11 +2048,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         console.warn('Service area add error in Firestore:', e);
       }
     }
-    setServiceAreas((prev) => {
-      const next = [...prev, newArea];
-      saveStorage(KEYS.AREAS, next);
-      return next;
-    });
     recordAudit('SERVICE_AREA_ADDED', id, `Added coverage area: ${newArea.name}`);
     return newArea;
   };
@@ -2039,15 +2122,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updatedAt: new Date().toISOString(),
     };
 
-    const firestoreDb = db;
-    if (isFirebaseConfigured && firestoreDb) {
-      try {
-        const { doc, setDoc } = await import('firebase/firestore');
-        await setDoc(doc(firestoreDb, 'tours', id), cleanFirestoreData(newTour));
-        console.info(`[Galle Taxi] Tour "${newTour.title}" saved to Cloud Firestore.`);
-      } catch (e) {
-        console.error('Tour write error in Firestore:', e);
-      }
+    // Synchronize in-memory PRIVATE_DAY_TOURS array & state immediately
+    const existingIndex = PRIVATE_DAY_TOURS.findIndex((t) => t.id === id);
+    if (existingIndex >= 0) {
+      PRIVATE_DAY_TOURS[existingIndex] = newTour;
+    } else {
+      PRIVATE_DAY_TOURS.unshift(newTour);
+    }
+
+    setTours((prev) => {
+      const next = [newTour, ...prev.filter((t) => t.id !== id)];
+      saveStorage(KEYS.TOURS, next);
+      broadcastLiveSync(KEYS.TOURS, next);
+      return next;
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('galletaxi_tour_updated', { detail: newTour }));
     }
 
     // Clear from deleted tours if previously removed
@@ -2059,29 +2150,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch {}
 
-    // Persist custom cover image key for fast direct lookup
-    if (newTour.heroImage) {
+    const firestoreDb = db;
+    if (isFirebaseConfigured && firestoreDb) {
       try {
-        localStorage.setItem(`custom_tour_img_${id}`, newTour.heroImage);
-      } catch {}
-    }
-
-    // Synchronize in-memory PRIVATE_DAY_TOURS array so non-reactive consumers sync immediately
-    const existingIndex = PRIVATE_DAY_TOURS.findIndex((t) => t.id === id);
-    if (existingIndex >= 0) {
-      PRIVATE_DAY_TOURS[existingIndex] = newTour;
-    } else {
-      PRIVATE_DAY_TOURS.unshift(newTour);
-    }
-
-    setTours((prev) => {
-      const next = [newTour, ...prev.filter((t) => t.id !== id)];
-      saveStorage(KEYS.TOURS, next);
-      return next;
-    });
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('galletaxi_tour_updated', { detail: newTour }));
+        const { doc, setDoc } = await import('firebase/firestore');
+        await setDoc(doc(firestoreDb, 'tours', id), cleanFirestoreData(newTour));
+        console.info(`[Galle Taxi] Tour "${newTour.title}" saved to Cloud Firestore.`);
+      } catch (e) {
+        console.error('Tour write error in Firestore:', e);
+      }
     }
 
     recordAudit('TOUR_ADDED', id, `Added private day tour: ${newTour.title}`);
@@ -2094,6 +2171,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updatedAt: new Date().toISOString(),
     };
 
+    // Synchronize in-memory PRIVATE_DAY_TOURS static array & React state immediately
+    const existingIndex = PRIVATE_DAY_TOURS.findIndex((t) => t.id === tour.id);
+    if (existingIndex >= 0) {
+      PRIVATE_DAY_TOURS[existingIndex] = updatedTour;
+    } else {
+      PRIVATE_DAY_TOURS.unshift(updatedTour);
+    }
+
+    setTours((prev) => {
+      const next = prev.map((t) => (t.id === tour.id ? updatedTour : t));
+      saveStorage(KEYS.TOURS, next);
+      broadcastLiveSync(KEYS.TOURS, next);
+      return next;
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('galletaxi_tour_updated', { detail: updatedTour }));
+    }
+
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
@@ -2105,46 +2201,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    // Persist custom cover image key
-    if (updatedTour.heroImage) {
-      try {
-        localStorage.setItem(`custom_tour_img_${tour.id}`, updatedTour.heroImage);
-      } catch {}
-    }
-
-    // Synchronize in-memory PRIVATE_DAY_TOURS static array
-    const existingIndex = PRIVATE_DAY_TOURS.findIndex((t) => t.id === tour.id);
-    if (existingIndex >= 0) {
-      PRIVATE_DAY_TOURS[existingIndex] = updatedTour;
-    } else {
-      PRIVATE_DAY_TOURS.unshift(updatedTour);
-    }
-
-    setTours((prev) => {
-      const next = prev.map((t) => (t.id === tour.id ? updatedTour : t));
-      saveStorage(KEYS.TOURS, next);
-      return next;
-    });
-
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('galletaxi_tour_updated', { detail: updatedTour }));
-    }
-
     recordAudit('TOUR_UPDATED', tour.id, `Updated private day tour: ${tour.title}`);
   };
 
   const deleteTour = async (id: string) => {
-    const firestoreDb = db;
-    if (isFirebaseConfigured && firestoreDb) {
-      try {
-        const { doc, deleteDoc } = await import('firebase/firestore');
-        await deleteDoc(doc(firestoreDb, 'tours', id));
-        console.info(`[Galle Taxi] Tour ${id} deleted from Cloud Firestore.`);
-      } catch (e) {
-        console.warn('Tour delete error in Firestore:', e);
-      }
-    }
-
     // Record in deleted tours list
     try {
       const raw = localStorage.getItem('galletaxi_v1_deleted_tours');
@@ -2153,10 +2213,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         list.push(id);
         localStorage.setItem('galletaxi_v1_deleted_tours', JSON.stringify(list));
       }
-    } catch {}
-
-    try {
-      localStorage.removeItem(`custom_tour_img_${id}`);
     } catch {}
 
     const index = PRIVATE_DAY_TOURS.findIndex((t) => t.id === id);
@@ -2168,8 +2224,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTours((prev) => {
       const next = prev.filter((t) => t.id !== id);
       saveStorage(KEYS.TOURS, next);
+      broadcastLiveSync(KEYS.TOURS, next);
       return next;
     });
+
+    const firestoreDb = db;
+    if (isFirebaseConfigured && firestoreDb) {
+      try {
+        const { doc, deleteDoc } = await import('firebase/firestore');
+        await deleteDoc(doc(firestoreDb, 'tours', id));
+        console.info(`[Galle Taxi] Tour ${id} deleted from Cloud Firestore.`);
+      } catch (e) {
+        console.warn('Tour delete error in Firestore:', e);
+      }
+    }
+
     recordAudit('TOUR_DELETED', id, `Deleted day tour: ${removedTour?.title || id}`);
   };
 
@@ -2353,11 +2422,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDrivers(INITIAL_DRIVERS);
     setVehicles(normalizedDefaultVehicles);
     saveStorage(KEYS.VEHICLES, normalizedDefaultVehicles);
+    broadcastLiveSync(KEYS.VEHICLES, normalizedDefaultVehicles);
     syncFleetToServerCache(normalizedDefaultVehicles);
     setServices(INITIAL_SERVICES);
+    broadcastLiveSync(KEYS.SERVICES, INITIAL_SERVICES);
     setServiceAreas(INITIAL_SERVICE_AREAS);
+    broadcastLiveSync(KEYS.AREAS, INITIAL_SERVICE_AREAS);
     setFareRules(INITIAL_FARE_RULES);
+    broadcastLiveSync(KEYS.FARES, INITIAL_FARE_RULES);
     setSiteSettings(INITIAL_SITE_SETTINGS);
+    broadcastLiveSync(KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
+
+    const firestoreDb = db;
+    if (isFirebaseConfigured && firestoreDb) {
+      import('firebase/firestore').then(({ doc, setDoc }) => {
+        normalizedDefaultVehicles.forEach((v) => {
+          setDoc(doc(firestoreDb, 'vehicles', v.id), cleanFirestoreData(v), { merge: true }).catch(() => {});
+        });
+        setDoc(doc(firestoreDb, 'fareRules', 'current'), cleanFirestoreData(INITIAL_FARE_RULES)).catch(() => {});
+        setDoc(doc(firestoreDb, 'siteSettings', 'current'), cleanFirestoreData(INITIAL_SITE_SETTINGS)).catch(() => {});
+      }).catch(() => {});
+    }
+
     recordAudit('SAMPLE_DATA_RESTORED', 'fleet', 'Restored default Galle Taxi fleet configuration.');
   };
 
@@ -2374,6 +2460,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setCurrencies(updated);
     saveStorage(KEYS.CURRENCIES_LIST, updated);
+    broadcastLiveSync(KEYS.CURRENCIES_LIST, updated);
 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
@@ -2403,6 +2490,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setCurrencies(updated);
     saveStorage(KEYS.CURRENCIES_LIST, updated);
+    broadcastLiveSync(KEYS.CURRENCIES_LIST, updated);
 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
@@ -2427,6 +2515,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     delete updated[code];
     setCurrencies(updated);
     saveStorage(KEYS.CURRENCIES_LIST, updated);
+    broadcastLiveSync(KEYS.CURRENCIES_LIST, updated);
     if (currency === code) {
       setCurrency('LKR');
     }
@@ -2448,6 +2537,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const resetCurrencies = async () => {
     setCurrencies(CURRENCIES);
     saveStorage(KEYS.CURRENCIES_LIST, CURRENCIES);
+    broadcastLiveSync(KEYS.CURRENCIES_LIST, CURRENCIES);
 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
@@ -2486,7 +2576,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setTaxiHubs(nextHubs);
     saveStorage(KEYS.TAXI_HUBS, nextHubs);
+    broadcastLiveSync(KEYS.TAXI_HUBS, nextHubs);
     TOWNS_DATA[slug] = merged;
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('galletaxi_hub_updated', { detail: merged }));
+    }
 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
@@ -2499,16 +2594,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('galletaxi_hub_updated', { detail: merged }));
-    }
-
     recordAudit('TAXI_HUB_UPDATED', slug, `Updated details & rates for ${merged.townName}`);
   };
 
   const resetTaxiHubs = async () => {
     setTaxiHubs(TOWNS_DATA);
     saveStorage(KEYS.TAXI_HUBS, TOWNS_DATA);
+    broadcastLiveSync(KEYS.TAXI_HUBS, TOWNS_DATA);
+
+    const firestoreDb = db;
+    if (isFirebaseConfigured && firestoreDb) {
+      try {
+        const { doc, setDoc } = await import('firebase/firestore');
+        await Promise.all(
+          Object.entries(TOWNS_DATA).map(([slug, hub]) =>
+            setDoc(doc(firestoreDb, 'taxi_hubs', slug), cleanFirestoreData(hub), { merge: true })
+          )
+        );
+      } catch (e) {
+        console.warn('Reset taxi hubs error in Firestore:', e);
+      }
+    }
+
     recordAudit('TAXI_HUBS_RESET', 'all', 'Reset all Southern Coast Taxi Hubs to default content');
   };
 
