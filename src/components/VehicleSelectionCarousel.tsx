@@ -26,6 +26,11 @@ import { useApp } from '../lib/store';
 import { Vehicle } from '../types';
 import { calculateAuthoritativeFare, formatLKR } from '../lib/fareEngine';
 import { calculateRouteDistance, RouteDistanceResult } from '../lib/routeDistanceService';
+import {
+  getActivePublicVehicles,
+  getCategoryFallbackImage,
+  normalizeVehicleImageUrl,
+} from '../lib/vehicleHelpers';
 
 interface VehicleSelectionCarouselProps {
   pickupLocation: string;
@@ -193,16 +198,14 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 8,
       handLuggage: 6,
       acLabel: 'Rear Climate Control A/C',
-      fallbackImage: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
+      fallbackImage: '/assets/images/regenerated_image_1793464621511.png',
       category: 'KDH HIGH ROOF' as const,
     },
   ];
 
   // Derive active vehicles dynamically from Admin / Store
   const carouselVehicles: DisplayVehicleItem[] = useMemo(() => {
-    // If we have vehicles in store, filter active and visible ones
-    const activeVehicles = vehicles.filter((v) => v.isAvailable !== false && !v.hideCard);
-    const sourceVehicles = activeVehicles.length > 0 ? activeVehicles : vehicles;
+    const sourceVehicles = getActivePublicVehicles(vehicles);
 
     // If still empty (e.g. initial boot before store hydration), fallback to CAROUSEL_SPECS
     if (!sourceVehicles || sourceVehicles.length === 0) {
@@ -246,11 +249,9 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       }));
     }
 
-    // Sort by displayOrder if defined, preserving order
-    const sorted = [...sourceVehicles].sort((a, b) => (a.displayOrder ?? 999) - (b.displayOrder ?? 999));
-
-    return sorted.map((v) => {
-      const matchedSpec = CAROUSEL_SPECS.find((s) => s.id === v.id || (s.category as string) === (v.category as string));
+    // sourceVehicles is already sorted cleanly by Admin displayOrder via getActivePublicVehicles
+    return sourceVehicles.map((v) => {
+      const matchedSpec = CAROUSEL_SPECS.find((s) => s.id === v.id);
 
       const categoryTiers =
         (fareRules.categoryPricingTiers && fareRules.categoryPricingTiers[v.category]) ||
@@ -269,6 +270,12 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
           ? 360
           : 320);
       const dynamicBaseFare = v.baseFare || fareRules.baseFare || 1500;
+      const resolvedImageUrl = normalizeVehicleImageUrl(
+        v.imageUrl || matchedSpec?.fallbackImage,
+        v.category,
+        v.id,
+        v.name
+      );
 
       const rawVehicle: Vehicle = {
         ...v,
@@ -283,7 +290,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
         pricePerKm: dynamicPricePerKm,
         baseFare: dynamicBaseFare,
         pricingTiers: categoryTiers,
-        imageUrl: v.imageUrl || matchedSpec?.fallbackImage || '/assets/images/regenerated_image_1793163512211.png',
+        imageUrl: resolvedImageUrl,
         isAvailable: v.isAvailable !== false,
         features:
           v.features && v.features.length > 0
@@ -551,15 +558,9 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                       className="w-full h-full object-contain rounded-lg transition-transform duration-300 hover:scale-105 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        // Never override data URLs, blob URLs, or custom uploads
-                        if (
-                          !target.src.startsWith('data:') &&
-                          !target.src.startsWith('blob:') &&
-                          !target.src.includes('regenerated_image') &&
-                          !target.src.includes('vehicle_')
-                        ) {
-                          target.src = '/assets/images/regenerated_image_1793163512211.png';
-                        }
+                        if (target.dataset.fallbackApplied) return;
+                        target.dataset.fallbackApplied = 'true';
+                        target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
                       }}
                     />
                     <div className="absolute top-2 right-2">

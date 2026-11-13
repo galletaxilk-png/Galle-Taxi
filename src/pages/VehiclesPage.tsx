@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Users, Briefcase, CheckCircle2, ArrowRight, ArrowLeft, ShieldCheck, Sparkles, Wind } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { formatLKR } from '../lib/fareEngine';
+import {
+  getActivePublicVehicles,
+  getCategoryFallbackImage,
+  normalizeVehicleImageUrl,
+} from '../lib/vehicleHelpers';
 
 export const VehiclesPage: React.FC = () => {
   const navigate = useNavigate();
   const { vehicles, formatFare } = useApp();
+  const publicVehicles = useMemo(() => getActivePublicVehicles(vehicles), [vehicles]);
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
@@ -42,7 +48,7 @@ export const VehiclesPage: React.FC = () => {
 
         {/* Vehicle Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {vehicles.map((veh) => (
+          {publicVehicles.map((veh) => (
             <div
               key={veh.id}
               className="bg-[#141416] border border-[#27272A] rounded-2xl overflow-hidden hover:border-[#F5B91B]/40 transition-all flex flex-col justify-between"
@@ -51,19 +57,14 @@ export const VehiclesPage: React.FC = () => {
                 {/* Image */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#1B1B1F] rounded-t-2xl flex items-center justify-center p-4 border-b border-[#27272A]">
                   <img
-                    src={veh.imageUrl}
+                    src={normalizeVehicleImageUrl(veh.imageUrl, veh.category, veh.id, veh.name)}
                     alt={veh.name}
                     className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition-transform duration-300 hover:scale-105"
                     onError={(e) => {
                       const target = e.currentTarget;
-                      if (
-                        !target.src.startsWith('data:') &&
-                        !target.src.startsWith('blob:') &&
-                        !target.src.includes('regenerated_image') &&
-                        !target.src.includes('vehicle_')
-                      ) {
-                        target.src = '/assets/images/regenerated_image_1793163512211.png';
-                      }
+                      if (target.dataset.fallbackApplied) return;
+                      target.dataset.fallbackApplied = 'true';
+                      target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
                     }}
                   />
                   <div className="absolute top-4 left-4 px-3 py-1 rounded bg-black/80 backdrop-blur-md text-xs font-semibold text-[#F5B91B] border border-[#27272A]">

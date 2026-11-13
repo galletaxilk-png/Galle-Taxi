@@ -76,8 +76,13 @@ export const VEHICLE_PHOTO_PRESETS = [
     url: '/assets/images/regenerated_image_1793163512211.png',
   },
   {
-    label: 'VIP KDH High-Roof Commuter Van',
+    label: 'Toyota KDH High-Roof White Van',
     category: 'KDH High Roof',
+    url: '/assets/images/regenerated_image_1793464621511.png',
+  },
+  {
+    label: 'VIP KDH Flat-Roof Executive Van',
+    category: 'KDH Flat Roof',
     url: '/assets/images/vehicle_premium_van_1793121943671.jpg',
   },
   {
@@ -86,19 +91,19 @@ export const VEHICLE_PHOTO_PRESETS = [
     url: '/assets/images/regenerated_image_1793161723258.png',
   },
   {
-    label: 'Toyota KDH High-Roof VIP Commuter',
-    category: 'KDH High Roof',
-    url: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
-  },
-  {
-    label: 'Luxury Prado / Montero 4x4 SUV',
+    label: 'SUV 4x4 (Prado / CR-V / Fortuner)',
     category: 'SUV',
-    url: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80',
+    url: '/assets/images/regenerated_image_1793464744920.png',
   },
   {
-    label: 'Compact Mini Van (Every / Spacia)',
+    label: 'Compact Mini Van / Shuttle',
     category: 'Mini Van',
-    url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
+    url: '/assets/images/regenerated_image_1793465213680.png',
+  },
+  {
+    label: 'Luxury Executive Sedan (Mercedes / BMW)',
+    category: 'Luxury',
+    url: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
   },
   {
     label: 'Tourist Mini Coach / Coaster Bus',
@@ -115,7 +120,6 @@ export const VEHICLE_PHOTO_PRESETS = [
 const compressUploadedFile = (file: File): Promise<string> => {
   return new Promise((resolve) => {
     try {
-      const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
       const objectUrl = URL.createObjectURL(file);
       const img = new Image();
       let didFinish = false;
@@ -136,9 +140,9 @@ const compressUploadedFile = (file: File): Promise<string> => {
         clearTimeout(timeout);
         URL.revokeObjectURL(objectUrl);
         const canvas = document.createElement('canvas');
-        let width = img.width || 800;
-        let height = img.height || 500;
-        const maxDimension = 900;
+        let width = img.naturalWidth || img.width || 640;
+        let height = img.naturalHeight || img.height || 400;
+        const maxDimension = 640;
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
             height = Math.round((height * maxDimension) / width);
@@ -148,19 +152,36 @@ const compressUploadedFile = (file: File): Promise<string> => {
             height = maxDimension;
           }
         }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        canvas.width = Math.max(10, width);
+        canvas.height = Math.max(10, height);
+        const ctx = canvas.getContext('2d', { alpha: true });
         if (!ctx) {
           resolve('');
           return;
         }
-        if (!isPng) {
-          ctx.fillStyle = '#FFFFFF';
-          ctx.fillRect(0, 0, width, height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // WebP supports alpha transparency and produces 5x-15x smaller files than uncompressed PNG
+        let dataUrl = canvas.toDataURL('image/webp', 0.8);
+        if (!dataUrl.startsWith('data:image/webp')) {
+          const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+          dataUrl = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.8);
         }
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.82);
+        if (dataUrl.length > 140000) {
+          const smallCanvas = document.createElement('canvas');
+          smallCanvas.width = Math.max(10, Math.round(canvas.width * 0.72));
+          smallCanvas.height = Math.max(10, Math.round(canvas.height * 0.72));
+          const sCtx = smallCanvas.getContext('2d', { alpha: true });
+          if (sCtx) {
+            sCtx.clearRect(0, 0, smallCanvas.width, smallCanvas.height);
+            sCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
+            const smaller = smallCanvas.toDataURL('image/webp', 0.68);
+            if (smaller.startsWith('data:image/webp')) {
+              dataUrl = smaller;
+            }
+          }
+        }
         resolve(dataUrl);
       };
 

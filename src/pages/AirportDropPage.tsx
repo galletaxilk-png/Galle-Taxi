@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   PlaneTakeoff,
@@ -20,6 +20,11 @@ import {
 import { useApp } from '../lib/store';
 import { CurrencySelector } from '../components/CurrencySelector';
 import { calculateAuthoritativeFare } from '../lib/fareEngine';
+import {
+  getActivePublicVehicles,
+  getCategoryFallbackImage,
+  normalizeVehicleImageUrl,
+} from '../lib/vehicleHelpers';
 
 interface FaqItem {
   question: string;
@@ -466,7 +471,7 @@ export const AirportDropPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {vehicles.map((veh) => {
+          {getActivePublicVehicles(vehicles).map((veh) => {
             const fareCalc = calculateAuthoritativeFare({
               pickup: selectedPickup || 'Galle Dutch Fort',
               destination: 'Bandaranaike International Airport (CMB)',
@@ -485,9 +490,15 @@ export const AirportDropPage: React.FC = () => {
                 <div className="space-y-4">
                   <div className="relative aspect-[16/10] bg-[#1A1A1E] rounded-xl overflow-hidden border border-[#27272A] p-2 flex items-center justify-center">
                     <img
-                      src={veh.imageUrl}
+                      src={normalizeVehicleImageUrl(veh.imageUrl, veh.category, veh.id, veh.name)}
                       alt={veh.name}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.dataset.fallbackApplied) return;
+                        target.dataset.fallbackApplied = 'true';
+                        target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
+                      }}
                     />
                     <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-bold text-[#F5B91B] border border-[#27272A]">
                       {veh.category}

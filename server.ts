@@ -1119,6 +1119,54 @@ app.post('/api/upload-hub-image', (req, res) => {
 });
 
 /**
+ * Public Fleet Cache Endpoints (/api/public/vehicles & /api/fleet/sync)
+ * Keeps a persistent server-side copy of admin-managed vehicles in /public/uploads/fleet-cache.json
+ * so unauthenticated public visitors always receive live fleet data even if Firestore quota is hit.
+ */
+const fleetCachePath = path.resolve(uploadsDir, 'fleet-cache.json');
+
+app.get('/api/public/vehicles', (_req, res) => {
+  try {
+    if (fs.existsSync(fleetCachePath)) {
+      const raw = fs.readFileSync(fleetCachePath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.vehicles) && parsed.vehicles.length > 0) {
+        return res.json({
+          success: true,
+          vehicles: parsed.vehicles,
+          updatedAt: parsed.updatedAt || null,
+        });
+      }
+    }
+    return res.json({ success: true, vehicles: [], updatedAt: null });
+  } catch (err: any) {
+    console.warn('[Galle Taxi] Failed to read fleet-cache.json:', err?.message || err);
+    return res.json({ success: true, vehicles: [], updatedAt: null });
+  }
+});
+
+app.post('/api/fleet/sync', (req, res) => {
+  try {
+    const incoming = req.body?.vehicles;
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return res.status(400).json({ success: false, error: 'Non-empty vehicles array required' });
+    }
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const payload = {
+      updatedAt: new Date().toISOString(),
+      vehicles: incoming,
+    };
+    fs.writeFileSync(fleetCachePath, JSON.stringify(payload), 'utf-8');
+    return res.json({ success: true, count: incoming.length, updatedAt: payload.updatedAt });
+  } catch (err: any) {
+    console.warn('[Galle Taxi] Failed to write fleet-cache.json:', err?.message || err);
+    return res.status(500).json({ success: false, error: err?.message || 'Sync failed' });
+  }
+});
+
+/**
  * Dedicated routes for /sitemap.xml and /robots.txt
  * Guarantees pure XML and plain text delivery with proper headers, preventing SPA HTML fallback.
  */

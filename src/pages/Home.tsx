@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Car,
@@ -24,6 +24,11 @@ import {
 } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { formatLKR, calculateAuthoritativeFare } from '../lib/fareEngine';
+import {
+  getActivePublicVehicles,
+  getCategoryFallbackImage,
+  normalizeVehicleImageUrl,
+} from '../lib/vehicleHelpers';
 import { CurrencySelector } from '../components/CurrencySelector';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { ToursSection } from '../components/ToursSection';
@@ -119,6 +124,8 @@ export const Home: React.FC = () => {
   const [isFleetHovered, setIsFleetHovered] = useState(false);
   const [activeFleetIndex, setActiveFleetIndex] = useState(0);
 
+  const publicVehicles = useMemo(() => getActivePublicVehicles(vehicles), [vehicles]);
+
   useEffect(() => {
     if (isFleetHovered) return;
 
@@ -138,14 +145,14 @@ export const Home: React.FC = () => {
     }, 3200);
 
     return () => clearInterval(interval);
-  }, [isFleetHovered, vehicles.length]);
+  }, [isFleetHovered, publicVehicles.length]);
 
   const handleFleetScroll = () => {
     if (!fleetSliderRef.current) return;
     const { scrollLeft } = fleetSliderRef.current;
     const cardStep = 265;
     const idx = Math.round(scrollLeft / cardStep);
-    setActiveFleetIndex(Math.min(vehicles.length - 1, Math.max(0, idx)));
+    setActiveFleetIndex(Math.min(Math.max(0, publicVehicles.length - 1), Math.max(0, idx)));
   };
 
   const scrollFleet = (direction: 'prev' | 'next') => {
@@ -167,7 +174,15 @@ export const Home: React.FC = () => {
   // Quick Quote Form State initialized for AIRPORT DROP
   const [quickPickup, setQuickPickup] = useState('Galle Dutch Fort');
   const [quickDestination, setQuickDestination] = useState('Bandaranaike International Airport (CMB)');
-  const [quickVehicleId, setQuickVehicleId] = useState(vehicles[0]?.id || 'veh-sedan-std');
+  const [quickVehicleId, setQuickVehicleId] = useState(
+    () => (publicVehicles.find((v) => v.isDefaultSelected) || publicVehicles[0])?.id || 'veh-sedan-std'
+  );
+
+  useEffect(() => {
+    if (publicVehicles.length > 0 && !publicVehicles.some((v) => v.id === quickVehicleId)) {
+      setQuickVehicleId((publicVehicles.find((v) => v.isDefaultSelected) || publicVehicles[0]).id);
+    }
+  }, [publicVehicles, quickVehicleId]);
   const [quickDate, setQuickDate] = useState(() => {
     const today = new Date();
     today.setDate(today.getDate() + 1);
@@ -765,7 +780,7 @@ export const Home: React.FC = () => {
             onTouchEnd={() => setTimeout(() => setIsFleetHovered(false), 2500)}
             className="flex gap-4 overflow-x-auto pb-3 pt-1 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {vehicles.map((veh) => (
+            {publicVehicles.map((veh) => (
               <div
                 key={veh.id}
                 className="w-[240px] sm:w-[250px] flex-shrink-0 snap-start bg-[#141416] border border-[#27272A] rounded-xl overflow-hidden flex flex-col justify-between hover:border-[#F5B91B]/50 hover:shadow-lg hover:shadow-black/50 transition-all duration-300"
@@ -773,19 +788,14 @@ export const Home: React.FC = () => {
                 <div>
                   <div className="relative aspect-[16/10] overflow-hidden bg-[#1A1A1E] flex items-center justify-center p-3 rounded-t-xl border-b border-[#27272A]">
                     <img
-                      src={veh.imageUrl}
+                      src={normalizeVehicleImageUrl(veh.imageUrl, veh.category, veh.id, veh.name)}
                       alt={veh.name}
                       className="w-full h-full object-contain rounded-lg transition-transform duration-500 hover:scale-105 drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)]"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        if (
-                          !target.src.startsWith('data:') &&
-                          !target.src.startsWith('blob:') &&
-                          !target.src.includes('regenerated_image') &&
-                          !target.src.includes('vehicle_')
-                        ) {
-                          target.src = '/assets/images/regenerated_image_1793163512211.png';
-                        }
+                        if (target.dataset.fallbackApplied) return;
+                        target.dataset.fallbackApplied = 'true';
+                        target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
                       }}
                     />
                     <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-semibold text-[#F5B91B] border border-[#27272A]">
@@ -830,7 +840,7 @@ export const Home: React.FC = () => {
 
           {/* Dot Indicators */}
           <div className="flex justify-center items-center gap-1.5 mt-5">
-            {vehicles.map((_, i) => (
+            {publicVehicles.map((_, i) => (
               <button
                 key={i}
                 type="button"

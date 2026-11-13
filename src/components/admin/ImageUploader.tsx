@@ -34,8 +34,23 @@ export const SYSTEM_IMAGE_PRESETS: ImagePreset[] = [
     category: 'Vehicles',
   },
   {
-    label: 'VIP KDH High-Roof Commuter Van',
+    label: 'Toyota KDH High-Roof White Van',
+    url: '/assets/images/regenerated_image_1793464621511.png',
+    category: 'Vehicles',
+  },
+  {
+    label: 'VIP KDH Flat-Roof Van',
     url: '/assets/images/vehicle_premium_van_1793121943671.jpg',
+    category: 'Vehicles',
+  },
+  {
+    label: 'SUV 4x4 (Prado / CR-V / Fortuner)',
+    url: '/assets/images/regenerated_image_1793464744920.png',
+    category: 'Vehicles',
+  },
+  {
+    label: 'Compact Mini Van / Shuttle',
+    url: '/assets/images/regenerated_image_1793465213680.png',
     category: 'Vehicles',
   },
   {
@@ -160,22 +175,30 @@ const compressImageFile = (file: File): Promise<string> => {
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
           let outputUrl = '';
-          if (isPng) {
+          const webpUrl = canvas.toDataURL('image/webp', 0.82);
+          if (webpUrl.startsWith('data:image/webp')) {
+            outputUrl = webpUrl;
+          } else if (isPng) {
             outputUrl = canvas.toDataURL('image/png');
           } else {
             outputUrl = canvas.toDataURL('image/jpeg', 0.82);
           }
 
-          // If PNG is > 90KB, perform a second pass to guarantee it stays ~30KB
+          // If still > 90KB, perform a second pass to guarantee lightweight storage
           if (outputUrl.length > 90000) {
             const smallCanvas = document.createElement('canvas');
-            smallCanvas.width = Math.round(canvas.width * 0.7);
-            smallCanvas.height = Math.round(canvas.height * 0.7);
+            smallCanvas.width = Math.round(canvas.width * 0.72);
+            smallCanvas.height = Math.round(canvas.height * 0.72);
             const sCtx = smallCanvas.getContext('2d', { alpha: true });
             if (sCtx) {
               sCtx.clearRect(0, 0, smallCanvas.width, smallCanvas.height);
               sCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
-              outputUrl = isPng ? smallCanvas.toDataURL('image/png') : smallCanvas.toDataURL('image/jpeg', 0.8);
+              const smallerWebp = smallCanvas.toDataURL('image/webp', 0.72);
+              outputUrl = smallerWebp.startsWith('data:image/webp')
+                ? smallerWebp
+                : isPng
+                ? smallCanvas.toDataURL('image/png')
+                : smallCanvas.toDataURL('image/jpeg', 0.8);
             }
           }
 

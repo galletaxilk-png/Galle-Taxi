@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   Car,
@@ -25,6 +25,11 @@ import {
 } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { formatLKR, calculateAuthoritativeFare, CURRENCIES } from '../lib/fareEngine';
+import {
+  getActivePublicVehicles,
+  getCategoryFallbackImage,
+  normalizeVehicleImageUrl,
+} from '../lib/vehicleHelpers';
 import { SERVICE_TABS, ServiceTabType } from './Home';
 import { CurrencySelector } from '../components/CurrencySelector';
 import { dispatchCustomerEmailVoucher } from '../lib/emailService';
@@ -66,7 +71,14 @@ export const BookTaxiPage: React.FC = () => {
     return tomorrow.toISOString().split('T')[0];
   });
   const [time, setTime] = useState(searchParams.get('time') || '10:00');
-  const [vehicleId, setVehicleId] = useState(searchParams.get('vehicleId') || vehicles[0]?.id || 'veh-sedan-std');
+  const publicVehicles = useMemo(() => getActivePublicVehicles(vehicles), [vehicles]);
+
+  const [vehicleId, setVehicleId] = useState(
+    () =>
+      searchParams.get('vehicleId') ||
+      (publicVehicles.find((v) => v.isDefaultSelected) || publicVehicles[0] || vehicles[0])?.id ||
+      'veh-sedan-std'
+  );
   const [passengerCount, setPassengerCount] = useState(2);
   const [luggageCount, setLuggageCount] = useState(2);
   const [customerName, setCustomerName] = useState('');
@@ -82,13 +94,17 @@ export const BookTaxiPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Synchronize vehicle if query param changes
+  // Synchronize vehicle if query param or public fleet updates
   useEffect(() => {
     const vParam = searchParams.get('vehicleId');
     if (vParam && vehicles.some((v) => v.id === vParam)) {
       setVehicleId(vParam);
+      return;
     }
-  }, [searchParams, vehicles]);
+    if (publicVehicles.length > 0 && !publicVehicles.some((v) => v.id === vehicleId)) {
+      setVehicleId((publicVehicles.find((v) => v.isDefaultSelected) || publicVehicles[0]).id);
+    }
+  }, [searchParams, vehicles, publicVehicles, vehicleId]);
 
   // Listen for real-time live fare rules and vehicle rate updates across admin & website tabs
   const [, setFareTick] = useState(0);
@@ -104,7 +120,11 @@ export const BookTaxiPage: React.FC = () => {
     };
   }, []);
 
-  const selectedVehicle = vehicles.find((v) => v.id === vehicleId) || vehicles[0];
+  const selectedVehicle =
+    publicVehicles.find((v) => v.id === vehicleId) ||
+    vehicles.find((v) => v.id === vehicleId) ||
+    publicVehicles[0] ||
+    vehicles[0];
 
   // Dynamic Route Distance Calculation
   const [routeResult, setRouteResult] = useState<RouteDistanceResult | null>(null);
@@ -875,9 +895,10 @@ export const BookTaxiPage: React.FC = () => {
                 </div>
 
                 <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1 sm:mx-0 sm:px-0">
-                  {vehicles.map((v) => {
+                  {publicVehicles.map((v) => {
                     const isSelected = v.id === vehicleId;
                     const vFare = getVehicleTripFare(v.id);
+                    const thumbSrc = normalizeVehicleImageUrl(v.imageUrl, v.category, v.id, v.name);
                     return (
                       <button
                         key={v.id}
@@ -890,6 +911,19 @@ export const BookTaxiPage: React.FC = () => {
                         }`}
                       >
                         <div>
+                          <div className="h-11 w-full rounded-lg bg-[#0B0B0D]/70 border border-white/10 flex items-center justify-center p-1 mb-2 overflow-hidden">
+                            <img
+                              src={thumbSrc}
+                              alt={v.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                if (target.dataset.fallbackApplied) return;
+                                target.dataset.fallbackApplied = 'true';
+                                target.src = getCategoryFallbackImage(v.category, v.id, v.name);
+                              }}
+                            />
+                          </div>
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-white truncate">
                               {v.name}
@@ -988,10 +1022,10 @@ export const BookTaxiPage: React.FC = () => {
               </div>
 
               <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1 sm:mx-0 sm:px-0">
-                {vehicles.map((v) => {
+                {publicVehicles.map((v) => {
                   const isSelected = v.id === vehicleId;
                   const vFare = getVehicleTripFare(v.id);
-                  const isSedanCar = v.id === 'veh-sedan-std' || v.category === 'SEDAN CAR' || v.name.toUpperCase().includes('SEDAN');
+                  const cardImg = normalizeVehicleImageUrl(v.imageUrl, v.category, v.id, v.name);
                   return (
                     <div
                       key={v.id}
@@ -1003,11 +1037,24 @@ export const BookTaxiPage: React.FC = () => {
                       }`}
                     >
                       <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-sm text-white">
+                        <div className="h-24 w-full rounded-xl bg-[#0D0D10]/80 border border-white/10 flex items-center justify-center p-2 mb-3 overflow-hidden">
+                          <img
+                            src={cardImg}
+                            alt={v.name}
+                            className="w-full h-full object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.45)]"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (target.dataset.fallbackApplied) return;
+                              target.dataset.fallbackApplied = 'true';
+                              target.src = getCategoryFallbackImage(v.category, v.id, v.name);
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-sm text-white truncate">
                             {v.name}
                           </span>
-                          <span className="text-[11px] font-bold text-[#F5B91B] uppercase tracking-wider px-2 py-0.5 rounded bg-[#F5B91B]/10 border border-[#F5B91B]/30">
+                          <span className="text-[11px] font-bold text-[#F5B91B] uppercase tracking-wider px-2 py-0.5 rounded bg-[#F5B91B]/10 border border-[#F5B91B]/30 shrink-0">
                             {v.category}
                           </span>
                         </div>

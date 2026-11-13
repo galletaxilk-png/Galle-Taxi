@@ -3,7 +3,7 @@
  * Integrates Cloud Firestore, Firebase Authentication, and reactive dispatch state.
  */
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useRef } from 'react';
 import {
   Booking,
   BookingStatus,
@@ -27,11 +27,8 @@ import {
   INITIAL_SITE_SETTINGS,
   INITIAL_VEHICLES,
   DEFAULT_CATEGORY_TIERS,
-  DEFAULT_SEDAN_TIERS,
-  DEFAULT_SUV_TIERS,
-  DEFAULT_VAN_TIERS,
-  DEFAULT_KDH_HIGH_TIERS,
 } from './initialData';
+import { normalizeVehicleRecord, sortVehiclesByDisplayOrder } from './vehicleHelpers';
 import {
   isFirebaseConfigured,
   auth,
@@ -207,21 +204,13 @@ function loadStorage<T>(key: string, fallback: T): T {
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
     if (key === KEYS.VEHICLES && Array.isArray(parsed)) {
-      const restored = parsed.map((v: any) => {
-        let img = v.imageUrl;
-        const memImg = (window as any).__GALLE_TAXI_VEHICLE_IMAGES__?.[v.id];
-        if (memImg) {
-          img = memImg;
-        } else {
-          try {
-            const sessImg = sessionStorage.getItem(`galle_veh_img_${v.id}`);
-            if (sessImg) img = sessImg;
-          } catch {}
-        }
-        return { ...v, imageUrl: img };
-      });
-      (window as any).__GALLE_TAXI_VEHICLES__ = restored;
-      return restored as unknown as T;
+      const normalized = sortVehiclesByDisplayOrder(
+        parsed
+          .filter((v: any) => v && typeof v.id === 'string')
+          .map((v: any) => normalizeVehicleRecord(v))
+      );
+      (window as any).__GALLE_TAXI_VEHICLES__ = normalized;
+      return normalized as unknown as T;
     }
     if (key === KEYS.TAXI_HUBS && parsed && typeof parsed === 'object') {
       const restored: Record<string, any> = {};
@@ -248,12 +237,12 @@ function cleanExcessStorage() {
     localStorage.removeItem('galletaxi_v1_tours_cache');
     localStorage.removeItem('galle_taxi_email_dispatches');
 
-    // Clean any oversized temporary or custom tour image keys
+    // Clean any oversized temporary or custom tour/vehicle image keys
     try {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && (k.startsWith('custom_tour_img_') || k.startsWith('galle_taxi_temp_'))) {
+        if (k && (k.startsWith('custom_tour_img_') || k.startsWith('galle_taxi_temp_') || k.startsWith('galle_veh_img_'))) {
           keysToRemove.push(k);
         }
       }
@@ -402,53 +391,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
     const loaded = loadStorage<Vehicle[] | null>(KEYS.VEHICLES, null);
     if (loaded && Array.isArray(loaded) && loaded.length > 0) {
-      return loaded.map((v) => {
-        let updatedCategory = v.category;
-        let updatedName = v.name;
-        let updatedPrice = v.pricePerKm;
-        let updatedTiers = v.pricingTiers;
-
-        if (v.id === 'veh-sedan-std' || v.category === 'Sedan' || v.name === 'Sedan' || v.name.toLowerCase().includes('toyota premio')) {
-          updatedCategory = 'SEDAN CAR';
-          updatedName = 'SEDAN CAR';
-          if (!updatedPrice || updatedPrice <= 0) updatedPrice = 240;
-          if (!updatedTiers || updatedTiers.length === 0) updatedTiers = DEFAULT_SEDAN_TIERS;
-        } else if (v.id === 'veh-suv-4wd' || v.category === 'SUV' || v.name.toLowerCase().includes('prado')) {
-          updatedCategory = 'SUV CAR';
-          updatedName = 'SUV CAR';
-          if (!updatedPrice || updatedPrice <= 0 || updatedPrice === 240) updatedPrice = 380;
-          if (!updatedTiers || updatedTiers.length === 0 || updatedTiers[0]?.flatPrice === 12000) updatedTiers = DEFAULT_SUV_TIERS;
-        } else if (v.id === 'veh-kdh-flat' || v.name.toLowerCase().includes('flat roof')) {
-          updatedCategory = 'KDH FLAT ROOF';
-          updatedName = 'KDH FLAT ROOF';
-          if (!updatedPrice || updatedPrice <= 0 || updatedPrice === 240) updatedPrice = 320;
-          if (!updatedTiers || updatedTiers.length === 0 || updatedTiers[0]?.flatPrice === 12000) updatedTiers = DEFAULT_VAN_TIERS;
-        } else if (
-          v.id === 'veh-kdh-high' ||
-          v.name.toLowerCase().includes('high roof') ||
-          v.name.toLowerCase().includes('high-roof') ||
-          v.id === 'veh-luxury-exec' ||
-          v.category === 'Luxury' ||
-          v.category === 'KDH High Roof' ||
-          v.name.toLowerCase().includes('luxury')
-        ) {
-          updatedCategory = 'KDH HIGH ROOF';
-          updatedName = 'KDH HIGH ROOF';
-          if (!updatedPrice || updatedPrice <= 0 || updatedPrice === 240 || updatedPrice === 320) updatedPrice = 360;
-          if (!updatedTiers || updatedTiers.length === 0 || updatedTiers[0]?.flatPrice === 12000 || updatedTiers[0]?.flatPrice === 16000) updatedTiers = DEFAULT_KDH_HIGH_TIERS;
-        }
-        return {
-          ...v,
-          name: updatedName,
-          category: updatedCategory,
-          pricePerKm: updatedPrice || 240,
-          pricingTiers: updatedTiers || DEFAULT_CATEGORY_TIERS[updatedCategory] || DEFAULT_SEDAN_TIERS,
-        };
-      });
+      return sortVehiclesByDisplayOrder(loaded.map((v) => normalizeVehicleRecord(v)));
     }
-    saveStorage(KEYS.VEHICLES, INITIAL_VEHICLES);
-    return INITIAL_VEHICLES;
+    const normalizedInitial = sortVehiclesByDisplayOrder(
+      INITIAL_VEHICLES.map((v) => normalizeVehicleRecord(v))
+    );
+    saveStorage(KEYS.VEHICLES, normalizedInitial);
+    return normalizedInitial;
   });
+  const hasLiveFirestoreVehiclesRef = useRef(false);
   const [services, setServices] = useState<Service[]>(() => {
     const loaded = loadStorage(KEYS.SERVICES, INITIAL_SERVICES);
     return loaded.map((s) => {
@@ -1083,7 +1034,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               const data = docSnap.data() as FareRules;
               setFareRules(data);
               saveStorage(KEYS.FARES, data);
-            } else if (!globalQuotaExhausted) {
+            } else if (auth?.currentUser && !globalQuotaExhausted) {
               setDoc(doc(firestoreDb, 'fareRules', 'current'), cleanFirestoreData(INITIAL_FARE_RULES)).catch((err) => {
                 if (!isFirestoreQuotaExhausted(err)) console.warn('[Galle Taxi] Notice auto-seeding fareRules:', err);
               });
@@ -1094,32 +1045,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           unsubs.push(unsubFare);
         } catch (e) {
           if (!handleQuotaExhausted(e)) console.warn('Error attaching fareRules listener:', e);
-        }
-
-        // 2. Real-time Vehicles Fleet Sync
-        try {
-          const unsubVeh = onSnapshot(collection(firestoreDb, 'vehicles'), (snap) => {
-            if (!isMounted) return;
-            if (snap.empty) {
-              if (!globalQuotaExhausted) {
-                INITIAL_VEHICLES.forEach((v) => {
-                  setDoc(doc(firestoreDb, 'vehicles', v.id), cleanFirestoreData(v)).catch(() => {});
-                });
-              }
-              return;
-            }
-            const liveVehicles: Vehicle[] = [];
-            snap.forEach((d) => liveVehicles.push({ ...(d.data() as Vehicle), id: d.id }));
-            if (liveVehicles.length > 0) {
-              setVehicles(liveVehicles);
-              saveStorage(KEYS.VEHICLES, liveVehicles);
-            }
-          }, (err) => {
-            if (!handleQuotaExhausted(err)) console.warn('[Firestore Vehicles Warning]:', err);
-          });
-          unsubs.push(unsubVeh);
-        } catch (e) {
-          if (!handleQuotaExhausted(e)) console.warn('Error attaching vehicles listener:', e);
         }
 
         // 3. Real-time Site Settings Sync (Hero image, seasonal banner, contact numbers, branding)
@@ -1136,7 +1061,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 saveStorage(KEYS.SETTINGS, merged);
                 return merged;
               });
-            } else if (!globalQuotaExhausted) {
+            } else if (auth?.currentUser && !globalQuotaExhausted) {
               setDoc(doc(firestoreDb, 'siteSettings', 'current'), cleanFirestoreData(INITIAL_SITE_SETTINGS)).catch((err) => {
                 if (!isFirestoreQuotaExhausted(err)) console.warn('[Galle Taxi] Notice auto-seeding siteSettings:', err);
               });
@@ -1154,7 +1079,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubHubs = onSnapshot(collection(firestoreDb, 'taxi_hubs'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (!globalQuotaExhausted) {
+              if (auth?.currentUser && !globalQuotaExhausted) {
                 Object.entries(TOWNS_DATA).forEach(([slug, hub]) => {
                   setDoc(doc(firestoreDb, 'taxi_hubs', slug), cleanFirestoreData(hub), { merge: true }).catch(() => {});
                 });
@@ -1188,7 +1113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubCurrencies = onSnapshot(collection(firestoreDb, 'currencies'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (!globalQuotaExhausted) {
+              if (auth?.currentUser && !globalQuotaExhausted) {
                 Object.entries(CURRENCIES).forEach(([code, config]) => {
                   setDoc(doc(firestoreDb, 'currencies', code), cleanFirestoreData(config), { merge: true }).catch(() => {});
                 });
@@ -1214,7 +1139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubServices = onSnapshot(collection(firestoreDb, 'services'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (!globalQuotaExhausted) {
+              if (auth?.currentUser && !globalQuotaExhausted) {
                 INITIAL_SERVICES.forEach((s) => {
                   setDoc(doc(firestoreDb, 'services', s.id), cleanFirestoreData(s), { merge: true }).catch(() => {});
                 });
@@ -1240,7 +1165,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubAreas = onSnapshot(collection(firestoreDb, 'serviceAreas'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (!globalQuotaExhausted) {
+              if (auth?.currentUser && !globalQuotaExhausted) {
                 INITIAL_SERVICE_AREAS.forEach((a) => {
                   setDoc(doc(firestoreDb, 'serviceAreas', a.id), cleanFirestoreData(a), { merge: true }).catch(() => {});
                 });
@@ -1277,6 +1202,105 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           unsub();
         } catch {}
       });
+    };
+  }, []);
+
+  // Dedicated, isolated Public Vehicles Fleet Sync (Firestore + Server Cache fallback, no admin login required)
+  useEffect(() => {
+    let isMounted = true;
+    let unsubVehicles: (() => void) | undefined;
+
+    const loadServerFleetFallback = async () => {
+      try {
+        const res = await fetch('/api/public/vehicles');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!isMounted || hasLiveFirestoreVehiclesRef.current) return;
+        if (data && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+          const normalized = sortVehiclesByDisplayOrder(
+            data.vehicles
+              .filter((v: any) => v && typeof v.id === 'string')
+              .map((v: any) => normalizeVehicleRecord(v))
+          );
+          if (normalized.length > 0) {
+            setVehicles(normalized);
+            saveStorage(KEYS.VEHICLES, normalized);
+          }
+        }
+      } catch {}
+    };
+
+    // Hydrate from server fleet cache immediately if Firestore hasn't delivered yet
+    loadServerFleetFallback();
+
+    const firestoreDb = db;
+    if (!isFirebaseConfigured || !firestoreDb || globalQuotaExhausted) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const attachVehiclesListener = async () => {
+      try {
+        const { doc, collection, onSnapshot, setDoc } = await import('firebase/firestore');
+        if (!isMounted) return;
+        unsubVehicles = onSnapshot(
+          collection(firestoreDb, 'vehicles'),
+          (snap) => {
+            if (!isMounted) return;
+            if (snap.empty) {
+              if (auth?.currentUser && !globalQuotaExhausted) {
+                INITIAL_VEHICLES.forEach((v) => {
+                  const normalized = normalizeVehicleRecord(v);
+                  setDoc(doc(firestoreDb, 'vehicles', normalized.id), cleanFirestoreData(normalized)).catch(() => {});
+                });
+              }
+              return;
+            }
+            const liveVehicles: Vehicle[] = [];
+            snap.forEach((d) => {
+              liveVehicles.push(normalizeVehicleRecord({ ...(d.data() as Vehicle), id: d.id }));
+            });
+            if (liveVehicles.length > 0) {
+              hasLiveFirestoreVehiclesRef.current = true;
+              const sorted = sortVehiclesByDisplayOrder(liveVehicles);
+              setVehicles(sorted);
+              saveStorage(KEYS.VEHICLES, sorted);
+              fetch('/api/fleet/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vehicles: sorted }),
+              }).catch(() => {});
+            }
+          },
+          (err) => {
+            if (isFirestoreQuotaExhausted(err)) {
+              globalQuotaExhausted = true;
+              setFirestoreQuotaExhausted(true);
+            } else {
+              console.warn('[Firestore Vehicles Warning]:', err);
+            }
+            loadServerFleetFallback();
+          }
+        );
+      } catch (e) {
+        if (isFirestoreQuotaExhausted(e)) {
+          globalQuotaExhausted = true;
+          setFirestoreQuotaExhausted(true);
+        }
+        loadServerFleetFallback();
+      }
+    };
+
+    attachVehiclesListener();
+
+    return () => {
+      isMounted = false;
+      if (unsubVehicles) {
+        try {
+          unsubVehicles();
+        } catch {}
+      }
     };
   }, []);
 
@@ -1824,12 +1848,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Vehicles
+  const syncFleetToServerCache = (nextVehicles: Vehicle[]) => {
+    fetch('/api/fleet/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vehicles: nextVehicles }),
+    }).catch(() => {});
+  };
+
   const addVehicle = async (vehicleInput: Omit<Vehicle, 'id'>): Promise<Vehicle> => {
     const id = `veh-${Date.now()}`;
-    const newVehicle: Vehicle = {
+    const newVehicle: Vehicle = normalizeVehicleRecord({
       ...vehicleInput,
       id,
-    };
+    });
 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
@@ -1847,8 +1879,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setVehicles((prev) => {
-      const next = [newVehicle, ...prev];
+      const next = sortVehiclesByDisplayOrder([...prev, newVehicle]);
       saveStorage(KEYS.VEHICLES, next);
+      syncFleetToServerCache(next);
       try {
         window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
       } catch {}
@@ -1859,30 +1892,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateVehicle = async (vehicle: Vehicle) => {
+    const normalizedVehicle = normalizeVehicleRecord(vehicle);
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
         const { doc, setDoc } = await import('firebase/firestore');
-        await setDoc(doc(firestoreDb, 'vehicles', vehicle.id), cleanFirestoreData({ ...vehicle }), { merge: true });
-        console.info(`[Galle Taxi] Vehicle ${vehicle.id} saved to Cloud Firestore.`);
+        await setDoc(doc(firestoreDb, 'vehicles', normalizedVehicle.id), cleanFirestoreData({ ...normalizedVehicle }), { merge: true });
+        console.info(`[Galle Taxi] Vehicle ${normalizedVehicle.id} saved to Cloud Firestore.`);
       } catch (e: any) {
         if (isFirestoreQuotaExhausted(e)) {
-          console.warn(`[Galle Taxi Quota Notice] Firestore daily write quota reached on project 'galle-taxi'. Vehicle ${vehicle.id} saved to local storage and active in app.`);
+          console.warn(`[Galle Taxi Quota Notice] Firestore daily write quota reached on project 'galle-taxi'. Vehicle ${normalizedVehicle.id} saved to local storage and active in app.`);
         } else {
           console.error('Vehicle update error in Firestore:', e);
         }
       }
     }
     setVehicles((prev) => {
-      const exists = prev.some((v) => v.id === vehicle.id);
-      const next = exists ? prev.map((v) => (v.id === vehicle.id ? vehicle : v)) : [vehicle, ...prev];
+      const exists = prev.some((v) => v.id === normalizedVehicle.id);
+      const updatedList = exists
+        ? prev.map((v) => (v.id === normalizedVehicle.id ? normalizedVehicle : v))
+        : [...prev, normalizedVehicle];
+      const next = sortVehiclesByDisplayOrder(updatedList);
       saveStorage(KEYS.VEHICLES, next);
+      syncFleetToServerCache(next);
       try {
         window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
       } catch {}
       return next;
     });
-    recordAudit('VEHICLE_UPDATED', vehicle.id, `Updated vehicle: ${vehicle.name}`);
+    recordAudit('VEHICLE_UPDATED', normalizedVehicle.id, `Updated vehicle: ${normalizedVehicle.name}`);
   };
 
   const deleteVehicle = async (id: string) => {
@@ -1902,8 +1940,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
     setVehicles((prev) => {
-      const next = prev.filter((v) => v.id !== id);
+      const next = sortVehiclesByDisplayOrder(prev.filter((v) => v.id !== id));
       saveStorage(KEYS.VEHICLES, next);
+      syncFleetToServerCache(next);
       try {
         window.dispatchEvent(new CustomEvent('galle_taxi_vehicle_updated', { detail: next }));
       } catch {}
@@ -2419,8 +2458,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetToSampleData = () => {
+    const normalizedDefaultVehicles = sortVehiclesByDisplayOrder(
+      INITIAL_VEHICLES.map((v) => normalizeVehicleRecord(v))
+    );
     setDrivers(INITIAL_DRIVERS);
-    setVehicles(INITIAL_VEHICLES);
+    setVehicles(normalizedDefaultVehicles);
+    saveStorage(KEYS.VEHICLES, normalizedDefaultVehicles);
+    syncFleetToServerCache(normalizedDefaultVehicles);
     setServices(INITIAL_SERVICES);
     setServiceAreas(INITIAL_SERVICE_AREAS);
     setFareRules(INITIAL_FARE_RULES);
