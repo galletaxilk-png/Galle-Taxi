@@ -172,8 +172,6 @@ interface AppContextType {
 
   // Maintenance & Cloud Diagnostics
   resetToSampleData: () => void;
-  firestoreQuotaExhausted: boolean;
-  clearQuotaStatus: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -263,31 +261,6 @@ function cleanExcessStorage() {
     }
   } catch {}
 }
-
-/**
- * Checks if a Firestore operation failed due to Spark free tier quota exhaustion (50,000 reads or 20,000 writes/day)
- */
-export function isFirestoreQuotaExhausted(err: any): boolean {
-  if (!err) return false;
-  const code = String(err.code || '');
-  const msg = String(err.message || '');
-  return (
-    code === 'resource-exhausted' ||
-    code === 'quota-exceeded' ||
-    code.includes('resource-exhausted') ||
-    msg.includes('Quota exceeded') ||
-    msg.includes('Quota limit exceeded') ||
-    msg.includes('resource-exhausted') ||
-    msg.includes('RESOURCE_EXHAUSTED') ||
-    msg.includes('Free daily read units per project') ||
-    msg.includes('Free daily write units per project') ||
-    msg.includes('quota')
-  );
-}
-
-// In-memory circuit breaker to prevent repeated listener spamming when daily free quota is exceeded
-let globalQuotaExhausted = false;
-let globalQuotaLogged = false;
 
 function normalizeImageUrl(url: string | undefined): string {
   if (!url || typeof url !== 'string') return '';
@@ -503,24 +476,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [currency, setCurrencyState] = useState<CurrencyCode>(() => loadStorage<CurrencyCode>(KEYS.CURRENCY, 'LKR'));
 
-  // Cloud Firestore Status - Project is active on Blaze Billing Plan with active credits
-  const [firestoreQuotaExhausted, setFirestoreQuotaExhausted] = useState<boolean>(() => {
-    try {
-      sessionStorage.removeItem('galletaxi_quota_exhausted');
-    } catch {}
-    return false;
-  });
-
-  const clearQuotaStatus = () => {
-    globalQuotaExhausted = false;
-    globalQuotaLogged = false;
-    try {
-      sessionStorage.removeItem('galletaxi_quota_exhausted');
-    } catch {}
-    setFirestoreQuotaExhausted(false);
-    window.location.reload();
-  };
-
   const setCurrency = (newCurrency: CurrencyCode) => {
     setCurrencyState(newCurrency);
     saveStorage(KEYS.CURRENCY, newCurrency);
@@ -583,6 +538,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Proactive storage cleanup on initialization and tour event sync
   useEffect(() => {
     cleanExcessStorage();
+    try {
+      sessionStorage.removeItem('galletaxi_quota_exhausted');
+    } catch {}
 
     const handleTourUpdated = (e: any) => {
       if (e?.detail && e.detail.id) {
@@ -839,7 +797,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
    */
   useEffect(() => {
     const firestoreDb = db;
-    if (!isFirebaseConfigured || !firestoreDb || globalQuotaExhausted) return;
+    if (!isFirebaseConfigured || !firestoreDb) return;
     let isMounted = true;
 
     const attachToursListener = async () => {
@@ -904,18 +862,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               saveStorage(KEYS.TOURS, mergedTours);
             }
 
-            // If Firestore is missing any of the baseline tours, seed them seamlessly if not in quota fallback
-            if (isFirebaseConfigured && firestoreDb && !globalQuotaExhausted) {
+            // Seed missing baseline tours when authenticated admin is connected
+            if (isFirebaseConfigured && firestoreDb && auth?.currentUser) {
               for (const baseTour of PRIVATE_DAY_TOURS) {
                 if (!firestoreToursMap.has(baseTour.id) && !deletedTourIds.includes(baseTour.id)) {
                   try {
                     await setDoc(doc(firestoreDb, 'tours', baseTour.id), cleanFirestoreData(baseTour), { merge: true });
                   } catch (seedErr) {
-                    if (isFirestoreQuotaExhausted(seedErr)) {
-                      globalQuotaExhausted = true;
-                      setFirestoreQuotaExhausted(true);
-                      break;
-                    }
                     console.warn(`[Galle Taxi] Notice seeding tour ${baseTour.id}:`, seedErr);
                   }
                 }
@@ -923,18 +876,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
           },
           (err) => {
-            if (isFirestoreQuotaExhausted(err)) {
-              globalQuotaExhausted = true;
-              try {
-                sessionStorage.setItem('galletaxi_quota_exhausted', 'true');
-              } catch {}
-              setFirestoreQuotaExhausted(true);
-              if (!globalQuotaLogged) {
-                console.info('[Galle Taxi Cloud Notice] Firebase Free Tier daily read quota (50,000 reads/day) reached for project "galle-taxi". Seamlessly serving local & cached fleet/tour data.');
-                globalQuotaLogged = true;
-              }
-              return;
-            }
             console.warn('[Firestore Tours Warning]:', err);
           }
         );
@@ -987,7 +928,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.addEventListener('galle_taxi_vehicle_updated', handleVehCustomEvent);
 
     const firestoreDb = db;
-    if (!isFirebaseConfigured || !firestoreDb || globalQuotaExhausted) {
+    if (!isFirebaseConfigured || !firestoreDb) {
       return () => {
         window.removeEventListener('storage', handleStorageChange);
         window.removeEventListener('galle_taxi_fare_rules_updated', handleFareCustomEvent);
@@ -997,30 +938,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     let isMounted = true;
     const unsubs: (() => void)[] = [];
-
-    const handleQuotaExhausted = (err: any): boolean => {
-      if (isFirestoreQuotaExhausted(err)) {
-        globalQuotaExhausted = true;
-        try {
-          sessionStorage.setItem('galletaxi_quota_exhausted', 'true');
-        } catch {}
-        setFirestoreQuotaExhausted(true);
-        if (!globalQuotaLogged) {
-          console.info(
-            '[Galle Taxi Cloud Notice] Firebase Free Tier daily read quota (50,000 reads/day) reached on project "galle-taxi". Operating in seamless local/cached storage fallback mode. Booking system remains 100% functional.'
-          );
-          globalQuotaLogged = true;
-        }
-        // Unsubscribe all active listeners immediately to halt further failed network requests
-        unsubs.forEach((unsub) => {
-          try {
-            unsub();
-          } catch {}
-        });
-        return true;
-      }
-      return false;
-    };
 
     const attachListeners = async () => {
       try {
@@ -1034,17 +951,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               const data = docSnap.data() as FareRules;
               setFareRules(data);
               saveStorage(KEYS.FARES, data);
-            } else if (auth?.currentUser && !globalQuotaExhausted) {
+            } else if (auth?.currentUser) {
               setDoc(doc(firestoreDb, 'fareRules', 'current'), cleanFirestoreData(INITIAL_FARE_RULES)).catch((err) => {
-                if (!isFirestoreQuotaExhausted(err)) console.warn('[Galle Taxi] Notice auto-seeding fareRules:', err);
+                console.warn('[Galle Taxi] Notice auto-seeding fareRules:', err);
               });
             }
           }, (err) => {
-            if (!handleQuotaExhausted(err)) console.warn('[Firestore FareRules Warning]:', err);
+            console.warn('[Firestore FareRules Warning]:', err);
           });
           unsubs.push(unsubFare);
         } catch (e) {
-          if (!handleQuotaExhausted(e)) console.warn('Error attaching fareRules listener:', e);
+          console.warn('Error attaching fareRules listener:', e);
         }
 
         // 3. Real-time Site Settings Sync (Hero image, seasonal banner, contact numbers, branding)
@@ -1061,17 +978,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 saveStorage(KEYS.SETTINGS, merged);
                 return merged;
               });
-            } else if (auth?.currentUser && !globalQuotaExhausted) {
+            } else if (auth?.currentUser) {
               setDoc(doc(firestoreDb, 'siteSettings', 'current'), cleanFirestoreData(INITIAL_SITE_SETTINGS)).catch((err) => {
-                if (!isFirestoreQuotaExhausted(err)) console.warn('[Galle Taxi] Notice auto-seeding siteSettings:', err);
+                console.warn('[Galle Taxi] Notice auto-seeding siteSettings:', err);
               });
             }
           }, (err) => {
-            if (!handleQuotaExhausted(err)) console.warn('[Firestore SiteSettings Warning]:', err);
+            console.warn('[Firestore SiteSettings Warning]:', err);
           });
           unsubs.push(unsubSettings);
         } catch (e) {
-          if (!handleQuotaExhausted(e)) console.warn('Error attaching siteSettings listener:', e);
+          console.warn('Error attaching siteSettings listener:', e);
         }
 
         // 4. Real-time Southern Coast Taxi Hubs Sync (Routes, town fares, images, attractions)
@@ -1079,7 +996,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubHubs = onSnapshot(collection(firestoreDb, 'taxi_hubs'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (auth?.currentUser && !globalQuotaExhausted) {
+              if (auth?.currentUser) {
                 Object.entries(TOWNS_DATA).forEach(([slug, hub]) => {
                   setDoc(doc(firestoreDb, 'taxi_hubs', slug), cleanFirestoreData(hub), { merge: true }).catch(() => {});
                 });
@@ -1101,11 +1018,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               return merged;
             });
           }, (err) => {
-            if (!handleQuotaExhausted(err)) console.warn('[Firestore TaxiHubs Warning]:', err);
+            console.warn('[Firestore TaxiHubs Warning]:', err);
           });
           unsubs.push(unsubHubs);
         } catch (e) {
-          if (!handleQuotaExhausted(e)) console.warn('Error attaching taxiHubs listener:', e);
+          console.warn('Error attaching taxiHubs listener:', e);
         }
 
         // 5. Real-time Currencies & Live Exchange Rates Sync
@@ -1113,7 +1030,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubCurrencies = onSnapshot(collection(firestoreDb, 'currencies'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (auth?.currentUser && !globalQuotaExhausted) {
+              if (auth?.currentUser) {
                 Object.entries(CURRENCIES).forEach(([code, config]) => {
                   setDoc(doc(firestoreDb, 'currencies', code), cleanFirestoreData(config), { merge: true }).catch(() => {});
                 });
@@ -1127,11 +1044,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setCurrencies(liveCurrencies);
             saveStorage(KEYS.CURRENCIES_LIST, liveCurrencies);
           }, (err) => {
-            if (!handleQuotaExhausted(err)) console.warn('[Firestore Currencies Warning]:', err);
+            console.warn('[Firestore Currencies Warning]:', err);
           });
           unsubs.push(unsubCurrencies);
         } catch (e) {
-          if (!handleQuotaExhausted(e)) console.warn('Error attaching currencies listener:', e);
+          console.warn('Error attaching currencies listener:', e);
         }
 
         // 6. Real-time Services Catalog Sync
@@ -1139,7 +1056,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubServices = onSnapshot(collection(firestoreDb, 'services'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (auth?.currentUser && !globalQuotaExhausted) {
+              if (auth?.currentUser) {
                 INITIAL_SERVICES.forEach((s) => {
                   setDoc(doc(firestoreDb, 'services', s.id), cleanFirestoreData(s), { merge: true }).catch(() => {});
                 });
@@ -1153,11 +1070,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               saveStorage(KEYS.SERVICES, liveServices);
             }
           }, (err) => {
-            if (!handleQuotaExhausted(err)) console.warn('[Firestore Services Warning]:', err);
+            console.warn('[Firestore Services Warning]:', err);
           });
           unsubs.push(unsubServices);
         } catch (e) {
-          if (!handleQuotaExhausted(e)) console.warn('Error attaching services listener:', e);
+          console.warn('Error attaching services listener:', e);
         }
 
         // 7. Real-time Service Areas Coverage Sync
@@ -1165,7 +1082,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const unsubAreas = onSnapshot(collection(firestoreDb, 'serviceAreas'), (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (auth?.currentUser && !globalQuotaExhausted) {
+              if (auth?.currentUser) {
                 INITIAL_SERVICE_AREAS.forEach((a) => {
                   setDoc(doc(firestoreDb, 'serviceAreas', a.id), cleanFirestoreData(a), { merge: true }).catch(() => {});
                 });
@@ -1179,14 +1096,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               saveStorage(KEYS.AREAS, liveAreas);
             }
           }, (err) => {
-            if (!handleQuotaExhausted(err)) console.warn('[Firestore ServiceAreas Warning]:', err);
+            console.warn('[Firestore ServiceAreas Warning]:', err);
           });
           unsubs.push(unsubAreas);
         } catch (e) {
-          if (!handleQuotaExhausted(e)) console.warn('Error attaching serviceAreas listener:', e);
+          console.warn('Error attaching serviceAreas listener:', e);
         }
       } catch (err) {
-        if (!handleQuotaExhausted(err)) console.warn('Real-time database listener registration error:', err);
+        console.warn('Real-time database listener registration error:', err);
       }
     };
 
@@ -1234,7 +1151,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loadServerFleetFallback();
 
     const firestoreDb = db;
-    if (!isFirebaseConfigured || !firestoreDb || globalQuotaExhausted) {
+    if (!isFirebaseConfigured || !firestoreDb) {
       return () => {
         isMounted = false;
       };
@@ -1249,7 +1166,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           (snap) => {
             if (!isMounted) return;
             if (snap.empty) {
-              if (auth?.currentUser && !globalQuotaExhausted) {
+              if (auth?.currentUser) {
                 INITIAL_VEHICLES.forEach((v) => {
                   const normalized = normalizeVehicleRecord(v);
                   setDoc(doc(firestoreDb, 'vehicles', normalized.id), cleanFirestoreData(normalized)).catch(() => {});
@@ -1274,20 +1191,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
           },
           (err) => {
-            if (isFirestoreQuotaExhausted(err)) {
-              globalQuotaExhausted = true;
-              setFirestoreQuotaExhausted(true);
-            } else {
-              console.warn('[Firestore Vehicles Warning]:', err);
-            }
+            console.warn('[Firestore Vehicles Warning]:', err);
             loadServerFleetFallback();
           }
         );
       } catch (e) {
-        if (isFirestoreQuotaExhausted(e)) {
-          globalQuotaExhausted = true;
-          setFirestoreQuotaExhausted(true);
-        }
+        console.warn('[Firestore Vehicles Listener Error]:', e);
         loadServerFleetFallback();
       }
     };
@@ -1870,11 +1779,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await setDoc(doc(firestoreDb, 'vehicles', id), cleanFirestoreData(newVehicle));
         console.info(`[Galle Taxi] Vehicle ${id} added to Cloud Firestore.`);
       } catch (e: any) {
-        if (isFirestoreQuotaExhausted(e)) {
-          console.warn(`[Galle Taxi Quota Notice] Firestore daily write quota reached on project 'galle-taxi'. Vehicle ${id} saved to local storage.`);
-        } else {
-          console.error('Vehicle write error:', e);
-        }
+        console.error('Vehicle write error:', e);
       }
     }
 
@@ -1900,11 +1805,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await setDoc(doc(firestoreDb, 'vehicles', normalizedVehicle.id), cleanFirestoreData({ ...normalizedVehicle }), { merge: true });
         console.info(`[Galle Taxi] Vehicle ${normalizedVehicle.id} saved to Cloud Firestore.`);
       } catch (e: any) {
-        if (isFirestoreQuotaExhausted(e)) {
-          console.warn(`[Galle Taxi Quota Notice] Firestore daily write quota reached on project 'galle-taxi'. Vehicle ${normalizedVehicle.id} saved to local storage and active in app.`);
-        } else {
-          console.error('Vehicle update error in Firestore:', e);
-        }
+        console.error('Vehicle update error in Firestore:', e);
       }
     }
     setVehicles((prev) => {
@@ -1932,11 +1833,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await deleteDoc(doc(firestoreDb, 'vehicles', id));
         console.info(`[Galle Taxi] Vehicle ${id} removed from Cloud Firestore.`);
       } catch (e: any) {
-        if (isFirestoreQuotaExhausted(e)) {
-          console.warn(`[Galle Taxi Quota Notice] Firestore daily write quota reached. Vehicle ${id} removed from local storage.`);
-        } else {
-          console.error('Vehicle delete error in Firestore:', e);
-        }
+        console.error('Vehicle delete error in Firestore:', e);
       }
     }
     setVehicles((prev) => {
@@ -1968,10 +1865,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await setDoc(doc(firestoreDb, 'fareRules', 'current'), cleanFirestoreData(rules));
         console.info('[Galle Taxi] Fare rules saved to Cloud Firestore.');
       } catch (e: any) {
-        if (isFirestoreQuotaExhausted(e)) {
-          console.warn('[Galle Taxi Quota Notice] Firestore daily write quota limit reached (20,000 writes/day on Spark plan). Fare rules have been safely saved to local persistent storage and updated live on the website.');
-          return;
-        }
         console.error('Fare rules write error:', e);
         throw e;
       }
@@ -1986,11 +1879,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await setDoc(doc(firestoreDb, 'siteSettings', 'current'), cleanFirestoreData(settings));
         console.info('[Galle Taxi] Site settings saved to Cloud Firestore.');
       } catch (e: any) {
-        if (isFirestoreQuotaExhausted(e)) {
-          console.warn('[Galle Taxi Quota Notice] Firestore daily write quota reached on project "galle-taxi". Site settings saved to local storage and active in app.');
-        } else {
-          console.error('Site settings write error:', e);
-        }
+        console.error('Site settings write error:', e);
       }
     }
     setSiteSettings(settings);
@@ -2694,8 +2583,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       resetTaxiHubs,
       uploadHubImage,
       resetToSampleData,
-      firestoreQuotaExhausted,
-      clearQuotaStatus,
     }),
     [
       bookings,
@@ -2715,7 +2602,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isFirestoreSyncing,
       firestoreError,
       firebaseProjectId,
-      firestoreQuotaExhausted,
     ]
   );
 

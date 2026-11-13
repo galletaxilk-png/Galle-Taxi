@@ -1,6 +1,6 @@
 /**
  * Galle Taxi - Firebase Client Configuration
- * Provisioned for project "galle-taxi" with named Firestore Database.
+ * Provisioned for project "galle-taxi" (Blaze Plan - unlimited Cloud Firestore reads/writes) with named Firestore Database.
  */
 
 import { initializeApp, getApps, FirebaseApp, deleteApp } from 'firebase/app';

@@ -370,7 +370,7 @@ export const AdminSettings: React.FC = () => {
           </ol>
         </div>
 
-        {/* Firestore Daily Write Quota & Database Plan Management */}
+        {/* Firebase Blaze Plan & Cloud Firestore Persistence */}
         <div className="bg-[#0B0B0D] p-5 rounded-xl border border-[#27272A] space-y-4 text-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#1F1F23]">
             <div className="flex items-center gap-2">
@@ -395,29 +395,19 @@ export const AdminSettings: React.FC = () => {
                 <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 font-mono border border-emerald-800/60">Active With Credits</span>
               </div>
               <p className="text-slate-300 text-[11px] leading-relaxed">
-                Your Firebase project <code className="text-[#F5B91B] font-mono px-1 py-0.5 rounded bg-black/40">galle-taxi</code> is active on the Blaze (pay as you go) plan. Daily quota caps are lifted with unlimited document writes and reads supported.
+                Firebase project <code className="text-[#F5B91B] font-mono px-1 py-0.5 rounded bg-black/40">galle-taxi</code> operates on the Blaze billing plan with active credits, supporting unlimited real-time Cloud Firestore reads, writes, and live traffic.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-[#141416] border border-[#27272A] space-y-2 opacity-75">
+            <div className="p-3.5 rounded-xl bg-[#141416] border border-[#27272A] space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Spark Plan (Previous Tier)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">Replaced</span>
+                <span className="text-[11px] font-bold text-[#F5B91B] uppercase tracking-wider">Real-Time Cloud Sync</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-[#F5B91B]/10 text-[#F5B91B] font-mono border border-[#F5B91B]/30">Unrestricted</span>
               </div>
-              <p className="text-slate-400 text-[11px] leading-relaxed">
-                The Spark free tier limit of 50,000 daily read units is no longer restricting traffic. First 20,000 writes and 50,000 reads remain completely free daily under Google Cloud terms.
+              <p className="text-slate-300 text-[11px] leading-relaxed">
+                Bookings, vehicles, tours, hubs, fare rules, and site settings synchronize continuously with Cloud Firestore and cross-tab local cache for zero-downtime operation.
               </p>
             </div>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-[#141416]/80 border border-[#27272A] space-y-1.5">
-            <div className="flex items-center gap-2 text-emerald-400 text-[11px] font-bold">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-              <span>Offline &amp; Quota-Resilient Persistence Active</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Our system is built with automatic quota-exhaustion resilience. If Firestore daily write units are reached, data is safely saved to persistent browser storage, synchronized across open tabs, and live on the website without interruption.
-            </p>
           </div>
         </div>
       </div>

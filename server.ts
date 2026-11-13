@@ -1121,7 +1121,7 @@ app.post('/api/upload-hub-image', (req, res) => {
 /**
  * Public Fleet Cache Endpoints (/api/public/vehicles & /api/fleet/sync)
  * Keeps a persistent server-side copy of admin-managed vehicles in /public/uploads/fleet-cache.json
- * so unauthenticated public visitors always receive live fleet data even if Firestore quota is hit.
+ * for instant initial public fleet hydration alongside live Cloud Firestore sync.
  */
 const fleetCachePath = path.resolve(uploadsDir, 'fleet-cache.json');
 
