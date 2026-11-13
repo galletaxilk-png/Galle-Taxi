@@ -1,6 +1,7 @@
 /**
  * Galle Taxi - Firebase Client Configuration
- * Provisioned for project "galle-taxi" (Blaze Plan - unlimited Cloud Firestore reads/writes) with named Firestore Database.
+ * Provisioned for project "galle-taxi" (Blaze Plan - unlimited Cloud Firestore reads/writes)
+ * connected explicitly to the standard (default) Firestore database instance.
  */
 
 import { initializeApp, getApps, FirebaseApp, deleteApp } from 'firebase/app';
@@ -8,6 +9,8 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, doc, getDocFromServer, collection, getDocs, limit, query, serverTimestamp } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import bundledConfig from '../../firebase-applet-config.json';
+
+export const FIRESTORE_DATABASE_ID = '(default)';
 
 export interface FirebaseWebConfig {
   apiKey: string;
@@ -71,6 +74,7 @@ export function isValidFirebaseApiKey(key?: string | null): boolean {
  * 1. Provisioned firebase-applet-config.json (bundled with app)
  * 2. Stored custom credentials in localStorage
  * 3. Environment variables
+ * Always targets the standard (default) Firestore database instance so all collections stay unified.
  */
 export function getStoredFirebaseConfig(): FirebaseWebConfig | null {
   // 1. Check bundled configuration first (from ProvisionFirebase)
@@ -82,7 +86,7 @@ export function getStoredFirebaseConfig(): FirebaseWebConfig | null {
       storageBucket: bundledConfig.storageBucket || `${bundledConfig.projectId || 'galle-taxi'}.firebasestorage.app`,
       messagingSenderId: bundledConfig.messagingSenderId || undefined,
       appId: bundledConfig.appId || undefined,
-      firestoreDatabaseId: bundledConfig.firestoreDatabaseId || undefined,
+      firestoreDatabaseId: FIRESTORE_DATABASE_ID,
     };
   }
 
@@ -100,7 +104,7 @@ export function getStoredFirebaseConfig(): FirebaseWebConfig | null {
           storageBucket: parsed.storageBucket || `${pId}.firebasestorage.app`,
           messagingSenderId: parsed.messagingSenderId || undefined,
           appId: parsed.appId || undefined,
-          firestoreDatabaseId: parsed.firestoreDatabaseId || undefined,
+          firestoreDatabaseId: FIRESTORE_DATABASE_ID,
         };
       }
     }
@@ -120,7 +124,7 @@ export function getStoredFirebaseConfig(): FirebaseWebConfig | null {
       storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || `${envProjectId}.firebasestorage.app`,
       messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || undefined,
       appId: import.meta.env.VITE_FIREBASE_APP_ID || undefined,
-      firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined,
+      firestoreDatabaseId: FIRESTORE_DATABASE_ID,
     };
   }
 
@@ -161,9 +165,9 @@ function initFirebase() {
 
       auth = getAuth(app);
 
-      // CRITICAL: Connect to named database instance if defined in config
-      const dbId = cfg.firestoreDatabaseId || cfg.databaseId;
-      db = dbId ? getFirestore(app, dbId) : getFirestore(app);
+      // Explicitly connect to the standard (default) Cloud Firestore database instance
+      // so vehicles, fareRules, siteSettings, tours, taxi_hubs, and bookings share one unified DB.
+      db = getFirestore(app);
 
       try {
         storage = getStorage(app);
@@ -179,7 +183,7 @@ function initFirebase() {
           ? 'storage'
           : 'env';
 
-      console.info(`[Galle Taxi] Connected to Firebase project "${cfg.projectId}" (DB: ${dbId || 'default'}).`);
+      console.info(`[Galle Taxi] Connected to Firebase project "${cfg.projectId}" (Firestore Database: ${FIRESTORE_DATABASE_ID}).`);
 
       // Validate connection to Firestore as mandated by skill
       validateFirestoreConnection(db);
@@ -208,7 +212,7 @@ function initFirebase() {
 async function validateFirestoreConnection(firestoreInstance: Firestore) {
   try {
     await getDocFromServer(doc(firestoreInstance, 'test', 'connection'));
-    console.info('[Galle Taxi] Firestore connection validated successfully.');
+    console.info('[Galle Taxi] Firestore (default) connection validated successfully.');
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
       console.error('Please check your Firebase configuration.');
@@ -237,7 +241,7 @@ export async function saveFirebaseWebConfig(config: FirebaseWebConfig): Promise<
       storageBucket: (config.storageBucket || `${config.projectId || 'galle-taxi'}.firebasestorage.app`).trim(),
       messagingSenderId: config.messagingSenderId?.trim(),
       appId: config.appId?.trim(),
-      firestoreDatabaseId: config.firestoreDatabaseId?.trim(),
+      firestoreDatabaseId: FIRESTORE_DATABASE_ID,
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
@@ -259,11 +263,11 @@ export async function saveFirebaseWebConfig(config: FirebaseWebConfig): Promise<
       appId: sanitized.appId,
     });
     auth = getAuth(app);
-    const dbId = sanitized.firestoreDatabaseId || sanitized.databaseId;
-    db = dbId ? getFirestore(app, dbId) : getFirestore(app);
+    db = getFirestore(app);
     storage = getStorage(app);
     isConfigured = true;
     configSource = 'storage';
+    validateFirestoreConnection(db);
     return true;
   } catch (err) {
     console.warn('[Galle Taxi] Failed to apply new Firebase config:', err);
@@ -299,6 +303,7 @@ export async function testFirestoreConnection(): Promise<{
   success: boolean;
   message: string;
   projectId: string;
+  databaseId: string;
   latencyMs?: number;
   error?: string;
 }> {
@@ -309,6 +314,7 @@ export async function testFirestoreConnection(): Promise<{
     return {
       success: false,
       projectId,
+      databaseId: FIRESTORE_DATABASE_ID,
       message: `Firebase is not configured yet for project "${projectId}". Enter your Web App API Key to connect.`,
     };
   }
@@ -321,8 +327,9 @@ export async function testFirestoreConnection(): Promise<{
     return {
       success: true,
       projectId,
+      databaseId: FIRESTORE_DATABASE_ID,
       latencyMs,
-      message: `Successfully connected to Cloud Firestore on project "${projectId}" (${latencyMs}ms response time).`,
+      message: `Successfully connected to Cloud Firestore ${FIRESTORE_DATABASE_ID} on project "${projectId}" (${latencyMs}ms response time).`,
     };
   } catch (err: any) {
     const latencyMs = Date.now() - startTime;
@@ -331,8 +338,9 @@ export async function testFirestoreConnection(): Promise<{
       return {
         success: true, // Backend reached, rules actively protecting data
         projectId,
+        databaseId: FIRESTORE_DATABASE_ID,
         latencyMs,
-        message: `Firestore is active and rules are enforcing security (permission-denied for unauthenticated query as expected).`,
+        message: `Firestore ${FIRESTORE_DATABASE_ID} is active and rules are enforcing security (permission-denied for unauthenticated query as expected).`,
       };
     } else if (err?.code === 'unavailable') {
       errorExplanation = 'Could not reach Firestore backend. Verify your internet connection and Firebase project status.';
@@ -344,6 +352,7 @@ export async function testFirestoreConnection(): Promise<{
     return {
       success: false,
       projectId,
+      databaseId: FIRESTORE_DATABASE_ID,
       latencyMs,
       message: errorExplanation,
       error: err?.code || err?.message,

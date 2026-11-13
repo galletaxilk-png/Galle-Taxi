@@ -1004,8 +1004,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (!isMounted) return;
             if (docSnap.exists()) {
               const data = docSnap.data() as FareRules;
-              setFareRules(data);
-              saveStorage(KEYS.FARES, data);
+              const mergedFareRules: FareRules = {
+                ...INITIAL_FARE_RULES,
+                ...data,
+                categoryPricingTiers: {
+                  ...DEFAULT_CATEGORY_TIERS,
+                  ...(data?.categoryPricingTiers || {}),
+                },
+              };
+              setFareRules(mergedFareRules);
+              saveStorage(KEYS.FARES, mergedFareRules);
             } else if (auth?.currentUser) {
               setDoc(doc(firestoreDb, 'fareRules', 'current'), cleanFirestoreData(INITIAL_FARE_RULES)).catch((err) => {
                 console.warn('[Galle Taxi] Notice auto-seeding fareRules:', err);

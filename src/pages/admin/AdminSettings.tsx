@@ -19,7 +19,7 @@ import {
   Send,
 } from 'lucide-react';
 import { useApp } from '../../lib/store';
-import { getStoredFirebaseConfig, FirebaseWebConfig } from '../../lib/firebase';
+import { getStoredFirebaseConfig, FirebaseWebConfig, FIRESTORE_DATABASE_ID } from '../../lib/firebase';
 
 export const AdminSettings: React.FC = () => {
   const {
@@ -175,7 +175,9 @@ export const AdminSettings: React.FC = () => {
             </div>
             <div>
               <h2 className="text-base font-bold text-white font-['Outfit']">Cloud Firestore Status</h2>
-              <p className="text-xs text-slate-400 font-mono">Target Project: {firebaseProjectId}</p>
+              <p className="text-xs text-slate-400 font-mono">
+                Target Project: {firebaseProjectId} &bull; Database: {FIRESTORE_DATABASE_ID}
+              </p>
             </div>
           </div>
 
@@ -405,7 +407,7 @@ export const AdminSettings: React.FC = () => {
                 <span className="text-[10px] px-2 py-0.5 rounded bg-[#F5B91B]/10 text-[#F5B91B] font-mono border border-[#F5B91B]/30">Unrestricted</span>
               </div>
               <p className="text-slate-300 text-[11px] leading-relaxed">
-                Bookings, vehicles, tours, hubs, fare rules, and site settings synchronize continuously with Cloud Firestore and cross-tab local cache for zero-downtime operation.
+                Bookings, vehicles, tours, hubs, fare rules, and site settings synchronize in real time against the standard <code className="text-[#F5B91B] font-mono px-1 py-0.5 rounded bg-black/40">{FIRESTORE_DATABASE_ID}</code> Cloud Firestore database instance for unified admin and public updates.
               </p>
             </div>
           </div>
