@@ -536,12 +536,15 @@ export const Home: React.FC = () => {
             const suvPrice =
               route.suvPrice !== undefined && route.suvPrice > 0
                 ? route.suvPrice
-                : Math.round(route.sedanPrice * 1.35);
-            const kdhFlatPrice = route.vanPrice;
+                : (route.categoryPrices?.['SUV CAR'] || route.categoryPrices?.['SUV'] || Math.round(route.sedanPrice * 1.35));
+            const kdhFlatPrice =
+              (route.vanPrice !== undefined && route.vanPrice > 0)
+                ? route.vanPrice
+                : (route.categoryPrices?.['KDH FLAT ROOF'] || route.categoryPrices?.['Van'] || Math.round(route.sedanPrice * 1.25));
             const kdhHighPrice =
               (route.luxuryPrice !== undefined && route.luxuryPrice > 0)
                 ? route.luxuryPrice
-                : (route.categoryPrices?.['KDH HIGH ROOF'] || route.categoryPrices?.['KDH High Roof'] || Math.round(route.vanPrice * 1.15));
+                : (route.categoryPrices?.['KDH HIGH ROOF'] || route.categoryPrices?.['KDH High Roof'] || route.categoryPrices?.['Luxury'] || Math.round(kdhFlatPrice * 1.15));
 
             return (
               <div
@@ -669,12 +672,15 @@ export const Home: React.FC = () => {
                   const suvPrice =
                     route.suvPrice !== undefined && route.suvPrice > 0
                       ? route.suvPrice
-                      : Math.round(route.sedanPrice * 1.35);
-                  const kdhFlatPrice = route.vanPrice;
+                      : (route.categoryPrices?.['SUV CAR'] || route.categoryPrices?.['SUV'] || Math.round(route.sedanPrice * 1.35));
+                  const kdhFlatPrice =
+                    (route.vanPrice !== undefined && route.vanPrice > 0)
+                      ? route.vanPrice
+                      : (route.categoryPrices?.['KDH FLAT ROOF'] || route.categoryPrices?.['Van'] || Math.round(route.sedanPrice * 1.25));
                   const kdhHighPrice =
                     (route.luxuryPrice !== undefined && route.luxuryPrice > 0)
                       ? route.luxuryPrice
-                      : (route.categoryPrices?.['KDH HIGH ROOF'] || route.categoryPrices?.['KDH High Roof'] || Math.round(route.vanPrice * 1.15));
+                      : (route.categoryPrices?.['KDH HIGH ROOF'] || route.categoryPrices?.['KDH High Roof'] || route.categoryPrices?.['Luxury'] || Math.round(kdhFlatPrice * 1.15));
 
                   return (
                     <tr key={route.id} className="hover:bg-[#1B1B1F] transition-colors">

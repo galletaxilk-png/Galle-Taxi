@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { Vehicle } from '../types';
-import { calculateAuthoritativeFare, formatLKR } from '../lib/fareEngine';
+import { calculateAuthoritativeFare, formatLKR, resolveCategoryPricingTiers } from '../lib/fareEngine';
 import { calculateRouteDistance, RouteDistanceResult } from '../lib/routeDistanceService';
 import {
   getActivePublicVehicles,
@@ -253,13 +253,11 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
     return sourceVehicles.map((v) => {
       const matchedSpec = CAROUSEL_SPECS.find((s) => s.id === v.id);
 
-      const categoryTiers =
-        (fareRules.categoryPricingTiers && fareRules.categoryPricingTiers[v.category]) ||
-        v.pricingTiers;
+      const categoryTiers = resolveCategoryPricingTiers(v.category, fareRules, v.pricingTiers);
 
       const dynamicPricePerKm =
-        v.pricePerKm ||
         (categoryTiers && categoryTiers.find((t) => t.ratePerKm > 0)?.ratePerKm) ||
+        v.pricePerKm ||
         ((v.category as string) === 'Mini Car'
           ? 190
           : (v.category as string) === 'SEDAN CAR' || (v.category as string) === 'Sedan'

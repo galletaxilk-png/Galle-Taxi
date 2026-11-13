@@ -112,15 +112,23 @@ export const AdminFares: React.FC = () => {
     fareRules: currentRules,
   });
 
-  // Keep categoryTiers & fixedRoutes in sync if fareRules update from store/Firestore (only when not actively editing)
+  // Keep all fare rule state fields in sync if fareRules update from store/Firestore (only when not actively editing)
   React.useEffect(() => {
-    if (!hasUnsavedChanges && fareRules.categoryPricingTiers && Object.keys(fareRules.categoryPricingTiers).length > 0) {
-      setCategoryTiers(fareRules.categoryPricingTiers);
+    if (!hasUnsavedChanges) {
+      setBaseFare(fareRules.baseFare || 0);
+      setPerKmRate(fareRules.perKmRate || 240);
+      setMinimumFare(fareRules.minimumFare || 1000);
+      setWaitingPerHour(fareRules.waitingPerHour || 1000);
+      setNightSurchargePercent(fareRules.nightSurchargePercent || 15);
+      setAdditionalStopCharge(fareRules.additionalStopCharge || 1000);
+      if (fareRules.categoryPricingTiers && Object.keys(fareRules.categoryPricingTiers).length > 0) {
+        setCategoryTiers(fareRules.categoryPricingTiers);
+      }
+      if (fareRules.fixedRoutes && fareRules.fixedRoutes.length > 0) {
+        setFixedRoutes(fareRules.fixedRoutes);
+      }
     }
-    if (fareRules.fixedRoutes && fareRules.fixedRoutes.length > 0) {
-      setFixedRoutes(fareRules.fixedRoutes);
-    }
-  }, [fareRules.categoryPricingTiers, fareRules.fixedRoutes, hasUnsavedChanges]);
+  }, [fareRules, hasUnsavedChanges]);
 
   // Comprehensive alias normalizer ensuring all variants are updated synchronously
   const synchronizeAllTierAliases = (

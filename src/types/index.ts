@@ -162,6 +162,7 @@ export interface SiteSettings {
   seasonalBannerSubtitle?: string;
   seasonalBannerLink?: string;
   isSeasonalBannerVisible?: boolean;
+  deletedTourIds?: string[];
 }
 
 export interface AuditLog {

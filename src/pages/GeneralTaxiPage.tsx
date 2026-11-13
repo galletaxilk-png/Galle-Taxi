@@ -141,8 +141,23 @@ const GENERAL_TAXI_FAQS = [
 ];
 
 export const GeneralTaxiPage: React.FC = () => {
-  const { vehicles, siteSettings, formatFare } = useApp();
+  const { vehicles, fareRules, siteSettings, formatFare } = useApp();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  const popularRoutes: PopularRoute[] = React.useMemo(() => {
+    if (fareRules.fixedRoutes && fareRules.fixedRoutes.length > 0) {
+      return fareRules.fixedRoutes.map((r) => ({
+        from: r.from,
+        to: r.to,
+        duration: r.estimatedDuration || 'Direct Transfer',
+        distanceKm: r.estimatedDistanceKm || 0,
+        sedanLkr: r.sedanPrice,
+        vanLkr: r.vanPrice,
+        highlight: r.description || `${r.from} to ${r.to} private AC transfer`,
+      }));
+    }
+    return POPULAR_COASTAL_ROUTES;
+  }, [fareRules.fixedRoutes]);
 
   // SEO Meta Title, Meta Description, Social Cards & Schema.org Structured Data
   useEffect(() => {
@@ -286,7 +301,7 @@ export const GeneralTaxiPage: React.FC = () => {
           hasOfferCatalog: {
             '@type': 'OfferCatalog',
             name: 'Popular Coastal and Intercity Taxi Routes',
-            itemListElement: POPULAR_COASTAL_ROUTES.map((route) => ({
+            itemListElement: popularRoutes.map((route) => ({
               '@type': 'Offer',
               itemOffered: {
                 '@type': 'Service',
@@ -326,7 +341,7 @@ export const GeneralTaxiPage: React.FC = () => {
         existingScript.remove();
       }
     };
-  }, [siteSettings.businessName, siteSettings.phone, siteSettings.address]);
+  }, [siteSettings.businessName, siteSettings.phone, siteSettings.address, popularRoutes]);
 
   // Quick Book parameters
   const [selectedPickup, setSelectedPickup] = useState('Galle Dutch Fort');
@@ -584,7 +599,7 @@ export const GeneralTaxiPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#27272A]/70">
-                {POPULAR_COASTAL_ROUTES.map((route, idx) => (
+                {popularRoutes.map((route, idx) => (
                   <tr key={idx} className="hover:bg-[#1A1A1E] transition-colors">
                     <td className="py-4 px-4 sm:px-6">
                       <div className="font-bold text-white text-sm font-['Outfit'] flex items-center gap-1.5">

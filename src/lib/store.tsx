@@ -357,11 +357,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (loaded && Array.isArray(loaded) && loaded.length > 0) {
       return sortVehiclesByDisplayOrder(loaded.map((v) => normalizeVehicleRecord(v)));
     }
-    const normalizedInitial = sortVehiclesByDisplayOrder(
+    return sortVehiclesByDisplayOrder(
       INITIAL_VEHICLES.map((v) => normalizeVehicleRecord(v))
     );
-    saveStorage(KEYS.VEHICLES, normalizedInitial);
-    return normalizedInitial;
   });
   const hasLiveFirestoreVehiclesRef = useRef(false);
   const [services, setServices] = useState<Service[]>(() => {
@@ -496,23 +494,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const activeConfig = getStoredFirebaseConfig();
   const firebaseProjectId = activeConfig?.projectId || 'galle-taxi';
 
-  // Sync state changes to storage
+  const isInitialStorageMountRef = useRef(true);
+
+  // Sync state changes to storage (skip first mount when Firebase is active so stale static defaults are never persisted)
   useEffect(() => {
-    // Only cache local bookings when Firebase is offline
     if (!isFirebaseConfigured) {
       saveStorage(KEYS.BOOKINGS, bookings);
     }
   }, [bookings]);
 
-  useEffect(() => saveStorage(KEYS.DRIVERS, drivers), [drivers]);
-  useEffect(() => saveStorage(KEYS.VEHICLES, vehicles), [vehicles]);
-  useEffect(() => saveStorage(KEYS.SERVICES, services), [services]);
-  useEffect(() => saveStorage(KEYS.AREAS, serviceAreas), [serviceAreas]);
-  useEffect(() => saveStorage(KEYS.FARES, fareRules), [fareRules]);
-  useEffect(() => saveStorage(KEYS.SETTINGS, siteSettings), [siteSettings]);
-  useEffect(() => saveStorage(KEYS.AUDIT, auditLogs), [auditLogs]);
-  useEffect(() => saveStorage(KEYS.CURRENCIES_LIST, currencies), [currencies]);
-  useEffect(() => saveStorage(KEYS.TOURS, tours), [tours]);
+  useEffect(() => {
+    if (isInitialStorageMountRef.current) {
+      isInitialStorageMountRef.current = false;
+      if (isFirebaseConfigured) {
+        return;
+      }
+    }
+    saveStorage(KEYS.DRIVERS, drivers);
+    saveStorage(KEYS.VEHICLES, vehicles);
+    saveStorage(KEYS.SERVICES, services);
+    saveStorage(KEYS.AREAS, serviceAreas);
+    saveStorage(KEYS.FARES, fareRules);
+    saveStorage(KEYS.SETTINGS, siteSettings);
+    saveStorage(KEYS.AUDIT, auditLogs);
+    saveStorage(KEYS.CURRENCIES_LIST, currencies);
+    saveStorage(KEYS.TOURS, tours);
+  }, [drivers, vehicles, services, serviceAreas, fareRules, siteSettings, auditLogs, currencies, tours]);
 
   // Clean up legacy temporary keys on boot and listen for tour updates
   useEffect(() => {
@@ -815,7 +822,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   /**
    * Real-time Firestore Sync for Day Tours CMS
-   * Syncs live tours and pricing dynamically to the public website and admin console.
+   * Eagerly fetches live server documents and attaches a real-time listener so new visitors
+   * immediately see the exact same tours, images, pricing, and publish status as the Admin Console.
    */
   useEffect(() => {
     const firestoreDb = db;
@@ -824,79 +832,101 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const attachToursListener = async () => {
       try {
-        const { collection, onSnapshot, doc, setDoc } = await import('firebase/firestore');
-        // Query fetches all documents from the tours collection without restrictive limits or incorrect filters
+        const { collection, onSnapshot, doc, setDoc, getDocsFromServer, getDocs, getDocFromServer, getDoc } = await import('firebase/firestore');
         const toursCol = collection(firestoreDb, 'tours');
+        const settingsDocRef = doc(firestoreDb, 'siteSettings', 'current');
+
+        const getDeletedIds = async (): Promise<string[]> => {
+          const ids = new Set<string>();
+          try {
+            const raw = localStorage.getItem('galletaxi_v1_deleted_tours');
+            const parsed = raw ? JSON.parse(raw) : [];
+            if (Array.isArray(parsed)) parsed.forEach((id) => ids.add(id));
+          } catch {}
+          if (Array.isArray(siteSettings.deletedTourIds)) {
+            siteSettings.deletedTourIds.forEach((id) => ids.add(id));
+          }
+          try {
+            const settingsSnap = await getDocFromServer(settingsDocRef).catch(() => getDoc(settingsDocRef));
+            if (settingsSnap.exists()) {
+              const remoteDeleted = (settingsSnap.data() as Partial<SiteSettings>)?.deletedTourIds;
+              if (Array.isArray(remoteDeleted)) {
+                remoteDeleted.forEach((id) => ids.add(id));
+              }
+            }
+          } catch {}
+          return Array.from(ids);
+        };
+
+        const processToursSnapshot = async (snapshot: any, allowAdminSeed = false) => {
+          if (!isMounted) return;
+          const deletedTourIds = await getDeletedIds();
+
+          const firestoreToursMap = new Map<string, DayTourProduct>();
+          snapshot.forEach((docSnap: any) => {
+            const d = docSnap.data();
+            if (d && docSnap.id && !(d as any).isDeleted) {
+              firestoreToursMap.set(docSnap.id, {
+                ...(d as DayTourProduct),
+                id: docSnap.id,
+              });
+            }
+          });
+
+          const mergedMap = new Map<string, DayTourProduct>();
+
+          // 1. Custom & Firestore-managed tours first if Firestore has updates, keeping deterministic baseline merge
+          PRIVATE_DAY_TOURS.forEach((baseTour) => {
+            if (!deletedTourIds.includes(baseTour.id)) {
+              if (firestoreToursMap.has(baseTour.id)) {
+                mergedMap.set(baseTour.id, {
+                  ...baseTour,
+                  ...firestoreToursMap.get(baseTour.id)!,
+                });
+              } else {
+                mergedMap.set(baseTour.id, { ...baseTour });
+              }
+            }
+          });
+
+          // 2. Custom day tours created in Firestore
+          firestoreToursMap.forEach((fTour, fId) => {
+            if (!deletedTourIds.includes(fId) && !mergedMap.has(fId)) {
+              mergedMap.set(fId, fTour);
+            }
+          });
+
+          const mergedTours = Array.from(mergedMap.values());
+
+          if (mergedTours.length > 0) {
+            setTours(mergedTours);
+            saveStorage(KEYS.TOURS, mergedTours);
+          }
+
+          if (allowAdminSeed && auth?.currentUser) {
+            for (const baseTour of PRIVATE_DAY_TOURS) {
+              if (!firestoreToursMap.has(baseTour.id) && !deletedTourIds.includes(baseTour.id)) {
+                try {
+                  await setDoc(doc(firestoreDb, 'tours', baseTour.id), cleanFirestoreData(baseTour), { merge: true });
+                } catch (seedErr) {
+                  console.warn(`[Galle Taxi] Notice seeding tour ${baseTour.id}:`, seedErr);
+                }
+              }
+            }
+          }
+        };
+
+        // Eager live server fetch so brand-new visitors never stall on stale static defaults
+        getDocsFromServer(toursCol)
+          .catch(() => getDocs(toursCol))
+          .then((serverSnap) => {
+            if (serverSnap) processToursSnapshot(serverSnap, false);
+          })
+          .catch(() => {});
+
         const unsub = onSnapshot(
           toursCol,
-          async (snapshot) => {
-            if (!isMounted) return;
-
-            // Retrieve any deliberately deleted tour IDs
-            const deletedTourIds: string[] = (() => {
-              try {
-                const raw = localStorage.getItem('galletaxi_v1_deleted_tours');
-                return raw ? JSON.parse(raw) : [];
-              } catch {
-                return [];
-              }
-            })();
-
-            const firestoreToursMap = new Map<string, DayTourProduct>();
-            snapshot.forEach((docSnap) => {
-              const d = docSnap.data();
-              if (d && docSnap.id) {
-                firestoreToursMap.set(docSnap.id, {
-                  ...(d as DayTourProduct),
-                  id: docSnap.id,
-                });
-              }
-            });
-
-            // Merge all baseline tours with live Firestore data
-            const mergedMap = new Map<string, DayTourProduct>();
-
-            // 1. Baseline day tours (Galle, Ella, Udawalawe, Yala, Bentota)
-            PRIVATE_DAY_TOURS.forEach((baseTour) => {
-              if (!deletedTourIds.includes(baseTour.id)) {
-                if (firestoreToursMap.has(baseTour.id)) {
-                  mergedMap.set(baseTour.id, {
-                    ...baseTour,
-                    ...firestoreToursMap.get(baseTour.id)!,
-                  });
-                } else {
-                  mergedMap.set(baseTour.id, { ...baseTour });
-                }
-              }
-            });
-
-            // 2. Custom day tours created in Firestore
-            firestoreToursMap.forEach((fTour, fId) => {
-              if (!deletedTourIds.includes(fId) && !mergedMap.has(fId)) {
-                mergedMap.set(fId, fTour);
-              }
-            });
-
-            const mergedTours = Array.from(mergedMap.values());
-
-            if (mergedTours.length > 0) {
-              setTours(mergedTours);
-              saveStorage(KEYS.TOURS, mergedTours);
-            }
-
-            // Seed missing baseline tours when authenticated admin is connected
-            if (isFirebaseConfigured && firestoreDb && auth?.currentUser) {
-              for (const baseTour of PRIVATE_DAY_TOURS) {
-                if (!firestoreToursMap.has(baseTour.id) && !deletedTourIds.includes(baseTour.id)) {
-                  try {
-                    await setDoc(doc(firestoreDb, 'tours', baseTour.id), cleanFirestoreData(baseTour), { merge: true });
-                  } catch (seedErr) {
-                    console.warn(`[Galle Taxi] Notice seeding tour ${baseTour.id}:`, seedErr);
-                  }
-                }
-              }
-            }
-          },
+          (snapshot) => processToursSnapshot(snapshot, true),
           (err) => {
             console.warn('[Firestore Tours Warning]:', err);
           }
@@ -996,171 +1026,254 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const attachListeners = async () => {
       try {
-        const { doc, collection, onSnapshot, setDoc } = await import('firebase/firestore');
+        const { doc, collection, onSnapshot, setDoc, getDocFromServer, getDocsFromServer, getDoc, getDocs } = await import('firebase/firestore');
 
-        // 1. Real-time Fare Rules Sync
+        // 1. Real-time Fare Rules Sync (Server Bootstrap + Live Listener)
+        const fareDocRef = doc(firestoreDb, 'fareRules', 'current');
+        const applyFareRulesSnapshot = (docSnap: any, allowSeed = false) => {
+          if (!isMounted) return;
+          if (docSnap.exists()) {
+            const data = docSnap.data() as FareRules;
+            const mergedFareRules: FareRules = {
+              ...INITIAL_FARE_RULES,
+              ...data,
+              fixedRoutes: Array.isArray(data?.fixedRoutes) ? data.fixedRoutes : INITIAL_FARE_RULES.fixedRoutes,
+              categoryPricingTiers: {
+                ...DEFAULT_CATEGORY_TIERS,
+                ...(data?.categoryPricingTiers || {}),
+              },
+            };
+            setFareRules(mergedFareRules);
+            saveStorage(KEYS.FARES, mergedFareRules);
+          } else if (allowSeed && auth?.currentUser) {
+            setDoc(fareDocRef, cleanFirestoreData(INITIAL_FARE_RULES)).catch((err) => {
+              console.warn('[Galle Taxi] Notice auto-seeding fareRules:', err);
+            });
+          }
+        };
+
+        getDocFromServer(fareDocRef)
+          .catch(() => getDoc(fareDocRef))
+          .then((snap) => snap && applyFareRulesSnapshot(snap, false))
+          .catch(() => {});
+
         try {
-          const unsubFare = onSnapshot(doc(firestoreDb, 'fareRules', 'current'), (docSnap) => {
-            if (!isMounted) return;
-            if (docSnap.exists()) {
-              const data = docSnap.data() as FareRules;
-              const mergedFareRules: FareRules = {
-                ...INITIAL_FARE_RULES,
-                ...data,
-                categoryPricingTiers: {
-                  ...DEFAULT_CATEGORY_TIERS,
-                  ...(data?.categoryPricingTiers || {}),
-                },
-              };
-              setFareRules(mergedFareRules);
-              saveStorage(KEYS.FARES, mergedFareRules);
-            } else if (auth?.currentUser) {
-              setDoc(doc(firestoreDb, 'fareRules', 'current'), cleanFirestoreData(INITIAL_FARE_RULES)).catch((err) => {
-                console.warn('[Galle Taxi] Notice auto-seeding fareRules:', err);
-              });
+          const unsubFare = onSnapshot(
+            fareDocRef,
+            (docSnap) => applyFareRulesSnapshot(docSnap, true),
+            (err) => {
+              console.warn('[Firestore FareRules Warning]:', err);
             }
-          }, (err) => {
-            console.warn('[Firestore FareRules Warning]:', err);
-          });
+          );
           unsubs.push(unsubFare);
         } catch (e) {
           console.warn('Error attaching fareRules listener:', e);
         }
 
         // 3. Real-time Site Settings Sync (Hero image, seasonal banner, contact numbers, branding)
-        try {
-          const unsubSettings = onSnapshot(doc(firestoreDb, 'siteSettings', 'current'), (docSnap) => {
-            if (!isMounted) return;
-            if (docSnap.exists()) {
-              const data = docSnap.data() as Partial<SiteSettings>;
-              setSiteSettings((prev) => {
-                const merged: SiteSettings = {
-                  ...prev,
-                  ...data,
-                };
-                saveStorage(KEYS.SETTINGS, merged);
-                return merged;
-              });
-            } else if (auth?.currentUser) {
-              setDoc(doc(firestoreDb, 'siteSettings', 'current'), cleanFirestoreData(INITIAL_SITE_SETTINGS)).catch((err) => {
-                console.warn('[Galle Taxi] Notice auto-seeding siteSettings:', err);
+        const settingsDocRef = doc(firestoreDb, 'siteSettings', 'current');
+        const applySettingsSnapshot = (docSnap: any, allowSeed = false) => {
+          if (!isMounted) return;
+          if (docSnap.exists()) {
+            const data = docSnap.data() as Partial<SiteSettings>;
+            setSiteSettings((prev) => {
+              const merged: SiteSettings = {
+                ...INITIAL_SITE_SETTINGS,
+                ...prev,
+                ...data,
+              };
+              saveStorage(KEYS.SETTINGS, merged);
+              return merged;
+            });
+            if (Array.isArray(data?.deletedTourIds) && data.deletedTourIds.length > 0) {
+              setTours((prev) => {
+                const filtered = prev.filter((t) => !data.deletedTourIds!.includes(t.id));
+                if (filtered.length !== prev.length) {
+                  saveStorage(KEYS.TOURS, filtered);
+                }
+                return filtered;
               });
             }
-          }, (err) => {
-            console.warn('[Firestore SiteSettings Warning]:', err);
-          });
+          } else if (allowSeed && auth?.currentUser) {
+            setDoc(settingsDocRef, cleanFirestoreData(INITIAL_SITE_SETTINGS)).catch((err) => {
+              console.warn('[Galle Taxi] Notice auto-seeding siteSettings:', err);
+            });
+          }
+        };
+
+        getDocFromServer(settingsDocRef)
+          .catch(() => getDoc(settingsDocRef))
+          .then((snap) => snap && applySettingsSnapshot(snap, false))
+          .catch(() => {});
+
+        try {
+          const unsubSettings = onSnapshot(
+            settingsDocRef,
+            (docSnap) => applySettingsSnapshot(docSnap, true),
+            (err) => {
+              console.warn('[Firestore SiteSettings Warning]:', err);
+            }
+          );
           unsubs.push(unsubSettings);
         } catch (e) {
           console.warn('Error attaching siteSettings listener:', e);
         }
 
         // 4. Real-time Southern Coast Taxi Hubs Sync (Routes, town fares, images, attractions)
-        try {
-          const unsubHubs = onSnapshot(collection(firestoreDb, 'taxi_hubs'), (snap) => {
-            if (!isMounted) return;
-            if (snap.empty) {
-              if (auth?.currentUser) {
-                Object.entries(TOWNS_DATA).forEach(([slug, hub]) => {
-                  setDoc(doc(firestoreDb, 'taxi_hubs', slug), cleanFirestoreData(hub), { merge: true }).catch(() => {});
-                });
-              }
-              return;
-            }
-            setTaxiHubs((prev) => {
-              const merged = { ...prev };
-              snap.forEach((d) => {
-                const hubData = d.data() as TownTaxiConfig;
-                merged[d.id] = {
-                  ...(merged[d.id] || {}),
-                  ...hubData,
-                  slug: d.id,
-                };
-                TOWNS_DATA[d.id] = merged[d.id];
+        const hubsColRef = collection(firestoreDb, 'taxi_hubs');
+        const applyHubsSnapshot = (snap: any, allowSeed = false) => {
+          if (!isMounted) return;
+          if (snap.empty) {
+            if (allowSeed && auth?.currentUser) {
+              Object.entries(TOWNS_DATA).forEach(([slug, hub]) => {
+                setDoc(doc(firestoreDb, 'taxi_hubs', slug), cleanFirestoreData(hub), { merge: true }).catch(() => {});
               });
-              saveStorage(KEYS.TAXI_HUBS, merged);
-              return merged;
+            }
+            return;
+          }
+          setTaxiHubs((prev) => {
+            const merged = { ...TOWNS_DATA, ...prev };
+            snap.forEach((d: any) => {
+              const hubData = d.data() as TownTaxiConfig;
+              merged[d.id] = {
+                ...(merged[d.id] || {}),
+                ...hubData,
+                slug: d.id,
+              };
+              TOWNS_DATA[d.id] = merged[d.id];
             });
-          }, (err) => {
-            console.warn('[Firestore TaxiHubs Warning]:', err);
+            saveStorage(KEYS.TAXI_HUBS, merged);
+            return merged;
           });
+        };
+
+        getDocsFromServer(hubsColRef)
+          .catch(() => getDocs(hubsColRef))
+          .then((snap) => snap && applyHubsSnapshot(snap, false))
+          .catch(() => {});
+
+        try {
+          const unsubHubs = onSnapshot(
+            hubsColRef,
+            (snap) => applyHubsSnapshot(snap, true),
+            (err) => {
+              console.warn('[Firestore TaxiHubs Warning]:', err);
+            }
+          );
           unsubs.push(unsubHubs);
         } catch (e) {
           console.warn('Error attaching taxiHubs listener:', e);
         }
 
         // 5. Real-time Currencies & Live Exchange Rates Sync
-        try {
-          const unsubCurrencies = onSnapshot(collection(firestoreDb, 'currencies'), (snap) => {
-            if (!isMounted) return;
-            if (snap.empty) {
-              if (auth?.currentUser) {
-                Object.entries(CURRENCIES).forEach(([code, config]) => {
-                  setDoc(doc(firestoreDb, 'currencies', code), cleanFirestoreData(config), { merge: true }).catch(() => {});
-                });
-              }
-              return;
+        const currenciesColRef = collection(firestoreDb, 'currencies');
+        const applyCurrenciesSnapshot = (snap: any, allowSeed = false) => {
+          if (!isMounted) return;
+          if (snap.empty) {
+            if (allowSeed && auth?.currentUser) {
+              Object.entries(CURRENCIES).forEach(([code, config]) => {
+                setDoc(doc(firestoreDb, 'currencies', code), cleanFirestoreData(config), { merge: true }).catch(() => {});
+              });
             }
-            const liveCurrencies: Record<string, CurrencyConfig> = { ...CURRENCIES };
-            snap.forEach((d) => {
-              liveCurrencies[d.id] = d.data() as CurrencyConfig;
-            });
-            setCurrencies(liveCurrencies);
-            saveStorage(KEYS.CURRENCIES_LIST, liveCurrencies);
-          }, (err) => {
-            console.warn('[Firestore Currencies Warning]:', err);
+            return;
+          }
+          const liveCurrencies: Record<string, CurrencyConfig> = { ...CURRENCIES };
+          snap.forEach((d: any) => {
+            liveCurrencies[d.id] = d.data() as CurrencyConfig;
           });
+          setCurrencies(liveCurrencies);
+          saveStorage(KEYS.CURRENCIES_LIST, liveCurrencies);
+        };
+
+        getDocsFromServer(currenciesColRef)
+          .catch(() => getDocs(currenciesColRef))
+          .then((snap) => snap && applyCurrenciesSnapshot(snap, false))
+          .catch(() => {});
+
+        try {
+          const unsubCurrencies = onSnapshot(
+            currenciesColRef,
+            (snap) => applyCurrenciesSnapshot(snap, true),
+            (err) => {
+              console.warn('[Firestore Currencies Warning]:', err);
+            }
+          );
           unsubs.push(unsubCurrencies);
         } catch (e) {
           console.warn('Error attaching currencies listener:', e);
         }
 
         // 6. Real-time Services Catalog Sync
+        const servicesColRef = collection(firestoreDb, 'services');
+        const applyServicesSnapshot = (snap: any, allowSeed = false) => {
+          if (!isMounted) return;
+          if (snap.empty) {
+            if (allowSeed && auth?.currentUser) {
+              INITIAL_SERVICES.forEach((s) => {
+                setDoc(doc(firestoreDb, 'services', s.id), cleanFirestoreData(s), { merge: true }).catch(() => {});
+              });
+            }
+            return;
+          }
+          const liveServices: Service[] = [];
+          snap.forEach((d: any) => liveServices.push({ ...(d.data() as Service), id: d.id }));
+          if (liveServices.length > 0) {
+            setServices(liveServices);
+            saveStorage(KEYS.SERVICES, liveServices);
+          }
+        };
+
+        getDocsFromServer(servicesColRef)
+          .catch(() => getDocs(servicesColRef))
+          .then((snap) => snap && applyServicesSnapshot(snap, false))
+          .catch(() => {});
+
         try {
-          const unsubServices = onSnapshot(collection(firestoreDb, 'services'), (snap) => {
-            if (!isMounted) return;
-            if (snap.empty) {
-              if (auth?.currentUser) {
-                INITIAL_SERVICES.forEach((s) => {
-                  setDoc(doc(firestoreDb, 'services', s.id), cleanFirestoreData(s), { merge: true }).catch(() => {});
-                });
-              }
-              return;
+          const unsubServices = onSnapshot(
+            servicesColRef,
+            (snap) => applyServicesSnapshot(snap, true),
+            (err) => {
+              console.warn('[Firestore Services Warning]:', err);
             }
-            const liveServices: Service[] = [];
-            snap.forEach((d) => liveServices.push({ ...(d.data() as Service), id: d.id }));
-            if (liveServices.length > 0) {
-              setServices(liveServices);
-              saveStorage(KEYS.SERVICES, liveServices);
-            }
-          }, (err) => {
-            console.warn('[Firestore Services Warning]:', err);
-          });
+          );
           unsubs.push(unsubServices);
         } catch (e) {
           console.warn('Error attaching services listener:', e);
         }
 
         // 7. Real-time Service Areas Coverage Sync
+        const areasColRef = collection(firestoreDb, 'serviceAreas');
+        const applyAreasSnapshot = (snap: any, allowSeed = false) => {
+          if (!isMounted) return;
+          if (snap.empty) {
+            if (allowSeed && auth?.currentUser) {
+              INITIAL_SERVICE_AREAS.forEach((a) => {
+                setDoc(doc(firestoreDb, 'serviceAreas', a.id), cleanFirestoreData(a), { merge: true }).catch(() => {});
+              });
+            }
+            return;
+          }
+          const liveAreas: ServiceArea[] = [];
+          snap.forEach((d: any) => liveAreas.push({ ...(d.data() as ServiceArea), id: d.id }));
+          if (liveAreas.length > 0) {
+            setServiceAreas(liveAreas);
+            saveStorage(KEYS.AREAS, liveAreas);
+          }
+        };
+
+        getDocsFromServer(areasColRef)
+          .catch(() => getDocs(areasColRef))
+          .then((snap) => snap && applyAreasSnapshot(snap, false))
+          .catch(() => {});
+
         try {
-          const unsubAreas = onSnapshot(collection(firestoreDb, 'serviceAreas'), (snap) => {
-            if (!isMounted) return;
-            if (snap.empty) {
-              if (auth?.currentUser) {
-                INITIAL_SERVICE_AREAS.forEach((a) => {
-                  setDoc(doc(firestoreDb, 'serviceAreas', a.id), cleanFirestoreData(a), { merge: true }).catch(() => {});
-                });
-              }
-              return;
+          const unsubAreas = onSnapshot(
+            areasColRef,
+            (snap) => applyAreasSnapshot(snap, true),
+            (err) => {
+              console.warn('[Firestore ServiceAreas Warning]:', err);
             }
-            const liveAreas: ServiceArea[] = [];
-            snap.forEach((d) => liveAreas.push({ ...(d.data() as ServiceArea), id: d.id }));
-            if (liveAreas.length > 0) {
-              setServiceAreas(liveAreas);
-              saveStorage(KEYS.AREAS, liveAreas);
-            }
-          }, (err) => {
-            console.warn('[Firestore ServiceAreas Warning]:', err);
-          });
+          );
           unsubs.push(unsubAreas);
         } catch (e) {
           console.warn('Error attaching serviceAreas listener:', e);
@@ -1189,12 +1302,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Dedicated, isolated Public Vehicles Fleet Sync (Firestore + Server Cache fallback, no admin login required)
+  // Dedicated, isolated Public Vehicles Fleet Sync (Live Cloud Firestore server fetch + real-time listener; no admin login required)
   useEffect(() => {
     let isMounted = true;
     let unsubVehicles: (() => void) | undefined;
 
     const loadServerFleetFallback = async () => {
+      if (hasLiveFirestoreVehiclesRef.current) return;
       try {
         const res = await fetch('/api/public/vehicles');
         if (!res.ok) return;
@@ -1214,11 +1328,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {}
     };
 
-    // Hydrate from server fleet cache immediately if Firestore hasn't delivered yet
-    loadServerFleetFallback();
-
     const firestoreDb = db;
     if (!isFirebaseConfigured || !firestoreDb) {
+      // Only fall back to local API cache when Firebase is not configured
+      loadServerFleetFallback();
       return () => {
         isMounted = false;
       };
@@ -1226,45 +1339,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const attachVehiclesListener = async () => {
       try {
-        const { doc, collection, onSnapshot, setDoc } = await import('firebase/firestore');
+        const { doc, collection, onSnapshot, setDoc, getDocsFromServer, getDocs } = await import('firebase/firestore');
         if (!isMounted) return;
-        unsubVehicles = onSnapshot(
-          collection(firestoreDb, 'vehicles'),
-          (snap) => {
-            if (!isMounted) return;
-            if (snap.empty) {
-              if (auth?.currentUser) {
-                INITIAL_VEHICLES.forEach((v) => {
-                  const normalized = normalizeVehicleRecord(v);
-                  setDoc(doc(firestoreDb, 'vehicles', normalized.id), cleanFirestoreData(normalized)).catch(() => {});
-                });
-              }
-              return;
+        const vehiclesColRef = collection(firestoreDb, 'vehicles');
+
+        const applyVehiclesSnapshot = (snap: any, allowSeed = false) => {
+          if (!isMounted) return;
+          if (snap.empty) {
+            if (allowSeed && auth?.currentUser) {
+              INITIAL_VEHICLES.forEach((v) => {
+                const normalized = normalizeVehicleRecord(v);
+                setDoc(doc(firestoreDb, 'vehicles', normalized.id), cleanFirestoreData(normalized)).catch(() => {});
+              });
             }
-            const liveVehicles: Vehicle[] = [];
-            snap.forEach((d) => {
-              liveVehicles.push(normalizeVehicleRecord({ ...(d.data() as Vehicle), id: d.id }));
-            });
-            if (liveVehicles.length > 0) {
-              hasLiveFirestoreVehiclesRef.current = true;
-              const sorted = sortVehiclesByDisplayOrder(liveVehicles);
-              setVehicles(sorted);
-              saveStorage(KEYS.VEHICLES, sorted);
+            return;
+          }
+          const liveVehicles: Vehicle[] = [];
+          snap.forEach((d: any) => {
+            liveVehicles.push(normalizeVehicleRecord({ ...(d.data() as Vehicle), id: d.id }));
+          });
+          if (liveVehicles.length > 0) {
+            hasLiveFirestoreVehiclesRef.current = true;
+            const sorted = sortVehiclesByDisplayOrder(liveVehicles);
+            setVehicles(sorted);
+            saveStorage(KEYS.VEHICLES, sorted);
+            if (auth?.currentUser) {
               fetch('/api/fleet/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ vehicles: sorted }),
               }).catch(() => {});
             }
-          },
+          }
+        };
+
+        // Eagerly fetch directly from Cloud Firestore server so new visitors immediately receive live vehicles
+        getDocsFromServer(vehiclesColRef)
+          .catch(() => getDocs(vehiclesColRef))
+          .then((serverSnap) => serverSnap && applyVehiclesSnapshot(serverSnap, false))
+          .catch(() => {});
+
+        unsubVehicles = onSnapshot(
+          vehiclesColRef,
+          (snap) => applyVehiclesSnapshot(snap, true),
           (err) => {
             console.warn('[Firestore Vehicles Warning]:', err);
-            loadServerFleetFallback();
+            if (!hasLiveFirestoreVehiclesRef.current) {
+              loadServerFleetFallback();
+            }
           }
         );
       } catch (e) {
         console.warn('[Firestore Vehicles Listener Error]:', e);
-        loadServerFleetFallback();
+        if (!hasLiveFirestoreVehiclesRef.current) {
+          loadServerFleetFallback();
+        }
       }
     };
 
@@ -2063,25 +2192,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Day Tours CMS
   const fetchTours = async (): Promise<DayTourProduct[]> => {
     const firestoreDb = db;
-    const deletedTourIds: string[] = (() => {
-      try {
-        const raw = localStorage.getItem('galletaxi_v1_deleted_tours');
-        return raw ? JSON.parse(raw) : [];
-      } catch {
-        return [];
-      }
-    })();
+    const deletedSet = new Set<string>();
+    try {
+      const raw = localStorage.getItem('galletaxi_v1_deleted_tours');
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) parsed.forEach((id) => deletedSet.add(id));
+    } catch {}
+    if (Array.isArray(siteSettings.deletedTourIds)) {
+      siteSettings.deletedTourIds.forEach((id) => deletedSet.add(id));
+    }
 
     const firestoreToursMap = new Map<string, DayTourProduct>();
     if (isFirebaseConfigured && firestoreDb) {
       try {
-        const { collection, getDocs } = await import('firebase/firestore');
-        // Unrestricted query fetching all documents from the tours collection
+        const { collection, getDocsFromServer, getDocs, doc, getDocFromServer, getDoc } = await import('firebase/firestore');
+        const settingsSnap = await getDocFromServer(doc(firestoreDb, 'siteSettings', 'current')).catch(() =>
+          getDoc(doc(firestoreDb, 'siteSettings', 'current'))
+        );
+        if (settingsSnap.exists()) {
+          const remoteDeleted = (settingsSnap.data() as Partial<SiteSettings>)?.deletedTourIds;
+          if (Array.isArray(remoteDeleted)) {
+            remoteDeleted.forEach((id) => deletedSet.add(id));
+          }
+        }
         const toursCol = collection(firestoreDb, 'tours');
-        const snap = await getDocs(toursCol);
+        const snap = await getDocsFromServer(toursCol).catch(() => getDocs(toursCol));
         snap.forEach((docSnap) => {
           const d = docSnap.data();
-          if (d && docSnap.id) {
+          if (d && docSnap.id && !(d as any).isDeleted) {
             firestoreToursMap.set(docSnap.id, {
               ...(d as DayTourProduct),
               id: docSnap.id,
@@ -2093,6 +2231,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
+    const deletedTourIds = Array.from(deletedSet);
     const mergedMap = new Map<string, DayTourProduct>();
     PRIVATE_DAY_TOURS.forEach((baseTour) => {
       if (!deletedTourIds.includes(baseTour.id)) {
@@ -2161,8 +2300,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
-        const { doc, setDoc } = await import('firebase/firestore');
+        const { doc, setDoc, arrayRemove } = await import('firebase/firestore');
         await setDoc(doc(firestoreDb, 'tours', id), cleanFirestoreData(newTour));
+        await setDoc(doc(firestoreDb, 'siteSettings', 'current'), { deletedTourIds: arrayRemove(id) }, { merge: true }).catch(() => {});
         console.info(`[Galle Taxi] Tour "${newTour.title}" saved to Cloud Firestore.`);
       } catch (e) {
         console.error('Tour write error in Firestore:', e);
@@ -2239,8 +2379,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
       try {
-        const { doc, deleteDoc } = await import('firebase/firestore');
+        const { doc, deleteDoc, setDoc, arrayUnion } = await import('firebase/firestore');
         await deleteDoc(doc(firestoreDb, 'tours', id));
+        await setDoc(doc(firestoreDb, 'siteSettings', 'current'), { deletedTourIds: arrayUnion(id) }, { merge: true }).catch(() => {});
         console.info(`[Galle Taxi] Tour ${id} deleted from Cloud Firestore.`);
       } catch (e) {
         console.warn('Tour delete error in Firestore:', e);

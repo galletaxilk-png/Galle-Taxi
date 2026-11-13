@@ -37,7 +37,7 @@ interface TownTaxiTemplateProps {
 }
 
 export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town }) => {
-  const { siteSettings, formatFare, currency } = useApp();
+  const { siteSettings, formatFare, currency, taxiHubs } = useApp();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const cleanWhatsApp = siteSettings.whatsappNumber.replace(/[^0-9]/g, '');
@@ -51,7 +51,7 @@ export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town }) => {
     return formatFare(lkrAmount);
   };
 
-  const otherTowns = Object.values(TOWNS_DATA).filter((t) => t.id !== town.id);
+  const otherTowns = Object.values(taxiHubs && Object.keys(taxiHubs).length > 0 ? taxiHubs : TOWNS_DATA).filter((t) => t.id !== town.id);
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-slate-100">

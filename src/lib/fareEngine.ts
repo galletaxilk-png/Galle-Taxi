@@ -200,6 +200,56 @@ function isHubMatch(input: string, hub: string): boolean {
   return false;
 }
 
+/**
+ * Resolves live pricing tiers for any vehicle category or alias from Admin-configured
+ * fareRules.categoryPricingTiers, falling back to vehicle-level tiers or defaults.
+ */
+export function resolveCategoryPricingTiers(
+  category: string | undefined,
+  fareRules?: FareRules,
+  fallbackVehicleTiers?: PricingTier[]
+): PricingTier[] | undefined {
+  const cat = (category || '').trim();
+  const catUpper = cat.toUpperCase();
+  const tiersMap = fareRules?.categoryPricingTiers;
+
+  if (tiersMap) {
+    if (tiersMap[cat]) return tiersMap[cat];
+
+    // Case-insensitive exact key match
+    const exactCIKey = Object.keys(tiersMap).find((k) => k.trim().toUpperCase() === catUpper);
+    if (exactCIKey && tiersMap[exactCIKey]) return tiersMap[exactCIKey];
+
+    // Alias matching matching AdminFares & VehicleSelectionCarousel conventions
+    if (catUpper.includes('MINI CAR')) {
+      return tiersMap['Mini Car'] || tiersMap['MINI CAR'] || fallbackVehicleTiers || DEFAULT_CATEGORY_TIERS['Mini Car'];
+    }
+    if (catUpper.includes('MINI VAN') || catUpper.includes('SHUTTLE') || catUpper === 'MINI_VAN') {
+      return tiersMap['Mini Van'] || tiersMap['MINI VAN'] || tiersMap['mini_van'] || fallbackVehicleTiers || DEFAULT_CATEGORY_TIERS['Mini Van'];
+    }
+    if (catUpper.includes('HIGH') || catUpper.includes('LUXURY')) {
+      return (
+        tiersMap['KDH High Roof'] ||
+        tiersMap['KDH HIGH ROOF'] ||
+        tiersMap['Luxury'] ||
+        fallbackVehicleTiers ||
+        DEFAULT_KDH_HIGH_TIERS
+      );
+    }
+    if (catUpper.includes('FLAT') || catUpper === 'VAN' || (catUpper.includes('VAN') && !catUpper.includes('MINI'))) {
+      return tiersMap['KDH FLAT ROOF'] || tiersMap['Van'] || fallbackVehicleTiers || DEFAULT_CATEGORY_TIERS['KDH FLAT ROOF'];
+    }
+    if (catUpper.includes('SUV')) {
+      return tiersMap['SUV CAR'] || tiersMap['SUV'] || fallbackVehicleTiers || DEFAULT_CATEGORY_TIERS['SUV CAR'];
+    }
+    if (catUpper.includes('SEDAN')) {
+      return tiersMap['SEDAN CAR'] || tiersMap['Sedan'] || fallbackVehicleTiers || DEFAULT_CATEGORY_TIERS['SEDAN CAR'];
+    }
+  }
+
+  return fallbackVehicleTiers || DEFAULT_CATEGORY_TIERS[cat] || DEFAULT_CATEGORY_TIERS[catUpper];
+}
+
 export function calculateAuthoritativeFare(params: CalculateFareParams): FareCalculationResult {
   const { pickup, destination, vehicleCategoryId, pickupTime, stopsCount = 0, vehicles, fareRules, customDistanceKm } = params;
 
@@ -236,18 +286,11 @@ export function calculateAuthoritativeFare(params: CalculateFareParams): FareCal
   const vId = (vehicle.id || '').toLowerCase();
   const vName = (vehicle.name || '').toLowerCase();
 
-  const categoryTiers: PricingTier[] | undefined =
-    fareRules.categoryPricingTiers?.[vehicle.category] ||
-    (catUpper.includes('SEDAN') ? (fareRules.categoryPricingTiers?.['Sedan'] || fareRules.categoryPricingTiers?.['SEDAN CAR']) : undefined) ||
-    (catUpper.includes('SUV') ? (fareRules.categoryPricingTiers?.['SUV'] || fareRules.categoryPricingTiers?.['SUV CAR']) : undefined) ||
-    (catUpper.includes('FLAT') || catUpper === 'VAN' || (catUpper.includes('VAN') && !catUpper.includes('MINI')) ? (fareRules.categoryPricingTiers?.['Van'] || fareRules.categoryPricingTiers?.['KDH FLAT ROOF']) : undefined) ||
-    (catUpper.includes('HIGH') || catUpper.includes('LUXURY')
-      ? (fareRules.categoryPricingTiers?.['KDH High Roof'] || fareRules.categoryPricingTiers?.['KDH HIGH ROOF'] || fareRules.categoryPricingTiers?.['Luxury'] || DEFAULT_KDH_HIGH_TIERS)
-      : undefined) ||
-    (catUpper.includes('MINI CAR') ? (fareRules.categoryPricingTiers?.['Mini Car'] || fareRules.categoryPricingTiers?.['MINI CAR']) : undefined) ||
-    (catUpper.includes('MINI VAN') ? (fareRules.categoryPricingTiers?.['Mini Van'] || fareRules.categoryPricingTiers?.['MINI VAN']) : undefined) ||
-    vehicle.pricingTiers ||
-    DEFAULT_CATEGORY_TIERS[vehicle.category];
+  const categoryTiers: PricingTier[] | undefined = resolveCategoryPricingTiers(
+    vehicle.category,
+    fareRules,
+    vehicle.pricingTiers
+  );
 
   let baseFare = vehicle.baseFare || fareRules.baseFare || 0;
   let distanceCharge = 0;
