@@ -119,6 +119,7 @@ interface AppContextType {
   isFirebaseActive: boolean;
   firebaseProjectId: string;
   isFirestoreSyncing: boolean;
+  isPublicDataLoaded: boolean;
   firestoreError: string | null;
   testConnection: () => Promise<any>;
   saveWebConfig: (config: FirebaseWebConfig) => Promise<boolean>;
@@ -213,12 +214,8 @@ function loadStorage<T>(key: string, fallback: T): T {
     if (key === KEYS.TAXI_HUBS && parsed && typeof parsed === 'object') {
       const restored: Record<string, any> = {};
       for (const [k, hub] of Object.entries(parsed as Record<string, any>)) {
-        let img = hub?.heroImage;
-        try {
-          const sessImg = sessionStorage.getItem(`galle_hub_img_${k}`);
-          if (sessImg) img = sessImg;
-        } catch {}
-        restored[k] = { ...hub, heroImage: img };
+        if (!hub) continue;
+        restored[k] = { ...hub, heroImage: normalizeImageUrl(hub?.heroImage) };
       }
       return restored as unknown as T;
     }
@@ -296,8 +293,8 @@ function sanitizePayloadForStorage(key: string, data: any): any {
   if (key === KEYS.SETTINGS && data && typeof data === 'object') {
     return {
       ...data,
-      heroImage: normalizeImageUrl(data.heroImage),
-      seasonalBannerImage: normalizeImageUrl(data.seasonalBannerImage),
+      heroImageUrl: normalizeImageUrl(data.heroImageUrl),
+      seasonalBannerImageUrl: normalizeImageUrl(data.seasonalBannerImageUrl),
     };
   }
 
@@ -357,91 +354,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (loaded && Array.isArray(loaded) && loaded.length > 0) {
       return sortVehiclesByDisplayOrder(loaded.map((v) => normalizeVehicleRecord(v)));
     }
+    if (isFirebaseConfigured) {
+      return [];
+    }
     return sortVehiclesByDisplayOrder(
       INITIAL_VEHICLES.map((v) => normalizeVehicleRecord(v))
     );
   });
   const hasLiveFirestoreVehiclesRef = useRef(false);
   const [services, setServices] = useState<Service[]>(() => {
-    const loaded = loadStorage(KEYS.SERVICES, INITIAL_SERVICES);
-    return loaded.map((s) => {
-      if (
-        s.id === 'city-taxi' &&
-        (s.imageUrl.includes('vehicle_luxury_sedan_1793121944773') ||
-          s.imageUrl.includes('regenerated_image_1793161723258') ||
-          !s.imageUrl)
-      ) {
-        return { ...s, imageUrl: '/assets/images/regenerated_image_1793163512211.png' };
-      }
-      return s;
-    });
-  });
-  const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>(() => loadStorage(KEYS.AREAS, INITIAL_SERVICE_AREAS));
-  const [tours, setTours] = useState<DayTourProduct[]>(() => {
-    const loaded = loadStorage<DayTourProduct[]>(KEYS.TOURS, PRIVATE_DAY_TOURS);
-    const tourMap = new Map<string, DayTourProduct>();
-    PRIVATE_DAY_TOURS.forEach((dt) => tourMap.set(dt.id, { ...dt }));
-    if (Array.isArray(loaded)) {
-      loaded.forEach((lt) => {
-        if (lt && lt.id) {
-          const base = tourMap.get(lt.id) || lt;
-          tourMap.set(lt.id, { ...base, ...lt });
-        }
-      });
+    const loaded = loadStorage<Service[] | null>(KEYS.SERVICES, null);
+    if (loaded && Array.isArray(loaded) && loaded.length > 0) {
+      return loaded.map((s) => ({ ...s, imageUrl: normalizeImageUrl(s.imageUrl) }));
     }
-    const allTours = Array.from(tourMap.values());
-    return allTours.map((t) => {
-      if (t.id === 'udawalawe-elephant-safari') {
-        if (
-          !t.heroImage ||
-          t.heroImage.includes('photo-1557050543-4d5f4e07ef46') ||
-          !t.heroImage.includes('regenerated_image_1793632543146')
-        ) {
-          const gallery = [...(t.galleryImages || [])];
-          gallery[0] = '/assets/images/regenerated_image_1793632543146.png';
-          return {
-            ...t,
-            heroImage: '/assets/images/regenerated_image_1793632543146.png',
-            galleryImages: gallery,
-          };
-        }
-      }
-      return t;
-    });
+    return isFirebaseConfigured ? [] : INITIAL_SERVICES;
+  });
+  const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>(() => {
+    const loaded = loadStorage<ServiceArea[] | null>(KEYS.AREAS, null);
+    if (loaded && Array.isArray(loaded) && loaded.length > 0) {
+      return loaded;
+    }
+    return isFirebaseConfigured ? [] : INITIAL_SERVICE_AREAS;
+  });
+  const [tours, setTours] = useState<DayTourProduct[]>(() => {
+    const loaded = loadStorage<DayTourProduct[] | null>(KEYS.TOURS, null);
+    if (loaded && Array.isArray(loaded) && loaded.length > 0) {
+      return loaded.map((t) => ({
+        ...t,
+        heroImage: normalizeImageUrl(t.heroImage),
+        galleryImages: Array.isArray(t.galleryImages) ? t.galleryImages.map(normalizeImageUrl) : [],
+      }));
+    }
+    return isFirebaseConfigured ? [] : PRIVATE_DAY_TOURS;
   });
   const [fareRules, setFareRules] = useState<FareRules>(() => {
-    const loaded = loadStorage(KEYS.FARES, INITIAL_FARE_RULES);
+    const loaded = loadStorage<FareRules | null>(KEYS.FARES, null);
+    if (loaded && typeof loaded === 'object') {
+      const hasTiers =
+        loaded.categoryPricingTiers && Object.keys(loaded.categoryPricingTiers).length > 0;
+      return {
+        ...INITIAL_FARE_RULES,
+        ...loaded,
+        categoryPricingTiers: hasTiers ? loaded.categoryPricingTiers : DEFAULT_CATEGORY_TIERS,
+      };
+    }
     return {
-      ...loaded,
-      categoryPricingTiers: {
-        ...DEFAULT_CATEGORY_TIERS,
-        ...(loaded?.categoryPricingTiers || {}),
-      },
+      ...INITIAL_FARE_RULES,
+      categoryPricingTiers: DEFAULT_CATEGORY_TIERS,
     };
   });
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => {
-    const loaded = loadStorage<SiteSettings>(KEYS.SETTINGS, INITIAL_SITE_SETTINGS);
-    const merged: SiteSettings = { ...INITIAL_SITE_SETTINGS, ...loaded };
+    const loaded = loadStorage<Partial<SiteSettings> | null>(KEYS.SETTINGS, null);
+    const merged: SiteSettings = { ...INITIAL_SITE_SETTINGS, ...(loaded || {}) };
     if (!merged.email) {
       merged.email = INITIAL_SITE_SETTINGS.email;
     }
     if (!merged.seasonalBannerImageUrl) {
       merged.seasonalBannerImageUrl = '/assets/images/regenerated_image_1794057460840.png';
     }
+    merged.heroImageUrl = normalizeImageUrl(merged.heroImageUrl);
+    merged.seasonalBannerImageUrl = normalizeImageUrl(merged.seasonalBannerImageUrl);
     return merged;
   });
 
   // Southern Coast Taxi Hubs (Ahangama, Mirissa, Unawatuna, Hikkaduwa, Bentota, Weligama)
   const [taxiHubs, setTaxiHubs] = useState<Record<string, TownTaxiConfig>>(() => {
-    const loaded = loadStorage<Record<string, TownTaxiConfig>>(KEYS.TAXI_HUBS, TOWNS_DATA);
-    const merged = { ...TOWNS_DATA, ...loaded };
-    if (merged['ahangama-taxi'] && !merged['ahangama-taxi'].heroImage) {
-      merged['ahangama-taxi'] = {
-        ...merged['ahangama-taxi'],
-        heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
-      };
+    const loaded = loadStorage<Record<string, TownTaxiConfig> | null>(KEYS.TAXI_HUBS, null);
+    if (loaded && typeof loaded === 'object' && Object.keys(loaded).length > 0) {
+      return loaded;
     }
-    return merged;
+    return isFirebaseConfigured ? {} : TOWNS_DATA;
   });
   
   // Multi-Currency & Configurable Exchange Rates
@@ -477,6 +459,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Firestore synchronization states
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState<boolean>(false);
   const [firestoreError, setFirestoreError] = useState<string | null>(null);
+  const [isPublicDataLoaded, setIsPublicDataLoaded] = useState<boolean>(() => !isFirebaseConfigured);
+  const readyCollectionsRef = useRef<Set<string>>(new Set());
+  const markCollectionReady = (name: string) => {
+    readyCollectionsRef.current.add(name);
+    if (readyCollectionsRef.current.size >= 4) {
+      setIsPublicDataLoaded(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setIsPublicDataLoaded(true);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setIsPublicDataLoaded(true);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Admin User state (stored in sessionStorage for active session persistence)
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => {
@@ -862,50 +863,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (!isMounted) return;
           const deletedTourIds = await getDeletedIds();
 
-          const firestoreToursMap = new Map<string, DayTourProduct>();
+          const firestoreToursList: DayTourProduct[] = [];
+          const firestoreIds = new Set<string>();
           snapshot.forEach((docSnap: any) => {
             const d = docSnap.data();
-            if (d && docSnap.id && !(d as any).isDeleted) {
-              firestoreToursMap.set(docSnap.id, {
+            if (d && docSnap.id && !(d as any).isDeleted && !deletedTourIds.includes(docSnap.id)) {
+              const baseMatch = PRIVATE_DAY_TOURS.find((bt) => bt.id === docSnap.id);
+              const mergedTour: DayTourProduct = {
+                ...(baseMatch || {}),
                 ...(d as DayTourProduct),
                 id: docSnap.id,
-              });
+                heroImage: normalizeImageUrl((d as DayTourProduct).heroImage || baseMatch?.heroImage),
+                galleryImages: Array.isArray((d as DayTourProduct).galleryImages)
+                  ? (d as DayTourProduct).galleryImages.map(normalizeImageUrl)
+                  : baseMatch?.galleryImages || [],
+              };
+              firestoreToursList.push(mergedTour);
+              firestoreIds.add(docSnap.id);
             }
           });
 
-          const mergedMap = new Map<string, DayTourProduct>();
-
-          // 1. Custom & Firestore-managed tours first if Firestore has updates, keeping deterministic baseline merge
-          PRIVATE_DAY_TOURS.forEach((baseTour) => {
-            if (!deletedTourIds.includes(baseTour.id)) {
-              if (firestoreToursMap.has(baseTour.id)) {
-                mergedMap.set(baseTour.id, {
-                  ...baseTour,
-                  ...firestoreToursMap.get(baseTour.id)!,
-                });
-              } else {
-                mergedMap.set(baseTour.id, { ...baseTour });
-              }
-            }
-          });
-
-          // 2. Custom day tours created in Firestore
-          firestoreToursMap.forEach((fTour, fId) => {
-            if (!deletedTourIds.includes(fId) && !mergedMap.has(fId)) {
-              mergedMap.set(fId, fTour);
-            }
-          });
-
-          const mergedTours = Array.from(mergedMap.values());
-
-          if (mergedTours.length > 0) {
-            setTours(mergedTours);
-            saveStorage(KEYS.TOURS, mergedTours);
+          if (firestoreToursList.length > 0) {
+            // Preserve natural baseline order for seeded tours, placing custom tours alongside deterministically
+            const baselineOrder = new Map(PRIVATE_DAY_TOURS.map((t, idx) => [t.id, idx]));
+            firestoreToursList.sort((a, b) => {
+              const idxA = baselineOrder.get(a.id);
+              const idxB = baselineOrder.get(b.id);
+              if (idxA !== undefined && idxB !== undefined) return idxA - idxB;
+              if (idxA !== undefined) return -1;
+              if (idxB !== undefined) return 1;
+              return (b.createdAt || '').localeCompare(a.createdAt || '');
+            });
+            setTours(firestoreToursList);
+            saveStorage(KEYS.TOURS, firestoreToursList);
+          } else if (snapshot.empty) {
+            const fallbackTours = PRIVATE_DAY_TOURS.filter((t) => !deletedTourIds.includes(t.id));
+            setTours(fallbackTours);
+          } else {
+            setTours([]);
+            saveStorage(KEYS.TOURS, []);
           }
+          markCollectionReady('tours');
 
           if (allowAdminSeed && auth?.currentUser) {
             for (const baseTour of PRIVATE_DAY_TOURS) {
-              if (!firestoreToursMap.has(baseTour.id) && !deletedTourIds.includes(baseTour.id)) {
+              if (!firestoreIds.has(baseTour.id) && !deletedTourIds.includes(baseTour.id)) {
                 try {
                   await setDoc(doc(firestoreDb, 'tours', baseTour.id), cleanFirestoreData(baseTour), { merge: true });
                 } catch (seedErr) {
@@ -920,15 +922,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         getDocsFromServer(toursCol)
           .catch(() => getDocs(toursCol))
           .then((serverSnap) => {
-            if (serverSnap) processToursSnapshot(serverSnap, false);
+            if (serverSnap) return processToursSnapshot(serverSnap, false);
           })
-          .catch(() => {});
+          .catch(() => {
+            markCollectionReady('tours');
+          });
 
         const unsub = onSnapshot(
           toursCol,
           (snapshot) => processToursSnapshot(snapshot, true),
           (err) => {
             console.warn('[Firestore Tours Warning]:', err);
+            markCollectionReady('tours');
           }
         );
         return unsub;
@@ -1034,14 +1039,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (!isMounted) return;
           if (docSnap.exists()) {
             const data = docSnap.data() as FareRules;
+            const hasLiveCategoryTiers =
+              data?.categoryPricingTiers && Object.keys(data.categoryPricingTiers).length > 0;
             const mergedFareRules: FareRules = {
               ...INITIAL_FARE_RULES,
               ...data,
               fixedRoutes: Array.isArray(data?.fixedRoutes) ? data.fixedRoutes : INITIAL_FARE_RULES.fixedRoutes,
-              categoryPricingTiers: {
-                ...DEFAULT_CATEGORY_TIERS,
-                ...(data?.categoryPricingTiers || {}),
-              },
+              categoryPricingTiers: hasLiveCategoryTiers ? data.categoryPricingTiers : DEFAULT_CATEGORY_TIERS,
             };
             setFareRules(mergedFareRules);
             saveStorage(KEYS.FARES, mergedFareRules);
@@ -1050,12 +1054,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               console.warn('[Galle Taxi] Notice auto-seeding fareRules:', err);
             });
           }
+          markCollectionReady('fares');
         };
 
         getDocFromServer(fareDocRef)
           .catch(() => getDoc(fareDocRef))
           .then((snap) => snap && applyFareRulesSnapshot(snap, false))
-          .catch(() => {});
+          .catch(() => {
+            markCollectionReady('fares');
+          });
 
         try {
           const unsubFare = onSnapshot(
@@ -1063,6 +1070,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             (docSnap) => applyFareRulesSnapshot(docSnap, true),
             (err) => {
               console.warn('[Firestore FareRules Warning]:', err);
+              markCollectionReady('fares');
             }
           );
           unsubs.push(unsubFare);
@@ -1076,15 +1084,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (!isMounted) return;
           if (docSnap.exists()) {
             const data = docSnap.data() as Partial<SiteSettings>;
-            setSiteSettings((prev) => {
-              const merged: SiteSettings = {
-                ...INITIAL_SITE_SETTINGS,
-                ...prev,
-                ...data,
-              };
-              saveStorage(KEYS.SETTINGS, merged);
-              return merged;
-            });
+            const merged: SiteSettings = {
+              ...INITIAL_SITE_SETTINGS,
+              ...data,
+              heroImageUrl: normalizeImageUrl(data.heroImageUrl || INITIAL_SITE_SETTINGS.heroImageUrl),
+              seasonalBannerImageUrl: normalizeImageUrl(
+                data.seasonalBannerImageUrl || '/assets/images/regenerated_image_1794057460840.png'
+              ),
+            };
+            setSiteSettings(merged);
+            saveStorage(KEYS.SETTINGS, merged);
             if (Array.isArray(data?.deletedTourIds) && data.deletedTourIds.length > 0) {
               setTours((prev) => {
                 const filtered = prev.filter((t) => !data.deletedTourIds!.includes(t.id));
@@ -1099,12 +1108,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               console.warn('[Galle Taxi] Notice auto-seeding siteSettings:', err);
             });
           }
+          markCollectionReady('settings');
         };
 
         getDocFromServer(settingsDocRef)
           .catch(() => getDoc(settingsDocRef))
           .then((snap) => snap && applySettingsSnapshot(snap, false))
-          .catch(() => {});
+          .catch(() => {
+            markCollectionReady('settings');
+          });
 
         try {
           const unsubSettings = onSnapshot(
@@ -1112,6 +1124,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             (docSnap) => applySettingsSnapshot(docSnap, true),
             (err) => {
               console.warn('[Firestore SiteSettings Warning]:', err);
+              markCollectionReady('settings');
             }
           );
           unsubs.push(unsubSettings);
@@ -1124,6 +1137,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const applyHubsSnapshot = (snap: any, allowSeed = false) => {
           if (!isMounted) return;
           if (snap.empty) {
+            setTaxiHubs((prev) => (Object.keys(prev).length > 0 ? prev : TOWNS_DATA));
+            markCollectionReady('hubs');
             if (allowSeed && auth?.currentUser) {
               Object.entries(TOWNS_DATA).forEach(([slug, hub]) => {
                 setDoc(doc(firestoreDb, 'taxi_hubs', slug), cleanFirestoreData(hub), { merge: true }).catch(() => {});
@@ -1131,26 +1146,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }
             return;
           }
-          setTaxiHubs((prev) => {
-            const merged = { ...TOWNS_DATA, ...prev };
-            snap.forEach((d: any) => {
-              const hubData = d.data() as TownTaxiConfig;
-              merged[d.id] = {
-                ...(merged[d.id] || {}),
-                ...hubData,
-                slug: d.id,
-              };
-              TOWNS_DATA[d.id] = merged[d.id];
-            });
-            saveStorage(KEYS.TAXI_HUBS, merged);
-            return merged;
+          const liveHubs: Record<string, TownTaxiConfig> = {};
+          snap.forEach((d: any) => {
+            const hubData = d.data() as Partial<TownTaxiConfig>;
+            const baseHub = TOWNS_DATA[d.id];
+            liveHubs[d.id] = {
+              ...(baseHub || {}),
+              ...(hubData as TownTaxiConfig),
+              id: hubData.id || baseHub?.id || d.id.replace(/-taxi$/, ''),
+              slug: d.id,
+              heroImage: normalizeImageUrl(hubData.heroImage || baseHub?.heroImage),
+            };
+            TOWNS_DATA[d.id] = liveHubs[d.id];
           });
+          setTaxiHubs(liveHubs);
+          saveStorage(KEYS.TAXI_HUBS, liveHubs);
+          markCollectionReady('hubs');
         };
 
         getDocsFromServer(hubsColRef)
           .catch(() => getDocs(hubsColRef))
           .then((snap) => snap && applyHubsSnapshot(snap, false))
-          .catch(() => {});
+          .catch(() => {
+            markCollectionReady('hubs');
+          });
 
         try {
           const unsubHubs = onSnapshot(
@@ -1158,6 +1177,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             (snap) => applyHubsSnapshot(snap, true),
             (err) => {
               console.warn('[Firestore TaxiHubs Warning]:', err);
+              markCollectionReady('hubs');
             }
           );
           unsubs.push(unsubHubs);
@@ -1208,6 +1228,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const applyServicesSnapshot = (snap: any, allowSeed = false) => {
           if (!isMounted) return;
           if (snap.empty) {
+            setServices((prev) => (prev.length > 0 ? prev : INITIAL_SERVICES));
             if (allowSeed && auth?.currentUser) {
               INITIAL_SERVICES.forEach((s) => {
                 setDoc(doc(firestoreDb, 'services', s.id), cleanFirestoreData(s), { merge: true }).catch(() => {});
@@ -1216,7 +1237,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return;
           }
           const liveServices: Service[] = [];
-          snap.forEach((d: any) => liveServices.push({ ...(d.data() as Service), id: d.id }));
+          snap.forEach((d: any) => {
+            const data = d.data() as Service;
+            liveServices.push({ ...data, id: d.id, imageUrl: normalizeImageUrl(data.imageUrl) });
+          });
           if (liveServices.length > 0) {
             setServices(liveServices);
             saveStorage(KEYS.SERVICES, liveServices);
@@ -1246,6 +1270,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const applyAreasSnapshot = (snap: any, allowSeed = false) => {
           if (!isMounted) return;
           if (snap.empty) {
+            setServiceAreas((prev) => (prev.length > 0 ? prev : INITIAL_SERVICE_AREAS));
             if (allowSeed && auth?.currentUser) {
               INITIAL_SERVICE_AREAS.forEach((a) => {
                 setDoc(doc(firestoreDb, 'serviceAreas', a.id), cleanFirestoreData(a), { merge: true }).catch(() => {});
@@ -1352,6 +1377,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 setDoc(doc(firestoreDb, 'vehicles', normalized.id), cleanFirestoreData(normalized)).catch(() => {});
               });
             }
+            if (!hasLiveFirestoreVehiclesRef.current) {
+              loadServerFleetFallback().finally(() => markCollectionReady('vehicles'));
+            } else {
+              markCollectionReady('vehicles');
+            }
             return;
           }
           const liveVehicles: Vehicle[] = [];
@@ -1361,6 +1391,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (liveVehicles.length > 0) {
             hasLiveFirestoreVehiclesRef.current = true;
             const sorted = sortVehiclesByDisplayOrder(liveVehicles);
+            (window as any).__GALLE_TAXI_VEHICLES__ = sorted;
             setVehicles(sorted);
             saveStorage(KEYS.VEHICLES, sorted);
             if (auth?.currentUser) {
@@ -1371,13 +1402,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               }).catch(() => {});
             }
           }
+          markCollectionReady('vehicles');
         };
 
         // Eagerly fetch directly from Cloud Firestore server so new visitors immediately receive live vehicles
         getDocsFromServer(vehiclesColRef)
           .catch(() => getDocs(vehiclesColRef))
           .then((serverSnap) => serverSnap && applyVehiclesSnapshot(serverSnap, false))
-          .catch(() => {});
+          .catch(() => {
+            if (!hasLiveFirestoreVehiclesRef.current) {
+              loadServerFleetFallback().finally(() => markCollectionReady('vehicles'));
+            } else {
+              markCollectionReady('vehicles');
+            }
+          });
 
         unsubVehicles = onSnapshot(
           vehiclesColRef,
@@ -1385,14 +1423,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           (err) => {
             console.warn('[Firestore Vehicles Warning]:', err);
             if (!hasLiveFirestoreVehiclesRef.current) {
-              loadServerFleetFallback();
+              loadServerFleetFallback().finally(() => markCollectionReady('vehicles'));
+            } else {
+              markCollectionReady('vehicles');
             }
           }
         );
       } catch (e) {
         console.warn('[Firestore Vehicles Listener Error]:', e);
         if (!hasLiveFirestoreVehiclesRef.current) {
-          loadServerFleetFallback();
+          loadServerFleetFallback().finally(() => markCollectionReady('vehicles'));
+        } else {
+          markCollectionReady('vehicles');
         }
       }
     };
@@ -2232,32 +2274,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const deletedTourIds = Array.from(deletedSet);
-    const mergedMap = new Map<string, DayTourProduct>();
-    PRIVATE_DAY_TOURS.forEach((baseTour) => {
-      if (!deletedTourIds.includes(baseTour.id)) {
-        if (firestoreToursMap.has(baseTour.id)) {
-          mergedMap.set(baseTour.id, {
-            ...baseTour,
-            ...firestoreToursMap.get(baseTour.id)!,
-          });
-        } else {
-          mergedMap.set(baseTour.id, { ...baseTour });
-        }
-      }
-    });
+    const firestoreList = Array.from(firestoreToursMap.values()).filter(
+      (t) => !deletedTourIds.includes(t.id)
+    );
 
-    firestoreToursMap.forEach((fTour, fId) => {
-      if (!deletedTourIds.includes(fId) && !mergedMap.has(fId)) {
-        mergedMap.set(fId, fTour);
-      }
-    });
-
-    const finalTours = Array.from(mergedMap.values());
-    if (finalTours.length > 0) {
+    if (firestoreList.length > 0) {
+      const baselineOrder = new Map(PRIVATE_DAY_TOURS.map((t, idx) => [t.id, idx]));
+      const finalTours = firestoreList
+        .map((fTour) => {
+          const base = PRIVATE_DAY_TOURS.find((bt) => bt.id === fTour.id);
+          return {
+            ...(base || {}),
+            ...fTour,
+            heroImage: normalizeImageUrl(fTour.heroImage || base?.heroImage),
+            galleryImages: Array.isArray(fTour.galleryImages)
+              ? fTour.galleryImages.map(normalizeImageUrl)
+              : base?.galleryImages || [],
+          };
+        })
+        .sort((a, b) => {
+          const idxA = baselineOrder.get(a.id);
+          const idxB = baselineOrder.get(b.id);
+          if (idxA !== undefined && idxB !== undefined) return idxA - idxB;
+          if (idxA !== undefined) return -1;
+          if (idxB !== undefined) return 1;
+          return (b.createdAt || '').localeCompare(a.createdAt || '');
+        });
       setTours(finalTours);
       saveStorage(KEYS.TOURS, finalTours);
+      return finalTours;
     }
-    return finalTours;
+
+    const fallbackTours = PRIVATE_DAY_TOURS.filter((t) => !deletedTourIds.includes(t.id));
+    setTours(fallbackTours);
+    return fallbackTours;
   };
 
   const addTour = async (tourInput: Omit<DayTourProduct, 'id'>): Promise<DayTourProduct> => {
@@ -2800,6 +2850,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isFirebaseActive: isFirebaseConfigured,
       firebaseProjectId,
       isFirestoreSyncing,
+      isPublicDataLoaded,
       firestoreError,
       testConnection: testFirestoreConnection,
       saveWebConfig,
@@ -2856,6 +2907,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminUser,
       isAuthChecking,
       isFirestoreSyncing,
+      isPublicDataLoaded,
       firestoreError,
       firebaseProjectId,
     ]

@@ -22,10 +22,8 @@ export const SeasonalBannerSection: React.FC = () => {
   }
 
   const bannerImg =
-    siteSettings.seasonalBannerImageUrl &&
-    siteSettings.seasonalBannerImageUrl !== '/assets/aistudio/Down_South_Season_Coastal_Adventures.png'
-      ? siteSettings.seasonalBannerImageUrl
-      : '/assets/images/regenerated_image_1794057460840.png';
+    siteSettings.seasonalBannerImageUrl ||
+    '/assets/images/regenerated_image_1794057460840.png';
   const bannerLink = siteSettings.seasonalBannerLink || '/general-taxi';
   const cleanWhatsApp = siteSettings.whatsappNumber.replace(/[^0-9]/g, '');
 

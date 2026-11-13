@@ -253,7 +253,7 @@ export function resolveCategoryPricingTiers(
 export function calculateAuthoritativeFare(params: CalculateFareParams): FareCalculationResult {
   const { pickup, destination, vehicleCategoryId, pickupTime, stopsCount = 0, vehicles, fareRules, customDistanceKm } = params;
 
-  const vehicle =
+  const vehicle: Vehicle =
     vehicles.find((v) => v.id === vehicleCategoryId) ||
     vehicles.find((v) => v.category === vehicleCategoryId) ||
     vehicles.find((v) => v.name.toLowerCase() === vehicleCategoryId.toLowerCase()) ||
@@ -262,7 +262,20 @@ export function calculateAuthoritativeFare(params: CalculateFareParams): FareCal
     (vehicleCategoryId.toLowerCase().includes('van') ? (vehicles.find((v) => v.id === 'veh-kdh-flat') || vehicles.find((v) => v.id === 'veh-kdh-high')) : undefined) ||
     (vehicleCategoryId.toLowerCase().includes('suv') ? vehicles.find((v) => v.id === 'veh-suv-4wd') : undefined) ||
     (vehicleCategoryId.toLowerCase().includes('sedan') ? vehicles.find((v) => v.id === 'veh-sedan-std') : undefined) ||
-    vehicles[0];
+    vehicles[0] || {
+      id: vehicleCategoryId || 'veh-sedan-std',
+      name: 'Sedan Car',
+      category: 'SEDAN CAR',
+      plateNumber: '',
+      passengers: 4,
+      luggage: 3,
+      description: '',
+      pricePerKm: fareRules.perKmRate || 240,
+      baseFare: fareRules.baseFare || 1500,
+      imageUrl: '',
+      isAvailable: true,
+      features: [],
+    };
 
   // 1. Check if matches any configured route hub (for accurate highway distance & name)
   const matchedRoute = fareRules.fixedRoutes?.find((r) => {

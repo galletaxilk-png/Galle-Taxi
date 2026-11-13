@@ -62,8 +62,10 @@ const AIRPORT_PICKUP_FAQS: FaqItem[] = [
 ];
 
 export const AirportPickupPage: React.FC = () => {
-  const { vehicles, fareRules, siteSettings, formatFare } = useApp();
+  const { vehicles, fareRules, siteSettings, formatFare, isFirebaseActive, isPublicDataLoaded } = useApp();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const activePublicVehicles = useMemo(() => getActivePublicVehicles(vehicles), [vehicles]);
+  const isLoadingVehicles = activePublicVehicles.length === 0 && isFirebaseActive && !isPublicDataLoaded;
 
   // SEO Meta Title, Meta Description, Social Cards & Schema.org Structured Data
   useEffect(() => {
@@ -490,7 +492,20 @@ export const AirportPickupPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {getActivePublicVehicles(vehicles).map((veh) => {
+          {isLoadingVehicles ? (
+            Array.from({ length: 4 }).map((_, idx) => (
+              <div
+                key={`pickup-veh-skeleton-${idx}`}
+                className="bg-[#141416] border border-[#27272A] rounded-2xl p-5 animate-pulse space-y-4"
+              >
+                <div className="aspect-[16/10] bg-[#1A1A1E] rounded-xl" />
+                <div className="h-5 w-2/3 rounded bg-[#1F1F26]" />
+                <div className="h-8 w-1/2 rounded bg-[#1A1A1E]" />
+                <div className="h-9 w-full rounded-xl bg-[#1F1F26]" />
+              </div>
+            ))
+          ) : (
+            activePublicVehicles.map((veh) => {
             const fareCalc = calculateAuthoritativeFare({
               pickup: 'Bandaranaike International Airport (CMB)',
               destination: selectedDestination || 'Galle Dutch Fort',
@@ -567,7 +582,8 @@ export const AirportPickupPage: React.FC = () => {
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </div>
       </section>
 

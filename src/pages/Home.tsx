@@ -85,7 +85,17 @@ export const SERVICE_TABS: ServiceTabItem[] = [
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { siteSettings, services, vehicles, fareRules, currency, formatFare } = useApp();
+  const {
+    siteSettings,
+    services,
+    vehicles,
+    fareRules,
+    currency,
+    formatFare,
+    taxiHubs,
+    isFirebaseActive,
+    isPublicDataLoaded,
+  } = useApp();
 
   // Active Category Tab
   const [activeTab, setActiveTab] = useState<ServiceTabType>('AIRPORT DROP');
@@ -229,9 +239,19 @@ export const Home: React.FC = () => {
         {/* Cinematic Sunset Beach Road Trip Background */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png"
+            src={
+              siteSettings.heroImageUrl?.startsWith('/src/assets/images/')
+                ? siteSettings.heroImageUrl.replace('/src/assets/images/', '/assets/images/')
+                : siteSettings.heroImageUrl || '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png'
+            }
             alt="Galle Taxi Sri Lanka Beach Road Trip"
             className="w-full h-full object-cover object-right md:object-center"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.src.includes('Sunset_Beach_Road_Trip_with_Surfboard_19548307.png')) {
+                target.src = '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png';
+              }
+            }}
           />
           {/* Multi-layered dark gradient overlays for typography contrast */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0D] via-[#0B0B0D]/90 to-[#0B0B0D]/40" />
@@ -245,12 +265,19 @@ export const Home: React.FC = () => {
           <div className="max-w-4xl space-y-6">
             {/* Marquee Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.1] font-['Outfit']" style={{ textWrap: 'balance' }}>
-              Your Journey, <span className="text-[#F5B91B]">Our Priority</span>
+              {!siteSettings.heroHeadline || siteSettings.heroHeadline === 'Your Journey, Our Priority' ? (
+                <>
+                  Your Journey, <span className="text-[#F5B91B]">Our Priority</span>
+                </>
+              ) : (
+                siteSettings.heroHeadline
+              )}
             </h1>
 
             {/* Subtitle */}
             <p className="text-lg sm:text-xl text-slate-300 max-w-3xl font-light leading-relaxed">
-              Safe, Comfortable & Reliable Taxi Services in Galle, Sri Lanka. From direct highway airport transfers to custom island tours with verified English-speaking chauffeurs.
+              {siteSettings.heroSubtitle ||
+                'Safe, Comfortable & Reliable Taxi Services in Galle, Sri Lanka. From direct highway airport transfers to custom island tours with verified English-speaking chauffeurs.'}
             </p>
 
             {/* Prominent Southern Coast Taxi Hubs Quick-Access Strip */}
@@ -260,25 +287,57 @@ export const Home: React.FC = () => {
                 <span>Southern Hubs:</span>
               </div>
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                {[
-                  { name: 'Ahangama', path: '/ahangama-taxi', tag: 'Surf & Villas' },
-                  { name: 'Mirissa', path: '/mirissa-taxi', tag: 'Whales' },
-                  { name: 'Unawatuna', path: '/unawatuna-taxi', tag: 'Beach' },
-                  { name: 'Hikkaduwa', path: '/hikkaduwa-taxi', tag: 'Coral' },
-                  { name: 'Bentota', path: '/bentota-taxi', tag: 'Resorts' },
-                  { name: 'Weligama', path: '/weligama-taxi', tag: 'Bay' },
-                ].map((hub) => (
-                  <Link
-                    key={hub.path}
-                    to={hub.path}
-                    className="px-2.5 py-1 rounded-lg bg-[#141416]/90 hover:bg-[#F5B91B] text-slate-200 hover:text-black border border-[#27272A] hover:border-[#F5B91B] text-xs font-semibold transition-all flex items-center gap-1.5 backdrop-blur-md group shadow-sm"
-                  >
-                    <span>{hub.name} Taxi</span>
-                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-[#27272A] text-[#F5B91B] group-hover:bg-black/20 group-hover:text-black">
-                      {hub.tag}
-                    </span>
-                  </Link>
-                ))}
+                {(() => {
+                  const CORE_HUB_ORDER = [
+                    'ahangama-taxi',
+                    'mirissa-taxi',
+                    'unawatuna-taxi',
+                    'hikkaduwa-taxi',
+                    'bentota-taxi',
+                    'weligama-taxi',
+                  ];
+                  const liveHubPills = Object.values(taxiHubs || {})
+                    .sort((a, b) => {
+                      const aIdx = CORE_HUB_ORDER.indexOf(a.id || a.slug);
+                      const bIdx = CORE_HUB_ORDER.indexOf(b.id || b.slug);
+                      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                      if (aIdx !== -1) return -1;
+                      if (bIdx !== -1) return 1;
+                      return (a.townName || '').localeCompare(b.townName || '');
+                    })
+                    .map((h) => ({
+                      name: h.townName,
+                      path: `/${h.slug}`,
+                      tag: h.badge ? h.badge.split('&')[0].trim() : 'Hub',
+                    }));
+
+                  const pills =
+                    liveHubPills.length > 0
+                      ? liveHubPills
+                      : !isFirebaseActive || isPublicDataLoaded
+                      ? [
+                          { name: 'Ahangama', path: '/ahangama-taxi', tag: 'Surf & Villas' },
+                          { name: 'Mirissa', path: '/mirissa-taxi', tag: 'Whales' },
+                          { name: 'Unawatuna', path: '/unawatuna-taxi', tag: 'Beach' },
+                          { name: 'Hikkaduwa', path: '/hikkaduwa-taxi', tag: 'Coral' },
+                          { name: 'Bentota', path: '/bentota-taxi', tag: 'Resorts' },
+                          { name: 'Weligama', path: '/weligama-taxi', tag: 'Bay' },
+                        ]
+                      : [];
+
+                  return pills.map((hub) => (
+                    <Link
+                      key={hub.path}
+                      to={hub.path}
+                      className="px-2.5 py-1 rounded-lg bg-[#141416]/90 hover:bg-[#F5B91B] text-slate-200 hover:text-black border border-[#27272A] hover:border-[#F5B91B] text-xs font-semibold transition-all flex items-center gap-1.5 backdrop-blur-md group shadow-sm"
+                    >
+                      <span>{hub.name} Taxi</span>
+                      <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-[#27272A] text-[#F5B91B] group-hover:bg-black/20 group-hover:text-black">
+                        {hub.tag}
+                      </span>
+                    </Link>
+                  ));
+                })()}
               </div>
             </div>
           </div>
@@ -786,7 +845,20 @@ export const Home: React.FC = () => {
             onTouchEnd={() => setTimeout(() => setIsFleetHovered(false), 2500)}
             className="flex gap-4 overflow-x-auto pb-3 pt-1 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {publicVehicles.map((veh) => (
+            {publicVehicles.length === 0 && isFirebaseActive && !isPublicDataLoaded ? (
+              Array.from({ length: 6 }).map((_, sIdx) => (
+                <div
+                  key={`fleet-skeleton-${sIdx}`}
+                  className="w-[240px] sm:w-[250px] flex-shrink-0 snap-start bg-[#141416] border border-[#27272A] rounded-xl p-3.5 animate-pulse space-y-3"
+                >
+                  <div className="aspect-[16/10] rounded-lg bg-[#1A1A1E]" />
+                  <div className="h-4 w-2/3 rounded bg-[#1F1F26]" />
+                  <div className="h-3 w-1/2 rounded bg-[#1A1A1E]" />
+                  <div className="h-7 w-full rounded-lg bg-[#1F1F26]" />
+                </div>
+              ))
+            ) : (
+              publicVehicles.map((veh) => (
               <div
                 key={veh.id}
                 className="w-[240px] sm:w-[250px] flex-shrink-0 snap-start bg-[#141416] border border-[#27272A] rounded-xl overflow-hidden flex flex-col justify-between hover:border-[#F5B91B]/50 hover:shadow-lg hover:shadow-black/50 transition-all duration-300"
@@ -841,7 +913,8 @@ export const Home: React.FC = () => {
                   </Link>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
 
           {/* Dot Indicators */}
@@ -1241,7 +1314,7 @@ export const Home: React.FC = () => {
               className="px-7 py-3.5 rounded-xl bg-[#171719] hover:bg-[#202024] text-white border border-[#27272A] font-semibold text-sm transition-all flex items-center gap-2"
             >
               <MessageSquare className="w-4 h-4 text-[#25D366]" />
-              <span>WhatsApp Dispatch (+94 77 123 4567)</span>
+              <span>WhatsApp Dispatch ({siteSettings.whatsappNumber || '+94 77 123 4567'})</span>
             </a>
           </div>
         </div>

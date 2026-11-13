@@ -106,10 +106,30 @@ export const SOUTHERN_HUBS: SouthernHubItem[] = [
 ];
 
 export const SouthernHubsSection: React.FC = () => {
-  const { taxiHubs, formatFare } = useApp();
+  const { taxiHubs, formatFare, isFirebaseActive, isPublicDataLoaded } = useApp();
+
+  const CORE_HUB_ORDER = [
+    'ahangama-taxi',
+    'mirissa-taxi',
+    'unawatuna-taxi',
+    'hikkaduwa-taxi',
+    'bentota-taxi',
+    'weligama-taxi',
+  ];
+
+  const liveHubList = Object.values(taxiHubs || {}).sort((a, b) => {
+    const aIdx = CORE_HUB_ORDER.indexOf(a.id || a.slug);
+    const bIdx = CORE_HUB_ORDER.indexOf(b.id || b.slug);
+    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+    if (aIdx !== -1) return -1;
+    if (bIdx !== -1) return 1;
+    return (a.townName || '').localeCompare(b.townName || '');
+  });
+
+  const isLoadingHubs = liveHubList.length === 0 && isFirebaseActive && !isPublicDataLoaded;
 
   // Dynamically derive display items from the live taxiHubs CMS state
-  const hubsToDisplay = Object.values(taxiHubs || {}).map((hub) => {
+  const hubsToDisplay = liveHubList.map((hub) => {
     const mainRoute = hub.popularRoutes?.[0];
     const defaultFeatures = [
       'Surfboard Racks Available',
@@ -122,11 +142,16 @@ export const SouthernHubsSection: React.FC = () => {
         ? hub.attractions.slice(0, 3).map((a) => `${a.name} (${a.category})`)
         : defaultFeatures;
 
-    const image = hub.heroImage || (
-      (hub.id === 'ahangama' || hub.slug === 'ahangama-taxi')
+    const rawImg = hub.heroImage || '';
+    const normalizedImg = rawImg.startsWith('/src/assets/images/')
+      ? rawImg.replace('/src/assets/images/', '/assets/images/')
+      : rawImg;
+
+    const image =
+      normalizedImg ||
+      (hub.id === 'ahangama-taxi' || hub.id === 'ahangama' || hub.slug === 'ahangama-taxi'
         ? '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png'
-        : '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png'
-    );
+        : '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png');
 
     return {
       id: hub.id,
@@ -143,6 +168,13 @@ export const SouthernHubsSection: React.FC = () => {
       image,
     };
   });
+
+  const resolvedHubs =
+    hubsToDisplay.length > 0
+      ? hubsToDisplay
+      : !isFirebaseActive
+      ? SOUTHERN_HUBS
+      : [];
 
   return (
     <section className="py-14 sm:py-20 bg-[#0E0E11] border-b border-[#1F1F23]">
@@ -169,7 +201,21 @@ export const SouthernHubsSection: React.FC = () => {
 
         {/* 6 Town Hub Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {hubsToDisplay.map((hub) => (
+          {isLoadingHubs ? (
+            Array.from({ length: 6 }).map((_, sIdx) => (
+              <div
+                key={`hub-skeleton-${sIdx}`}
+                className="bg-[#141416] border border-[#27272A] rounded-xl overflow-hidden animate-pulse p-4 space-y-3"
+              >
+                <div className="h-44 rounded-lg bg-[#1A1A1E]" />
+                <div className="h-5 w-1/2 rounded bg-[#1F1F26]" />
+                <div className="h-3 w-full rounded bg-[#1A1A1E]" />
+                <div className="h-14 w-full rounded-lg bg-[#0B0B0D]" />
+                <div className="h-9 w-full rounded-lg bg-[#1F1F26]" />
+              </div>
+            ))
+          ) : (
+            resolvedHubs.map((hub) => (
             <div
               key={hub.id}
               className="bg-[#141416] border border-[#27272A] rounded-xl overflow-hidden shadow-xl hover:border-[#F5B91B]/60 transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1"
@@ -266,7 +312,8 @@ export const SouthernHubsSection: React.FC = () => {
                 </Link>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
 
       </div>

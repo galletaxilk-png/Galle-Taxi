@@ -36,9 +36,18 @@ interface TownTaxiTemplateProps {
   town: TownTaxiConfig;
 }
 
-export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town }) => {
+export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town: initialTown }) => {
   const { siteSettings, formatFare, currency, taxiHubs } = useApp();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const town =
+    taxiHubs?.[initialTown.id] ||
+    taxiHubs?.[initialTown.slug] ||
+    initialTown;
+
+  const normalizedHeroImage = town.heroImage?.startsWith('/src/assets/images/')
+    ? town.heroImage.replace('/src/assets/images/', '/assets/images/')
+    : town.heroImage;
 
   const cleanWhatsApp = siteSettings.whatsappNumber.replace(/[^0-9]/g, '');
 
@@ -61,7 +70,7 @@ export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town }) => {
         {/* Background photo */}
         <div className="absolute inset-0 z-0">
           <img
-            src={town.heroImage}
+            src={normalizedHeroImage}
             alt={`${town.townName} Taxi Sri Lanka`}
             className="w-full h-full object-cover object-center"
           />

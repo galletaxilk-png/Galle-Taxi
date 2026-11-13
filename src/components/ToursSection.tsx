@@ -22,12 +22,13 @@ import { DayTourProduct } from '../lib/toursData';
 import { useApp } from '../lib/store';
 
 export const ToursSection: React.FC = () => {
-  const { currency, formatFare, tours } = useApp();
+  const { currency, formatFare, tours, isFirebaseActive, isPublicDataLoaded } = useApp();
   const sliderRef = useRef<HTMLDivElement>(null);
   const [activeSlide, setActiveSlide] = useState(0);
 
   // Filter only published tours for the public website
-  const publishedTours = tours.filter((t) => t.isPublished !== false);
+  const publishedTours = (tours || []).filter((t) => t.isPublished !== false);
+  const isLoadingTours = publishedTours.length === 0 && isFirebaseActive && !isPublicDataLoaded;
 
   const handleScroll = () => {
     if (!sliderRef.current) return;
@@ -54,14 +55,39 @@ export const ToursSection: React.FC = () => {
     }
   };
 
-  // If no tours are published, don't display empty section
+  // If loading from Firestore, show clean dark skeleton cards; if loaded and genuinely empty, hide section
+  if (isLoadingTours) {
+    return (
+      <section className="py-16 lg:py-24 bg-[#0E0E10] border-t border-b border-[#1F1F23] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div
+                key={`tour-skeleton-${idx}`}
+                className="bg-[#141416] border border-[#27272A] rounded-xl p-4 animate-pulse space-y-4"
+              >
+                <div className="aspect-[16/10] rounded-lg bg-[#1A1A1E]" />
+                <div className="h-5 w-3/4 rounded bg-[#1F1F26]" />
+                <div className="h-3 w-full rounded bg-[#1A1A1E]" />
+                <div className="h-9 w-full rounded-lg bg-[#1F1F26]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (publishedTours.length === 0) {
     return null;
   }
 
   // Convert USD starting price to the user's selected active currency
   const getStartingPrice = (tour: DayTourProduct) => {
-    const minUsd = Math.min(...tour.vehiclePrices.map((v) => v.priceUsd));
+    const prices = (tour.vehiclePrices || [])
+      .map((v) => Number(v.priceUsd) || 0)
+      .filter((p) => p > 0);
+    const minUsd = prices.length > 0 ? Math.min(...prices) : 0;
     if (currency === 'USD') {
       return `$${minUsd}`;
     }
@@ -132,7 +158,11 @@ export const ToursSection: React.FC = () => {
                   {/* Cinematic Photo with overlay badges */}
                   <div className="relative aspect-[16/10] overflow-hidden bg-[#0B0B0D]">
                     <img
-                      src={tour.heroImage}
+                      src={
+                        tour.heroImage?.startsWith('/src/assets/images/')
+                          ? tour.heroImage.replace('/src/assets/images/', '/assets/images/')
+                          : tour.heroImage || '/assets/images/regenerated_image_1794057460840.png'
+                      }
                       alt={tour.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
@@ -152,8 +182,8 @@ export const ToursSection: React.FC = () => {
                       )}
                       <div className="px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-bold text-white flex items-center gap-1 border border-slate-700 ml-auto">
                         <Star className="w-3 h-3 fill-[#F5B91B] text-[#F5B91B]" />
-                        <span>{tour.rating.toFixed(2)}</span>
-                        <span className="text-slate-400 font-normal">({tour.reviewCount})</span>
+                        <span>{(tour.rating ?? 5.0).toFixed(2)}</span>
+                        <span className="text-slate-400 font-normal">({tour.reviewCount ?? 0})</span>
                       </div>
                     </div>
 
@@ -161,7 +191,7 @@ export const ToursSection: React.FC = () => {
                     <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5">
                       <span className="px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md text-[11px] font-semibold text-slate-200 border border-slate-800 flex items-center gap-1">
                         <Clock className="w-3 h-3 text-[#F5B91B]" />
-                        <span>{tour.duration}</span>
+                        <span>{tour.duration || 'Full Day'}</span>
                       </span>
                     </div>
                   </div>
@@ -171,7 +201,9 @@ export const ToursSection: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-0.5">
                         <MapPin className="w-3 h-3 text-[#F5B91B] shrink-0" />
-                        <span className="truncate">Starts from {tour.startingLocation.split(',')[0]}</span>
+                        <span className="truncate">
+                          Starts from {(tour.startingLocation || 'Galle, Sri Lanka').split(',')[0]}
+                        </span>
                       </div>
                       <h3 className="text-base font-bold text-white font-['Outfit'] leading-snug group-hover:text-[#F5B91B] transition-colors line-clamp-1">
                         {tour.title}
@@ -183,7 +215,7 @@ export const ToursSection: React.FC = () => {
 
                     {/* Highlights Preview */}
                     <div className="space-y-1 pt-2 border-t border-[#27272A]/70">
-                      {tour.highlights.slice(0, 3).map((hl, hlIdx) => (
+                      {(tour.highlights || []).slice(0, 3).map((hl, hlIdx) => (
                         <div key={hlIdx} className="flex items-center gap-1.5 text-[11px] text-slate-300">
                           <CheckCircle2 className="w-3 h-3 text-[#F5B91B] shrink-0" />
                           <span className="truncate">{hl.title}</span>

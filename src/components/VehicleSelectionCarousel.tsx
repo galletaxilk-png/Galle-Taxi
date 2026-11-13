@@ -73,7 +73,15 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
   className = '',
   onRouteCalculated,
 }) => {
-  const { vehicles, fareRules, currencies, currency, formatFare } = useApp();
+  const {
+    vehicles,
+    fareRules,
+    currencies,
+    currency,
+    formatFare,
+    isFirebaseActive,
+    isPublicDataLoaded,
+  } = useApp();
 
   const sliderRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -207,8 +215,14 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
   const carouselVehicles: DisplayVehicleItem[] = useMemo(() => {
     const sourceVehicles = getActivePublicVehicles(vehicles);
 
-    // If still empty (e.g. initial boot before store hydration), fallback to CAROUSEL_SPECS
+    // Wait for live Firestore fleet instead of flashing outdated 6-vehicle static defaults
     if (!sourceVehicles || sourceVehicles.length === 0) {
+      if (isFirebaseActive && !isPublicDataLoaded) {
+        return [];
+      }
+      if (isFirebaseActive) {
+        return [];
+      }
       return CAROUSEL_SPECS.map((spec) => ({
         id: spec.id,
         name: spec.preferredName,
@@ -323,7 +337,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
         rawVehicle,
       };
     });
-  }, [vehicles, fareRules]);
+  }, [vehicles, fareRules, isFirebaseActive, isPublicDataLoaded]);
 
   // Check scroll position for arrow buttons & active dot
   const updateScrollState = () => {
@@ -518,7 +532,21 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {carouselVehicles.map((veh, idx) => {
+          {carouselVehicles.length === 0 && isFirebaseActive && !isPublicDataLoaded ? (
+            Array.from({ length: 6 }).map((_, skeletonIdx) => (
+              <div
+                key={`veh-skeleton-${skeletonIdx}`}
+                className="snap-start shrink-0 w-[82vw] sm:w-[260px] lg:w-full rounded-2xl p-3.5 bg-[#121216]/80 border border-white/20 animate-pulse space-y-3"
+              >
+                <div className="h-[105px] w-full rounded-xl bg-[#1A1A22]" />
+                <div className="h-4 w-3/4 rounded bg-[#1F1F28]" />
+                <div className="h-3 w-1/2 rounded bg-[#1A1A22]" />
+                <div className="h-14 w-full rounded-xl bg-[#0D0D10]" />
+                <div className="h-9 w-full rounded-xl bg-[#1F1F28]" />
+              </div>
+            ))
+          ) : (
+            carouselVehicles.map((veh, idx) => {
             const isSelected = veh.id === selectedVehicleId;
             const fareResult = getVehicleFareResult(veh.rawVehicle);
             const multiRates = getMultiCurrencyEstimates(fareResult.fare);
@@ -705,7 +733,8 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </div>
 
         {/* Carousel Dots Indicator - only on screens with horizontal scroll (<lg) */}

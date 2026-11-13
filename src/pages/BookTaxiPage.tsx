@@ -40,7 +40,16 @@ import { CountryPhoneInput } from '../components/CountryPhoneInput';
 export const BookTaxiPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { vehicles, fareRules, createBooking, siteSettings, currency, formatFare } = useApp();
+  const {
+    vehicles,
+    fareRules,
+    createBooking,
+    siteSettings,
+    currency,
+    formatFare,
+    isFirebaseActive,
+    isPublicDataLoaded,
+  } = useApp();
 
   const [activeTab, setActiveTab] = useState<ServiceTabType>(() => {
     const sParam = searchParams.get('serviceType');
@@ -165,7 +174,7 @@ export const BookTaxiPage: React.FC = () => {
   const calculated = calculateAuthoritativeFare({
     pickup: pickup || 'Galle Fort',
     destination: destination || 'Colombo Airport',
-    vehicleCategoryId: selectedVehicle.id,
+    vehicleCategoryId: selectedVehicle?.id || vehicleId || 'veh-sedan-std',
     pickupTime: time,
     vehicles,
     fareRules,
@@ -232,7 +241,7 @@ export const BookTaxiPage: React.FC = () => {
     setValidationError(null);
 
     // Vehicle & Passenger validation
-    if (passengerCount > selectedVehicle.passengers) {
+    if (selectedVehicle && passengerCount > selectedVehicle.passengers) {
       setValidationError(
         `Selected vehicle (${selectedVehicle.name}) accommodates up to ${selectedVehicle.passengers} passengers. Please choose a larger vehicle like a VIP Passenger Van.`
       );
@@ -320,8 +329,8 @@ export const BookTaxiPage: React.FC = () => {
         destination: destination.trim(),
         pickupDate: date,
         pickupTime: time,
-        vehicleCategoryId: selectedVehicle.id,
-        vehicleCategoryName: selectedVehicle.name,
+        vehicleCategoryId: selectedVehicle?.id || vehicleId || 'veh-sedan-std',
+        vehicleCategoryName: selectedVehicle?.name || 'Private Vehicle',
         passengerCount,
         luggageCount,
         flightNumber: activeTab === 'AIRPORT PICK UP' ? flightNumber.trim() : undefined,
@@ -342,7 +351,7 @@ export const BookTaxiPage: React.FC = () => {
           destination: destination.trim(),
           pickupDate: date,
           pickupTime: time,
-          vehicleCategoryName: selectedVehicle.name,
+          vehicleCategoryName: selectedVehicle?.name || 'Private Vehicle',
           passengerCount,
           luggageCount,
           flightNumber: activeTab === 'AIRPORT PICK UP' ? flightNumber.trim() : undefined,
@@ -846,7 +855,7 @@ export const BookTaxiPage: React.FC = () => {
                       Selected Vehicle:
                     </span>
                     <span className="text-xs font-bold text-[#F5B91B] bg-[#F5B91B]/15 px-2.5 py-0.5 rounded border border-[#F5B91B]/30 font-mono">
-                      {selectedVehicle.name} ({selectedVehicle.category})
+                      {selectedVehicle ? `${selectedVehicle.name} (${selectedVehicle.category})` : 'Loading vehicle...'}
                     </span>
                   </div>
                   <div className="text-xs text-slate-200 flex items-center gap-2">
@@ -895,7 +904,19 @@ export const BookTaxiPage: React.FC = () => {
                 </div>
 
                 <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1 sm:mx-0 sm:px-0">
-                  {publicVehicles.map((v) => {
+                  {publicVehicles.length === 0 && isFirebaseActive && !isPublicDataLoaded ? (
+                    Array.from({ length: 6 }).map((_, sIdx) => (
+                      <div
+                        key={`step1-veh-skeleton-${sIdx}`}
+                        className="shrink-0 w-[145px] sm:w-auto snap-start p-2.5 rounded-xl border border-white/20 bg-[#121216]/80 animate-pulse space-y-2"
+                      >
+                        <div className="h-11 w-full rounded-lg bg-[#1A1A22]" />
+                        <div className="h-3.5 w-3/4 rounded bg-[#1F1F28]" />
+                        <div className="h-4 w-1/2 rounded bg-[#1A1A22]" />
+                      </div>
+                    ))
+                  ) : (
+                    publicVehicles.map((v) => {
                     const isSelected = v.id === vehicleId;
                     const vFare = getVehicleTripFare(v.id);
                     const thumbSrc = normalizeVehicleImageUrl(v.imageUrl, v.category, v.id, v.name);
@@ -946,7 +967,8 @@ export const BookTaxiPage: React.FC = () => {
                         </div>
                       </button>
                     );
-                  })}
+                  })
+                  )}
                 </div>
               </div>
 
@@ -1022,7 +1044,20 @@ export const BookTaxiPage: React.FC = () => {
               </div>
 
               <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible pb-2 sm:pb-0 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1 sm:mx-0 sm:px-0">
-                {publicVehicles.map((v) => {
+                {publicVehicles.length === 0 && isFirebaseActive && !isPublicDataLoaded ? (
+                  Array.from({ length: 6 }).map((_, sIdx) => (
+                    <div
+                      key={`step2-veh-skeleton-${sIdx}`}
+                      className="shrink-0 w-[270px] sm:w-auto snap-start rounded-2xl p-4 border border-white/20 bg-[#121216]/80 animate-pulse space-y-3"
+                    >
+                      <div className="h-24 w-full rounded-xl bg-[#1A1A22]" />
+                      <div className="h-4 w-2/3 rounded bg-[#1F1F28]" />
+                      <div className="h-3 w-1/2 rounded bg-[#1A1A22]" />
+                      <div className="h-8 w-full rounded-lg bg-[#1F1F28]" />
+                    </div>
+                  ))
+                ) : (
+                  publicVehicles.map((v) => {
                   const isSelected = v.id === vehicleId;
                   const vFare = getVehicleTripFare(v.id);
                   const cardImg = normalizeVehicleImageUrl(v.imageUrl, v.category, v.id, v.name);
@@ -1089,7 +1124,8 @@ export const BookTaxiPage: React.FC = () => {
                       </div>
                     </div>
                   );
-                })}
+                })
+                )}
               </div>
 
               {/* Passengers & Luggage count */}
@@ -1100,7 +1136,7 @@ export const BookTaxiPage: React.FC = () => {
                     id="book-passenger-count"
                     type="number"
                     min={1}
-                    max={selectedVehicle.passengers}
+                    max={selectedVehicle?.passengers || 14}
                     value={passengerCount}
                     onChange={(e) => setPassengerCount(parseInt(e.target.value) || 1)}
                     className="w-full min-h-[44px] px-3.5 py-2 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
@@ -1112,7 +1148,7 @@ export const BookTaxiPage: React.FC = () => {
                     id="book-luggage-count"
                     type="number"
                     min={0}
-                    max={selectedVehicle.luggage}
+                    max={selectedVehicle?.luggage || 12}
                     value={luggageCount}
                     onChange={(e) => setLuggageCount(parseInt(e.target.value) || 0)}
                     className="w-full min-h-[44px] px-3.5 py-2 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
@@ -1206,7 +1242,7 @@ export const BookTaxiPage: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-xs text-slate-300 flex items-center gap-2 flex-wrap">
-                  <span className="text-[#F5B91B] font-bold">{selectedVehicle.name}</span>
+                  <span className="text-[#F5B91B] font-bold">{selectedVehicle?.name || 'Private Vehicle'}</span>
                   <span>·</span>
                   <span className="font-mono text-slate-200">~{calculated.distanceKm} km</span>
                   <span>·</span>
@@ -1347,13 +1383,18 @@ export const BookTaxiPage: React.FC = () => {
                 </span>
                 <div className="flex items-center gap-3 pt-1">
                   <img
-                    src={selectedVehicle.imageUrl}
-                    alt={selectedVehicle.name}
+                    src={normalizeVehicleImageUrl(
+                      selectedVehicle?.imageUrl,
+                      selectedVehicle?.category || 'Sedan',
+                      selectedVehicle?.id,
+                      selectedVehicle?.name
+                    )}
+                    alt={selectedVehicle?.name || 'Private Vehicle'}
                     className="w-16 h-12 object-cover rounded-lg bg-[#1B1B1F]"
                     referrerPolicy="no-referrer"
                   />
                   <div>
-                    <div className="font-bold text-white text-sm">{selectedVehicle.name}</div>
+                    <div className="font-bold text-white text-sm">{selectedVehicle?.name || 'Private Vehicle'}</div>
                     <div className="text-xs text-slate-400">
                       {passengerCount} Passengers · {luggageCount} Bags
                     </div>
@@ -1428,15 +1469,20 @@ export const BookTaxiPage: React.FC = () => {
               {/* Vehicle Preview Card */}
               <div className="flex items-center gap-3 sm:gap-4 p-3.5 bg-[#0D0D10]/80 backdrop-blur-md border border-white/20 hover:border-white/35 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all">
                 <img
-                  src={selectedVehicle.imageUrl}
-                  alt={selectedVehicle.name}
+                  src={normalizeVehicleImageUrl(
+                    selectedVehicle?.imageUrl,
+                    selectedVehicle?.category || 'Sedan',
+                    selectedVehicle?.id,
+                    selectedVehicle?.name
+                  )}
+                  alt={selectedVehicle?.name || 'Private Vehicle'}
                   className="w-16 h-14 sm:w-20 sm:h-16 object-cover rounded-lg bg-[#1B1B1F] shrink-0"
                   referrerPolicy="no-referrer"
                 />
                 <div className="min-w-0">
-                  <div className="font-bold text-white text-sm truncate">{selectedVehicle.name}</div>
+                  <div className="font-bold text-white text-sm truncate">{selectedVehicle?.name || 'Private Vehicle'}</div>
                   <div className="text-xs text-slate-400 mt-0.5">
-                    {selectedVehicle.passengers} Passengers · {selectedVehicle.luggage} Luggage
+                    {selectedVehicle?.passengers ?? 4} Passengers · {selectedVehicle?.luggage ?? 3} Luggage
                   </div>
                   <div className="text-[11px] text-[#F5B91B] font-semibold mt-1">Air-Conditioned Chauffeur</div>
                 </div>

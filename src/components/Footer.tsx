@@ -4,8 +4,43 @@ import { Car, Phone, Mail, MapPin, Clock, MessageSquare, ShieldCheck, ArrowRight
 import { useApp } from '../lib/store';
 
 export const Footer: React.FC = () => {
-  const { siteSettings, isAdminLoggedIn } = useApp();
+  const { siteSettings, isAdminLoggedIn, taxiHubs } = useApp();
   const cleanWhatsApp = siteSettings.whatsappNumber.replace(/[^0-9]/g, '');
+
+  const CORE_HUB_ORDER = [
+    'ahangama-taxi',
+    'mirissa-taxi',
+    'unawatuna-taxi',
+    'hikkaduwa-taxi',
+    'bentota-taxi',
+    'weligama-taxi',
+  ];
+
+  const liveHubLinks = Object.values(taxiHubs || {})
+    .sort((a, b) => {
+      const aIdx = CORE_HUB_ORDER.indexOf(a.id || a.slug);
+      const bIdx = CORE_HUB_ORDER.indexOf(b.id || b.slug);
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return (a.townName || '').localeCompare(b.townName || '');
+    })
+    .map((hub) => ({
+      name: `${hub.townName} Taxi`,
+      path: `/${hub.slug}`,
+    }));
+
+  const hubLinksToRender =
+    liveHubLinks.length > 0
+      ? liveHubLinks
+      : [
+          { name: 'Ahangama Taxi', path: '/ahangama-taxi' },
+          { name: 'Mirissa Taxi', path: '/mirissa-taxi' },
+          { name: 'Unawatuna Taxi', path: '/unawatuna-taxi' },
+          { name: 'Hikkaduwa Taxi', path: '/hikkaduwa-taxi' },
+          { name: 'Bentota Taxi', path: '/bentota-taxi' },
+          { name: 'Weligama Taxi', path: '/weligama-taxi' },
+        ];
 
   return (
     <footer className="bg-[#070709] border-t border-[#1F1F23] text-slate-400 text-sm">
@@ -192,30 +227,16 @@ export const Footer: React.FC = () => {
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-            <Link to="/ahangama-taxi" className="p-2.5 rounded-lg bg-[#141416] hover:bg-[#1E1E22] border border-[#27272A] hover:border-[#F5B91B]/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-              <span>Ahangama Taxi</span>
-              <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-[#F5B91B] transition-colors" />
-            </Link>
-            <Link to="/mirissa-taxi" className="p-2.5 rounded-lg bg-[#141416] hover:bg-[#1E1E22] border border-[#27272A] hover:border-[#F5B91B]/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-              <span>Mirissa Taxi</span>
-              <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-[#F5B91B] transition-colors" />
-            </Link>
-            <Link to="/unawatuna-taxi" className="p-2.5 rounded-lg bg-[#141416] hover:bg-[#1E1E22] border border-[#27272A] hover:border-[#F5B91B]/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-              <span>Unawatuna Taxi</span>
-              <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-[#F5B91B] transition-colors" />
-            </Link>
-            <Link to="/hikkaduwa-taxi" className="p-2.5 rounded-lg bg-[#141416] hover:bg-[#1E1E22] border border-[#27272A] hover:border-[#F5B91B]/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-              <span>Hikkaduwa Taxi</span>
-              <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-[#F5B91B] transition-colors" />
-            </Link>
-            <Link to="/bentota-taxi" className="p-2.5 rounded-lg bg-[#141416] hover:bg-[#1E1E22] border border-[#27272A] hover:border-[#F5B91B]/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-              <span>Bentota Taxi</span>
-              <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-[#F5B91B] transition-colors" />
-            </Link>
-            <Link to="/weligama-taxi" className="p-2.5 rounded-lg bg-[#141416] hover:bg-[#1E1E22] border border-[#27272A] hover:border-[#F5B91B]/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group">
-              <span>Weligama Taxi</span>
-              <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-[#F5B91B] transition-colors" />
-            </Link>
+            {hubLinksToRender.map((hubLink) => (
+              <Link
+                key={hubLink.path}
+                to={hubLink.path}
+                className="p-2.5 rounded-lg bg-[#141416] hover:bg-[#1E1E22] border border-[#27272A] hover:border-[#F5B91B]/40 text-slate-300 hover:text-white transition-all flex items-center justify-between group"
+              >
+                <span>{hubLink.name}</span>
+                <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-[#F5B91B] transition-colors" />
+              </Link>
+            ))}
           </div>
         </div>
 

@@ -11,8 +11,9 @@ import {
 
 export const VehiclesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { vehicles, formatFare } = useApp();
+  const { vehicles, isFirebaseActive, isPublicDataLoaded } = useApp();
   const publicVehicles = useMemo(() => getActivePublicVehicles(vehicles), [vehicles]);
+  const isLoadingVehicles = publicVehicles.length === 0 && isFirebaseActive && !isPublicDataLoaded;
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
@@ -48,7 +49,20 @@ export const VehiclesPage: React.FC = () => {
 
         {/* Vehicle Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {publicVehicles.map((veh) => (
+          {isLoadingVehicles ? (
+            Array.from({ length: 4 }).map((_, idx) => (
+              <div
+                key={`veh-page-skeleton-${idx}`}
+                className="bg-[#141416] border border-[#27272A] rounded-2xl overflow-hidden p-6 animate-pulse space-y-4"
+              >
+                <div className="aspect-[16/10] rounded-xl bg-[#1B1B1F]" />
+                <div className="h-6 w-1/2 rounded bg-[#1F1F26]" />
+                <div className="h-4 w-full rounded bg-[#1A1A1E]" />
+                <div className="h-10 w-full rounded-xl bg-[#1F1F26]" />
+              </div>
+            ))
+          ) : (
+            publicVehicles.map((veh) => (
             <div
               key={veh.id}
               className="bg-[#141416] border border-[#27272A] rounded-2xl overflow-hidden hover:border-[#F5B91B]/40 transition-all flex flex-col justify-between"
@@ -127,7 +141,8 @@ export const VehiclesPage: React.FC = () => {
                 </Link>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
 
       </div>

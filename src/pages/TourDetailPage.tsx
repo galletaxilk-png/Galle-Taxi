@@ -38,9 +38,18 @@ import { Booking } from '../types';
 export const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { currency, formatFare, createBooking, siteSettings, tours, isAdminLoggedIn } = useApp();
+  const {
+    currency,
+    formatFare,
+    createBooking,
+    siteSettings,
+    tours,
+    isAdminLoggedIn,
+    isFirebaseActive,
+    isPublicDataLoaded,
+  } = useApp();
 
-  const tour: DayTourProduct | undefined = tours.find((t) => t.slug === slug || t.id === slug);
+  const tour: DayTourProduct | undefined = (tours || []).find((t) => t.slug === slug || t.id === slug);
 
   // Gallery state
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
@@ -64,19 +73,28 @@ export const TourDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (tour) {
-      setSelectedVehicle(tour.vehiclePrices[0]);
+      setSelectedVehicle(tour.vehiclePrices?.[0] || null);
       // Set default tomorrow date
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       setTravelDate(tomorrow.toISOString().split('T')[0]);
       // Update document title for SEO
-      document.title = tour.seo.title;
+      document.title = tour.seo?.title || `${tour.title} | Galle Taxi`;
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
-        metaDesc.setAttribute('content', tour.seo.description);
+        metaDesc.setAttribute('content', tour.seo?.description || tour.shortDescription || '');
       }
     }
   }, [tour]);
+
+  if (!tour && isFirebaseActive && !isPublicDataLoaded) {
+    return (
+      <div className="min-h-screen bg-[#0B0B0D] py-24 px-4 text-center text-slate-100 flex flex-col items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#F5B91B] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-slate-400 font-mono mt-4">Loading tour details...</p>
+      </div>
+    );
+  }
 
   if (!tour || (!isAdminLoggedIn && tour.isPublished === false)) {
     return (
@@ -96,7 +114,9 @@ export const TourDetailPage: React.FC = () => {
   }
 
   // Calculate prices
-  const vehiclePriceUsd = selectedVehicle ? selectedVehicle.priceUsd : tour.vehiclePrices[0].priceUsd;
+  const vehiclePriceUsd = selectedVehicle
+    ? selectedVehicle.priceUsd
+    : tour.vehiclePrices?.[0]?.priceUsd || 0;
   const priceInLkr = vehiclePriceUsd * 310;
   const formattedVehiclePrice = currency === 'USD' ? `$${vehiclePriceUsd}` : formatFare(priceInLkr);
 
@@ -171,10 +191,10 @@ export const TourDetailPage: React.FC = () => {
           tourSlug: tour.slug,
           tourTitle: tour.title,
           tourDuration: tour.duration,
-          tourHighlights: tour.highlights.map((h) => `${h.title}: ${h.description}`),
-          tourItinerary: tour.itinerary.map((i) => `${i.time} - ${i.title}: ${i.description}`),
-          tourIncluded: tour.included,
-          tourExcluded: tour.excluded,
+          tourHighlights: (tour.highlights || []).map((h) => `${h.title}: ${h.description}`),
+          tourItinerary: (tour.itinerary || []).map((i) => `${i.time} - ${i.title}: ${i.description}`),
+          tourIncluded: tour.included || [],
+          tourExcluded: tour.excluded || [],
         });
       } catch (err) {
         console.warn('Voucher email notice:', err);
@@ -189,7 +209,13 @@ export const TourDetailPage: React.FC = () => {
     }
   };
 
-  const gallery = tour.galleryImages.length > 0 ? tour.galleryImages : [tour.heroImage];
+  const normalizedHero = tour.heroImage?.startsWith('/src/assets/images/')
+    ? tour.heroImage.replace('/src/assets/images/', '/assets/images/')
+    : tour.heroImage || '/assets/images/regenerated_image_1794057460840.png';
+  const rawGallery = tour.galleryImages && tour.galleryImages.length > 0 ? tour.galleryImages : [normalizedHero];
+  const gallery = rawGallery.map((g) =>
+    g?.startsWith('/src/assets/images/') ? g.replace('/src/assets/images/', '/assets/images/') : g
+  );
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-slate-100 pb-24">
@@ -241,16 +267,16 @@ export const TourDetailPage: React.FC = () => {
             )}
             <div className="flex items-center gap-1 text-xs font-bold text-white px-2.5 py-1 rounded-full bg-[#18181B] border border-[#27272A]">
               <Star className="w-3.5 h-3.5 fill-[#F5B91B] text-[#F5B91B]" />
-              <span>{tour.rating.toFixed(2)}</span>
-              <span className="text-slate-400 font-normal">({tour.reviewCount} verified traveler reviews)</span>
+              <span>{(tour.rating ?? 5.0).toFixed(2)}</span>
+              <span className="text-slate-400 font-normal">({tour.reviewCount ?? 0} verified traveler reviews)</span>
             </div>
             <div className="flex items-center gap-1 text-xs text-slate-400 px-2.5 py-1 rounded-full bg-[#18181B] border border-[#27272A]">
               <Clock className="w-3.5 h-3.5 text-[#F5B91B]" />
-              <span>{tour.duration} Duration</span>
+              <span>{tour.duration || 'Full Day'} Duration</span>
             </div>
             <div className="flex items-center gap-1 text-xs text-slate-400 px-2.5 py-1 rounded-full bg-[#18181B] border border-[#27272A]">
               <MapPin className="w-3.5 h-3.5 text-[#F5B91B]" />
-              <span>Pickup in {tour.startingLocation.split(',')[0]}</span>
+              <span>Pickup in {(tour.startingLocation || 'Galle, Sri Lanka').split(',')[0]}</span>
             </div>
           </div>
 
@@ -267,7 +293,7 @@ export const TourDetailPage: React.FC = () => {
           {/* Main Large Visual: 8 cols */}
           <div className="lg:col-span-8 relative aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden bg-[#141416] border border-[#27272A] shadow-2xl">
             <img
-              src={gallery[selectedPhotoIndex] || tour.heroImage}
+              src={gallery[selectedPhotoIndex] || normalizedHero}
               alt={`${tour.title} photo`}
               className="w-full h-full object-cover transition-all duration-300"
             />
@@ -338,7 +364,7 @@ export const TourDetailPage: React.FC = () => {
                 Experience Highlights
               </h2>
               <div className="grid grid-cols-1 gap-4">
-                {tour.highlights.map((hl, idx) => (
+                {(tour.highlights || []).map((hl, idx) => (
                   <div key={idx} className="flex items-start gap-3.5 p-3.5 rounded-xl bg-[#0B0B0D] border border-[#27272A]">
                     <div className="w-8 h-8 rounded-lg bg-[#F5B91B]/15 text-[#F5B91B] flex items-center justify-center shrink-0 mt-0.5">
                       <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
@@ -369,7 +395,7 @@ export const TourDetailPage: React.FC = () => {
               </div>
 
               <div className="relative pl-6 sm:pl-8 space-y-6 border-l-2 border-[#27272A] ml-2">
-                {tour.itinerary.map((stop, idx) => (
+                {(tour.itinerary || []).map((stop, idx) => (
                   <div key={idx} className="relative group">
                     {/* Step marker */}
                     <div className="absolute -left-[31px] sm:-left-[39px] top-1 w-4 h-4 rounded-full bg-[#0B0B0D] border-2 border-[#F5B91B] group-hover:bg-[#F5B91B] transition-colors" />
@@ -423,7 +449,7 @@ export const TourDetailPage: React.FC = () => {
                     <span>What's Included</span>
                   </h3>
                   <ul className="space-y-2 text-xs text-slate-300">
-                    {tour.included.map((item, idx) => (
+                    {(tour.included || []).map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                         <span>{item}</span>
@@ -439,7 +465,7 @@ export const TourDetailPage: React.FC = () => {
                     <span>What's Excluded</span>
                   </h3>
                   <ul className="space-y-2 text-xs text-slate-300">
-                    {tour.excluded.map((item, idx) => (
+                    {(tour.excluded || []).map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="text-rose-400 font-bold shrink-0">✕</span>
                         <span>{item}</span>
@@ -458,7 +484,7 @@ export const TourDetailPage: React.FC = () => {
                   <span>Important Traveler Information</span>
                 </h2>
                 <ul className="space-y-2 text-xs text-slate-400 list-disc list-inside">
-                  {tour.importantInfo.map((info, idx) => (
+                  {(tour.importantInfo || []).map((info, idx) => (
                     <li key={idx} className="leading-relaxed">
                       {info}
                     </li>
@@ -526,7 +552,7 @@ export const TourDetailPage: React.FC = () => {
                     <span className="text-[10px] text-slate-500">Prices per vehicle</span>
                   </label>
                   <div className="grid grid-cols-1 gap-2">
-                    {tour.vehiclePrices.map((veh) => {
+                    {(tour.vehiclePrices || []).map((veh) => {
                       const isSelected = selectedVehicle?.id === veh.id;
                       return (
                         <div
