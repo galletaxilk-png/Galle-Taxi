@@ -570,11 +570,12 @@ export const AdminTaxiHubs: React.FC = () => {
                       )}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.png,.jpg,.jpeg,.webp"
                         className="hidden"
                         disabled={uploadingHubKey === hub.key}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
+                          e.target.value = '';
                           if (file) handleDirectImageUpload(hub.key, file);
                         }}
                       />
@@ -877,11 +878,12 @@ export const AdminTaxiHubs: React.FC = () => {
                           )}
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/*,.png,.jpg,.jpeg,.webp"
                             className="hidden"
                             disabled={uploadingHubKey === selectedHubKey}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
+                              e.target.value = '';
                               if (file && selectedHubKey) handleDirectImageUpload(selectedHubKey, file);
                             }}
                           />
@@ -981,16 +983,17 @@ export const AdminTaxiHubs: React.FC = () => {
                       <div className="text-center">
                         <span className="text-sm font-bold text-white">Click or drag a photo here to upload</span>
                         <p className="text-xs text-slate-400 mt-1">
-                          Supports PNG, JPG, or WEBP up to 25MB. Files are automatically compressed and saved to Firebase / storage.
+                          Supports PNG, JPG, or WEBP up to 25MB. Files are automatically compressed &amp; converted to WebP before saving.
                         </p>
                       </div>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.png,.jpg,.jpeg,.webp"
                         className="hidden"
                         disabled={uploadingHubKey === selectedHubKey}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
+                          e.target.value = '';
                           if (file && selectedHubKey) handleDirectImageUpload(selectedHubKey, file);
                         }}
                       />
@@ -1534,15 +1537,16 @@ export const AdminTaxiHubs: React.FC = () => {
                   </div>
                   <div className="text-center">
                     <span className="text-xs font-bold text-white">Click or drag an image here</span>
-                    <p className="text-[11px] text-slate-400 mt-0.5">PNG, JPG, or WEBP up to 25MB (auto-compressed & saved to Firebase)</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">PNG, JPG, or WEBP up to 25MB (auto-compressed &amp; converted to WebP)</p>
                   </div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.png,.jpg,.jpeg,.webp"
                     className="hidden"
                     disabled={uploadingHubKey === quickImageHubKey}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
+                      e.target.value = '';
                       if (file) handleDirectImageUpload(quickImageHubKey, file);
                     }}
                   />

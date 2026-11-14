@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Link as LinkIcon, Image as ImageIcon, X, Check, RefreshCw, Eye } from 'lucide-react';
+import { optimizeImageToWebP } from '../../lib/imageOptimizer';
 
 export interface ImagePreset {
   label: string;
@@ -110,129 +111,7 @@ interface ImageUploaderProps {
   presets?: ImagePreset[];
 }
 
-/**
- * Utility to optimize and format image file before emitting as dataURL.
- * Uses fast URL.createObjectURL for instant decoding.
- * Preserves 100% transparency for PNG vehicle cutouts.
- * Generates an ultra-lightweight (15KB–35KB) dataURL for instant upload and real-time Cloud Firestore synchronization.
- */
-const compressImageFile = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    try {
-      const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
-      const objectUrl = URL.createObjectURL(file);
-      const img = new Image();
 
-      let didFinish = false;
-      const timeout = setTimeout(() => {
-        if (!didFinish) {
-          didFinish = true;
-          URL.revokeObjectURL(objectUrl);
-          const fr = new FileReader();
-          fr.onload = () => resolve((fr.result as string) || '');
-          fr.onerror = () => resolve('');
-          fr.readAsDataURL(file);
-        }
-      }, 1500);
-
-      img.onload = () => {
-        if (didFinish) return;
-        didFinish = true;
-        clearTimeout(timeout);
-        URL.revokeObjectURL(objectUrl);
-
-        try {
-          // Sharp web display size: max 420px wide, max 260px high
-          const maxWidth = 420;
-          const maxHeight = 260;
-          let width = img.naturalWidth || img.width || 420;
-          let height = img.naturalHeight || img.height || 260;
-
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = Math.max(10, width);
-          canvas.height = Math.max(10, height);
-          const ctx = canvas.getContext('2d', { alpha: true });
-          if (!ctx) {
-            const fr = new FileReader();
-            fr.onload = () => resolve((fr.result as string) || '');
-            fr.onerror = () => resolve('');
-            fr.readAsDataURL(file);
-            return;
-          }
-
-          // Clear transparent canvas for PNG cutouts
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          let outputUrl = '';
-          const webpUrl = canvas.toDataURL('image/webp', 0.82);
-          if (webpUrl.startsWith('data:image/webp')) {
-            outputUrl = webpUrl;
-          } else if (isPng) {
-            outputUrl = canvas.toDataURL('image/png');
-          } else {
-            outputUrl = canvas.toDataURL('image/jpeg', 0.82);
-          }
-
-          // If still > 90KB, perform a second pass to guarantee lightweight storage
-          if (outputUrl.length > 90000) {
-            const smallCanvas = document.createElement('canvas');
-            smallCanvas.width = Math.round(canvas.width * 0.72);
-            smallCanvas.height = Math.round(canvas.height * 0.72);
-            const sCtx = smallCanvas.getContext('2d', { alpha: true });
-            if (sCtx) {
-              sCtx.clearRect(0, 0, smallCanvas.width, smallCanvas.height);
-              sCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
-              const smallerWebp = smallCanvas.toDataURL('image/webp', 0.72);
-              outputUrl = smallerWebp.startsWith('data:image/webp')
-                ? smallerWebp
-                : isPng
-                ? smallCanvas.toDataURL('image/png')
-                : smallCanvas.toDataURL('image/jpeg', 0.8);
-            }
-          }
-
-          resolve(outputUrl);
-        } catch (canvasErr) {
-          console.error('Canvas processing error:', canvasErr);
-          const fr = new FileReader();
-          fr.onload = () => resolve((fr.result as string) || '');
-          fr.onerror = () => resolve('');
-          fr.readAsDataURL(file);
-        }
-      };
-
-      img.onerror = () => {
-        if (!didFinish) {
-          didFinish = true;
-          clearTimeout(timeout);
-          URL.revokeObjectURL(objectUrl);
-          const fr = new FileReader();
-          fr.onload = () => resolve((fr.result as string) || '');
-          fr.onerror = () => resolve('');
-          fr.readAsDataURL(file);
-        }
-      };
-
-      img.src = objectUrl;
-    } catch (e) {
-      console.error('Fast objectUrl error, falling back:', e);
-      const fr = new FileReader();
-      fr.onload = () => resolve((fr.result as string) || '');
-      fr.onerror = () => resolve('');
-      fr.readAsDataURL(file);
-    }
-  });
-};
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
   value,
@@ -251,6 +130,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [justApplied, setJustApplied] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     setUrlInput(value || '');
@@ -267,23 +147,33 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const processAndApplyFile = async (file: File) => {
     try {
       setIsProcessing(true);
-      const dataUrl = await compressImageFile(file);
-      if (!dataUrl) {
-        alert('Could not read image file. Please try another PNG or JPG.');
+      setUploadError(null);
+
+      const optimizationOptions =
+        aspectRatio === 'video'
+          ? { maxWidth: 1600, maxHeight: 1000, initialQuality: 0.85, maxBytes: 240 * 1024 }
+          : aspectRatio === 'wide'
+          ? { maxWidth: 1200, maxHeight: 800, initialQuality: 0.84, maxBytes: 180 * 1024 }
+          : { maxWidth: 800, maxHeight: 600, initialQuality: 0.82, maxBytes: 140 * 1024 };
+
+      const optimized = await optimizeImageToWebP(file, optimizationOptions);
+      if (!optimized.dataUrl) {
+        setUploadError('Could not read image file. Please try another PNG, JPG, or WEBP file.');
         return;
       }
-      onChange(dataUrl);
-      setUrlInput(dataUrl);
+
+      onChange(optimized.dataUrl);
+      setUrlInput(optimized.dataUrl);
       setImageError(false);
 
       if (onAutoApply) {
-        await onAutoApply(dataUrl);
+        await onAutoApply(optimized.dataUrl);
       }
       setJustApplied(true);
       setTimeout(() => setJustApplied(false), 3500);
     } catch (err) {
       console.error('Failed to process image file:', err);
-      alert('Unable to process this image. Please try a different JPG or PNG file.');
+      setUploadError('Unable to process this image. Please try a different JPG, PNG, or WEBP file.');
     } finally {
       setIsProcessing(false);
     }
@@ -415,7 +305,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <div className="p-2.5 bg-[#141418] border-t border-[#27272A] flex items-center justify-between gap-2">
               <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F5B91B] hover:bg-[#E5A812] text-black text-xs font-extrabold shadow-md cursor-pointer transition-all">
                 <Upload className="w-3.5 h-3.5 stroke-[3]" />
-                <span>{isProcessing ? 'Processing PNG...' : 'Replace Photo (PNG/JPG)'}</span>
+                <span>{isProcessing ? 'Converting to WebP...' : 'Replace Photo (JPG/PNG → WebP)'}</span>
                 <input
                   type="file"
                   accept="image/*, .png, .jpg, .jpeg, .webp, .svg"
@@ -449,14 +339,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <Upload className="w-5 h-5" />
             </div>
             <p className="text-xs font-bold text-white">
-              {isProcessing ? 'Processing Image...' : 'Click or Drag & Drop to upload photo'}
+              {isProcessing ? 'Optimizing & Converting to WebP...' : 'Click or Drag & Drop to upload photo'}
             </p>
             <p className="text-[11px] text-slate-400 mt-1">
-              Supports <strong className="text-[#F5B91B]">PNG</strong> (with transparency), <strong className="text-white">JPG</strong>, or <strong className="text-white">WEBP</strong>
+              Upload <strong className="text-[#F5B91B]">PNG</strong>, <strong className="text-white">JPG</strong>, or <strong className="text-white">WEBP</strong> — automatically compressed &amp; converted to WebP
             </p>
           </label>
         )}
       </div>
+
+      {uploadError && (
+        <div className="px-3 py-2 bg-red-950/50 border border-red-500/40 rounded-xl text-[11px] text-red-300">
+          {uploadError}
+        </div>
+      )}
 
       {/* Live Synced Indicator & Instant Apply Action */}
       {value && onAutoApply && (
@@ -528,16 +424,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <span className="font-bold text-white flex items-center gap-2">
               <span>Upload Custom Image</span>
               <span className="px-1.5 py-0.2 bg-[#F5B91B]/20 text-[#F5B91B] text-[10px] font-mono rounded font-bold">
-                PNG & JPG
+                AUTO WEBP
               </span>
             </span>
             <span className="text-[11px] text-slate-400 block mt-0.5">
-              Choose transparent PNG, JPG, or WEBP from your phone or PC.
+              Upload any JPG, PNG, or WEBP — automatically compressed &amp; converted to WebP.
             </span>
           </div>
           <label className="px-3.5 py-2 rounded-lg bg-[#27272A] hover:bg-[#F5B91B] hover:text-black text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer">
             <Upload className="w-3.5 h-3.5" />
-            <span>{isProcessing ? 'Processing PNG...' : 'Browse Computer...'}</span>
+            <span>{isProcessing ? 'Converting to WebP...' : 'Browse Computer...'}</span>
             <input
               type="file"
               accept="image/*, .png, .jpg, .jpeg, .webp, .svg"

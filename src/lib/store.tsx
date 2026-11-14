@@ -29,6 +29,7 @@ import {
   DEFAULT_CATEGORY_TIERS,
 } from './initialData';
 import { normalizeVehicleRecord, sortVehiclesByDisplayOrder } from './vehicleHelpers';
+import { optimizeImageToWebP } from './imageOptimizer';
 import {
   isFirebaseConfigured,
   auth,
@@ -2450,69 +2451,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const uploadTourImage = async (file: File, folder: string = 'tours'): Promise<string> => {
-    // 1. Try Firebase Storage if active
+    // 1. Automatically compress & convert any JPG/PNG/raster upload to optimized WebP on the fly
+    const optimized = await optimizeImageToWebP(file, {
+      maxWidth: 1440,
+      maxHeight: 960,
+      initialQuality: 0.85,
+      maxBytes: 420 * 1024,
+    });
+
+    // 2. Try Firebase Storage if active (uploading the optimized WebP blob)
     if (isFirebaseConfigured && storage) {
       try {
         const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const storageRef = ref(storage, `${folder}/${Date.now()}_${safeName}`);
-        const snapshot = await uploadBytes(storageRef, file);
+        const storageRef = ref(storage, `${folder}/${Date.now()}_${optimized.fileName}`);
+        const snapshot = await uploadBytes(storageRef, optimized.blob, {
+          contentType: optimized.mimeType,
+        });
         const downloadUrl = await getDownloadURL(snapshot.ref);
-        console.info('[Galle Taxi] Image uploaded to Firebase Storage:', downloadUrl);
+        console.info('[Galle Taxi] Optimized WebP tour image uploaded to Firebase Storage:', downloadUrl);
         return downloadUrl;
       } catch (err) {
         console.warn('Firebase Storage upload failed, trying server disk storage endpoint:', err);
       }
     }
 
-    // 2. Client-side canvas compression for crisp display and manageable upload size
-    const compressedBase64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const maxWidth = 1440;
-          const maxHeight = 960;
-          let width = img.width;
-          let height = img.height;
-          if (width > height) {
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            resolve(event.target?.result as string);
-            return;
-          }
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/webp', 0.85));
-        };
-        img.onerror = () => resolve(event.target?.result as string);
-      };
-      reader.onerror = (err) => reject(err);
-    });
-
-    // 3. Post to backend /api/upload-tour-image to store permanently on server disk and return static URL
+    // 3. Post optimized WebP to backend /api/upload-tour-image to store permanently on server disk
     try {
       const subFolder = folder.includes('gallery') ? 'gallery' : 'covers';
       const response = await fetch('/api/upload-tour-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: compressedBase64,
-          filename: file.name,
+          image: optimized.dataUrl,
+          filename: optimized.fileName,
           folder: subFolder,
         }),
       });
@@ -2520,81 +2491,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (response.ok) {
         const data = await response.json();
         if (data && data.success && data.url) {
-          console.info('[Galle Taxi] Tour image saved to server disk:', data.url);
+          console.info('[Galle Taxi] Optimized WebP tour image saved to server disk:', data.url);
           return data.url;
         }
       }
     } catch (apiErr) {
-      console.warn('[Galle Taxi] /api/upload-tour-image endpoint unreachable, using client data URL fallback:', apiErr);
+      console.warn('[Galle Taxi] /api/upload-tour-image endpoint unreachable, using client WebP data URL fallback:', apiErr);
     }
 
     // 4. Fallback: return the compressed WebP data URL
-    return compressedBase64;
+    return optimized.dataUrl;
   };
 
   const uploadHubImage = async (file: File, hubSlug: string = 'hub'): Promise<string> => {
-    // 1. Try Firebase Storage if active
+    // 1. Automatically compress & convert any JPG/PNG/raster upload to optimized WebP on the fly
+    const optimized = await optimizeImageToWebP(file, {
+      maxWidth: 1600,
+      maxHeight: 1000,
+      initialQuality: 0.86,
+      maxBytes: 420 * 1024,
+    });
+
+    // 2. Try Firebase Storage if active (uploading the optimized WebP blob)
     if (isFirebaseConfigured && storage) {
       try {
         const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const storageRef = ref(storage, `hubs/${Date.now()}_${safeName}`);
-        const snapshot = await uploadBytes(storageRef, file);
+        const storageRef = ref(storage, `hubs/${Date.now()}_${optimized.fileName}`);
+        const snapshot = await uploadBytes(storageRef, optimized.blob, {
+          contentType: optimized.mimeType,
+        });
         const downloadUrl = await getDownloadURL(snapshot.ref);
-        console.info('[Galle Taxi] Hub image uploaded to Firebase Storage:', downloadUrl);
+        console.info('[Galle Taxi] Optimized WebP hub image uploaded to Firebase Storage:', downloadUrl);
         return downloadUrl;
       } catch (err) {
         console.warn('Firebase Storage upload notice for hub, proceeding to server storage:', err);
       }
     }
 
-    // 2. Client-side canvas compression for crisp display and manageable upload size
-    const compressedBase64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const maxWidth = 1600;
-          const maxHeight = 1000;
-          let width = img.width;
-          let height = img.height;
-          if (width > height) {
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            resolve(event.target?.result as string);
-            return;
-          }
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/webp', 0.88));
-        };
-        img.onerror = () => resolve(event.target?.result as string);
-      };
-      reader.onerror = (err) => reject(err);
-    });
-
-    // 3. Post to backend /api/upload-hub-image to store permanently on server disk and return static URL
+    // 3. Post optimized WebP to backend /api/upload-hub-image to store permanently on server disk
     try {
       const response = await fetch('/api/upload-hub-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: compressedBase64,
-          filename: file.name,
+          image: optimized.dataUrl,
+          filename: optimized.fileName,
           hubSlug,
         }),
       });
@@ -2602,16 +2543,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (response.ok) {
         const data = await response.json();
         if (data && data.success && data.url) {
-          console.info('[Galle Taxi] Hub image saved to server disk:', data.url);
+          console.info('[Galle Taxi] Optimized WebP hub image saved to server disk:', data.url);
           return data.url;
         }
       }
     } catch (apiErr) {
-      console.warn('[Galle Taxi] /api/upload-hub-image endpoint unreachable, using client data URL fallback:', apiErr);
+      console.warn('[Galle Taxi] /api/upload-hub-image endpoint unreachable, using client WebP data URL fallback:', apiErr);
     }
 
     // 4. Fallback: return the compressed WebP data URL
-    return compressedBase64;
+    return optimized.dataUrl;
   };
 
   const resetToSampleData = () => {

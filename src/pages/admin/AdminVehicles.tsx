@@ -37,6 +37,7 @@ import { useApp } from '../../lib/store';
 import { Vehicle } from '../../types';
 import { formatLKR } from '../../lib/fareEngine';
 import { ImageUploader } from '../../components/admin/ImageUploader';
+import { optimizeImageToWebP } from '../../lib/imageOptimizer';
 
 const STANDARD_CATEGORIES = [
   'SEDAN CAR',
@@ -117,88 +118,7 @@ export const VEHICLE_PHOTO_PRESETS = [
   },
 ];
 
-const compressUploadedFile = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    try {
-      const objectUrl = URL.createObjectURL(file);
-      const img = new Image();
-      let didFinish = false;
-      const timeout = setTimeout(() => {
-        if (!didFinish) {
-          didFinish = true;
-          URL.revokeObjectURL(objectUrl);
-          const fr = new FileReader();
-          fr.onload = () => resolve((fr.result as string) || '');
-          fr.onerror = () => resolve('');
-          fr.readAsDataURL(file);
-        }
-      }, 3000);
 
-      img.onload = () => {
-        if (didFinish) return;
-        didFinish = true;
-        clearTimeout(timeout);
-        URL.revokeObjectURL(objectUrl);
-        const canvas = document.createElement('canvas');
-        let width = img.naturalWidth || img.width || 640;
-        let height = img.naturalHeight || img.height || 400;
-        const maxDimension = 640;
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-        canvas.width = Math.max(10, width);
-        canvas.height = Math.max(10, height);
-        const ctx = canvas.getContext('2d', { alpha: true });
-        if (!ctx) {
-          resolve('');
-          return;
-        }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        // WebP supports alpha transparency and produces 5x-15x smaller files than uncompressed PNG
-        let dataUrl = canvas.toDataURL('image/webp', 0.8);
-        if (!dataUrl.startsWith('data:image/webp')) {
-          const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
-          dataUrl = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.8);
-        }
-        if (dataUrl.length > 140000) {
-          const smallCanvas = document.createElement('canvas');
-          smallCanvas.width = Math.max(10, Math.round(canvas.width * 0.72));
-          smallCanvas.height = Math.max(10, Math.round(canvas.height * 0.72));
-          const sCtx = smallCanvas.getContext('2d', { alpha: true });
-          if (sCtx) {
-            sCtx.clearRect(0, 0, smallCanvas.width, smallCanvas.height);
-            sCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
-            const smaller = smallCanvas.toDataURL('image/webp', 0.68);
-            if (smaller.startsWith('data:image/webp')) {
-              dataUrl = smaller;
-            }
-          }
-        }
-        resolve(dataUrl);
-      };
-
-      img.onerror = () => {
-        if (didFinish) return;
-        didFinish = true;
-        clearTimeout(timeout);
-        URL.revokeObjectURL(objectUrl);
-        resolve('');
-      };
-
-      img.src = objectUrl;
-    } catch {
-      resolve('');
-    }
-  });
-};
 
 export const AdminVehicles: React.FC = () => {
   const { vehicles, addVehicle, updateVehicle, deleteVehicle, resetToSampleData } = useApp();
@@ -417,13 +337,18 @@ export const AdminVehicles: React.FC = () => {
   const handleFileUploadForVehicle = async (vehicle: Vehicle, file: File) => {
     setUploadingVehicleId(vehicle.id);
     try {
-      const dataUrl = await compressUploadedFile(file);
-      if (dataUrl) {
+      const optimized = await optimizeImageToWebP(file, {
+        maxWidth: 800,
+        maxHeight: 600,
+        initialQuality: 0.82,
+        maxBytes: 140 * 1024,
+      });
+      if (optimized.dataUrl) {
         await updateVehicle({
           ...vehicle,
-          imageUrl: dataUrl,
+          imageUrl: optimized.dataUrl,
         });
-        showNotification(`✓ Custom photo uploaded and saved live for ${vehicle.name}!`);
+        showNotification(`✓ Photo converted to WebP & saved live for ${vehicle.name}!`);
       } else {
         showNotification('⚠️ Could not process image file. Please try another image.');
       }
@@ -1888,15 +1813,16 @@ export const AdminVehicles: React.FC = () => {
                           <label className="px-3 py-1.5 rounded-lg bg-[#24242A] hover:bg-[#F5B91B] hover:text-black text-white text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors shadow-sm">
                             <Upload className="w-3.5 h-3.5 text-[#F5B91B] group-hover:text-black" />
                             <span>
-                              {uploadingVehicleId === veh.id ? 'Processing...' : 'Upload From Device'}
+                              {uploadingVehicleId === veh.id ? 'Converting WebP...' : 'Upload From Device'}
                             </span>
                             <input
                               type="file"
-                              accept="image/png,image/jpeg,image/webp"
+                              accept="image/*,.png,.jpg,.jpeg,.webp"
                               className="hidden"
                               disabled={uploadingVehicleId === veh.id}
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
+                                e.target.value = '';
                                 if (file) {
                                   handleFileUploadForVehicle(veh, file);
                                 }

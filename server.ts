@@ -1041,8 +1041,9 @@ app.post('/api/upload-tour-image', (req, res) => {
     }
 
     const safeBaseName = (filename || 'tour_image')
+      .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9_-]/g, '_')
-      .slice(0, 40);
+      .slice(0, 40) || 'tour_image';
     const uniqueFilename = `${safeBaseName}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const filePath = path.resolve(subDir, uniqueFilename);
 
@@ -1096,8 +1097,9 @@ app.post('/api/upload-hub-image', (req, res) => {
     }
 
     const safeBaseName = (hubSlug || filename || 'hub_banner')
+      .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9_-]/g, '_')
-      .slice(0, 40);
+      .slice(0, 40) || 'hub_banner';
     const uniqueFilename = `${safeBaseName}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const filePath = path.resolve(hubsUploadsDir, uniqueFilename);
 

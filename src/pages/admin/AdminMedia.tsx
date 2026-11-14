@@ -364,7 +364,11 @@ export const AdminMedia: React.FC = () => {
 
               <div className="mt-4 pt-3 border-t border-[#27272A] flex items-center justify-between">
                 <span className="text-[10px] text-slate-500 font-mono truncate max-w-[140px]">
-                  {item.imageUrl.startsWith('data:') ? 'Base64 Encoded' : item.imageUrl.split('/').pop()}
+                  {item.imageUrl.startsWith('data:image/webp')
+                    ? 'Optimized WebP'
+                    : item.imageUrl.startsWith('data:')
+                    ? 'Base64 Encoded'
+                    : item.imageUrl.split('/').pop()}
                 </span>
                 <button
                   type="button"
