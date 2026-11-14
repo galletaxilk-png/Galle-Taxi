@@ -540,8 +540,9 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* PREMIUM HORIZONTAL SLIDING VEHICLE SELECTION CAROUSEL */}
+          {/* PREMIUM FULL-VIEWPORT VEHICLE SELECTION */}
           <VehicleSelectionCarousel
+            className="-mx-4 sm:-mx-8 lg:-mx-12 xl:-mx-16 px-3 sm:px-5 lg:px-6"
             pickupLocation={quickPickup}
             destinationLocation={quickDestination}
             pickupDate={quickDate}

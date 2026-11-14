@@ -483,8 +483,8 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
           </h3>
         </div>
 
-        {/* Carousel Navigation Buttons - Hidden on mobile & desktop grid (shown on tablet if scrolling) */}
-        <div className="hidden sm:flex lg:hidden items-center gap-2 self-end sm:self-auto">
+        {/* Carousel Navigation Buttons - Hidden on mobile & responsive full-width grid */}
+        <div className="hidden items-center gap-2 self-end sm:self-auto">
           <span className="text-[11px] font-mono text-slate-400 mr-2 hidden sm:inline">
             Slide or Drag Vehicles
           </span>
@@ -525,8 +525,8 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
-          className={`w-full flex lg:grid lg:grid-cols-6 gap-3.5 overflow-x-auto lg:overflow-visible pb-4 pt-1 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-            isMouseDown ? 'cursor-grabbing select-none' : 'cursor-grab'
+          className={`w-full flex sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(195px,1fr))] gap-3.5 overflow-x-auto sm:overflow-visible pb-4 pt-1 snap-x snap-mandatory scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            isMouseDown ? 'cursor-grabbing select-none' : 'cursor-grab sm:cursor-default'
           }`}
           style={{
             WebkitOverflowScrolling: 'touch',
@@ -536,7 +536,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
             Array.from({ length: 6 }).map((_, skeletonIdx) => (
               <div
                 key={`veh-skeleton-${skeletonIdx}`}
-                className="snap-start shrink-0 w-[82vw] sm:w-[260px] lg:w-full rounded-2xl p-3.5 bg-[#121216]/80 border border-white/20 animate-pulse space-y-3"
+                className="snap-start shrink-0 w-[84vw] sm:w-full rounded-2xl p-3.5 bg-[#121216]/80 border border-white/20 animate-pulse space-y-3"
               >
                 <div className="h-[105px] w-full rounded-xl bg-[#1A1A22]" />
                 <div className="h-4 w-3/4 rounded bg-[#1F1F28]" />
@@ -561,7 +561,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                     onSelectVehicle(veh.id);
                   }
                 }}
-                className={`snap-start shrink-0 w-[82vw] sm:w-[260px] lg:w-full rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-300 relative select-none cursor-pointer backdrop-blur-xl ${
+                className={`snap-start shrink-0 w-[84vw] sm:w-full rounded-2xl p-3.5 flex flex-col justify-between transition-all duration-300 relative select-none cursor-pointer backdrop-blur-xl ${
                   isSelected
                     ? 'bg-[#16161D]/90 border border-white/45 ring-1 ring-white/25 shadow-[0_14px_40px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.3)] scale-[1.01]'
                     : 'bg-[#121216]/80 hover:bg-[#181820]/85 border border-white/25 hover:border-white/45 ring-1 ring-white/10 shadow-[0_10px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_14px_40px_rgba(0,0,0,0.75),inset_0_1px_0_rgba(255,255,255,0.3)]'
@@ -737,8 +737,8 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
           )}
         </div>
 
-        {/* Carousel Dots Indicator - only on screens with horizontal scroll (<lg) */}
-        <div className="flex lg:hidden items-center justify-center gap-1.5 mt-2">
+        {/* Carousel Dots Indicator - only on mobile horizontal scroll (<sm) */}
+        <div className="flex sm:hidden items-center justify-center gap-1.5 mt-2">
           {carouselVehicles.map((_, dotIdx) => (
             <button
               key={dotIdx}

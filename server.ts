@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
 
 // Allow up to 25MB payloads for high-resolution tour imagery uploads
 app.use(express.json({ limit: '25mb' }));
@@ -1201,11 +1201,31 @@ app.get('/robots.txt', (_req, res) => {
  */
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
+    let viteMiddlewares: express.RequestHandler | null = null;
+    let viteInitError: Error | null = null;
+
+    const viteReady = createViteServer({
+      server: {
+        middlewareMode: true,
+        hmr: false,
+        ws: false,
+      },
       appType: 'spa',
+    })
+      .then((vite) => {
+        viteMiddlewares = vite.middlewares;
+      })
+      .catch((err) => {
+        viteInitError = err instanceof Error ? err : new Error(String(err));
+        console.error('[Galle Taxi] Failed to initialize Vite dev middleware:', viteInitError);
+      });
+
+    app.use(async (req, res, next) => {
+      await viteReady;
+      if (viteInitError) return next(viteInitError);
+      if (viteMiddlewares) return viteMiddlewares(req, res, next);
+      return next();
     });
-    app.use(vite.middlewares);
   } else {
     app.use(express.static(path.resolve(__dirname, 'dist')));
     app.get('*', (_req, res) => {

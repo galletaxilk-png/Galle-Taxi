@@ -17,6 +17,7 @@ export default defineConfig(() => {
     server: {
       // HMR is disabled in AI Studio environment to prevent websocket disconnect errors
       hmr: false,
+      ws: false as const,
       watch: null,
     },
   };
