@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { DayTourProduct } from '../lib/toursData';
 import { useApp } from '../lib/store';
+import { OptimizedImage } from './OptimizedImage';
 
 export const ToursSection: React.FC = () => {
   const { currency, formatFare, tours, isFirebaseActive, isPublicDataLoaded } = useApp();
@@ -157,18 +158,11 @@ export const ToursSection: React.FC = () => {
                 <div>
                   {/* Cinematic Photo with overlay badges */}
                   <div className="relative aspect-[16/10] overflow-hidden bg-[#0B0B0D]">
-                    <img
-                      src={
-                        tour.heroImage?.startsWith('/src/assets/images/')
-                          ? tour.heroImage.replace('/src/assets/images/', '/assets/images/')
-                          : tour.heroImage || '/assets/images/regenerated_image_1794057460840.png'
-                      }
+                    <OptimizedImage
+                      src={tour.heroImage || '/assets/images/regenerated_image_1794057460840.webp'}
+                      fallbackSrc="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80&fm=webp"
                       alt={tour.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src =
-                          'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
-                      }}
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-transparent to-black/30" />

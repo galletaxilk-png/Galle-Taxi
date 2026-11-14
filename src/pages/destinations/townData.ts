@@ -56,7 +56,7 @@ export const TOWNS_DATA: Record<string, TownTaxiConfig> = {
     heroHighlight: 'Ahangama & Kabalana',
     badge: 'Sri Lanka Surf Coast Hub',
     tagline: 'Direct Colombo Airport (CMB) highway transfers, beachfront villa rides, and custom surf trip transportation with board-rack equipped luxury vehicles.',
-    heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
     aboutTitle: 'Why Travelers Choose Galle Taxi for Ahangama Rides',
     aboutText: [
       'Ahangama has emerged as Sri Lanka’s premier surf and coastal bohemian lifestyle enclave. Known for legendary surf breaks like Kabalana The Rock, Marshmallows, and Sticks, plus stylish oceanfront cafes and private boutique villas, having a dedicated on-demand chauffeur makes exploring seamless.',
@@ -180,7 +180,7 @@ export const TOWNS_DATA: Record<string, TownTaxiConfig> = {
     heroHighlight: 'Mirissa & Weligama Bay',
     badge: 'Whales & Tropical Beach Capital',
     tagline: 'Reliable private airport transfers, early morning whale watching shuttles, and inter-city rides to Yala, Ella, and Galle Fort with air-conditioned luxury vehicles.',
-    heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
     aboutTitle: 'Premier Chauffeur Transport for Mirissa Travelers',
     aboutText: [
       'Mirissa is famous worldwide for blue whale watching expeditions, iconic Coconut Tree Hill, Secret Beach, and vibrant beachfront nightlife. Navigating between resorts, harbors, and distant wildlife reserves is effortless with Galle Taxi.',
@@ -300,7 +300,7 @@ export const TOWNS_DATA: Record<string, TownTaxiConfig> = {
     heroHighlight: 'Unawatuna Beach & Bay',
     badge: 'Historic Golden Bay Sanctuary',
     tagline: 'Quick 15-minute rides to Galle Dutch Fort, direct Colombo Airport highway transfers, and private beach shuttles to Jungle Beach and Dalawella rope swing.',
-    heroImage: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png',
+    heroImage: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp',
     aboutTitle: 'Your Trusted Private Chauffeur in Unawatuna',
     aboutText: [
       'Unawatuna is one of Sri Lanka’s most beloved coastal resort towns, renowned for its crescent-shaped golden bay, calm swimming waters, and lush jungle headlands. Nestled just minutes from UNESCO Galle Fort, it is an ideal hub for exploring the south coast.',
@@ -420,7 +420,7 @@ export const TOWNS_DATA: Record<string, TownTaxiConfig> = {
     heroHighlight: 'Hikkaduwa & Narigama Beach',
     badge: 'Coral Reef & Marine Life Hub',
     tagline: 'Reliable private airport transfers, sea turtle beach shuttles, and day tours to Galle Fort and Madu Ganga river safari with executive air-conditioned vehicles.',
-    heroImage: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png',
+    heroImage: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp',
     aboutTitle: 'Professional Chauffeurs Serving Hikkaduwa',
     aboutText: [
       'Hikkaduwa is world-famous as Sri Lanka’s original surfing and coral reef haven. With its offshore marine national park, wild sea turtles swimming right up to the shore, and miles of palm-fringed sands along Narigama Beach, it remains a traveler favorite.',
@@ -540,7 +540,7 @@ export const TOWNS_DATA: Record<string, TownTaxiConfig> = {
     heroHighlight: 'Bentota & Beruwala Beach',
     badge: 'Luxury Beach Resort & River Capital',
     tagline: 'Direct Colombo Airport transfers to 5-star beach resorts, Madu Ganga river safari day tours, and private chauffeurs across Sri Lanka’s gold coast.',
-    heroImage: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png',
+    heroImage: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp',
     aboutTitle: 'Elite Chauffeur Experience in Bentota',
     aboutText: [
       'Bentota is Sri Lanka’s prime coastal haven for luxury beach holidays, water sports, and architectural heritage. Famous for the tranquil Bentota River lagoon, Geoffrey Bawa’s Lunuganga estate, and five-star beachfront resorts, high standards of hospitality are essential.',
@@ -660,7 +660,7 @@ export const TOWNS_DATA: Record<string, TownTaxiConfig> = {
     heroHighlight: 'Weligama Bay & Beach',
     badge: 'Sri Lanka Surf & Catamaran Bay',
     tagline: 'Reliable Colombo Airport (CMB) highway transfers, beachfront surf shuttles, and private chauffeur rides across Weligama, Midigama & Mirissa with air-conditioned luxury sedans and vans.',
-    heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    heroImage: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
     aboutTitle: 'Why Travelers Choose Galle Taxi for Weligama Rides',
     aboutText: [
       'Weligama Bay is Sri Lanka’s celebrated coastal hub for beginner and intermediate surfing, luxury resorts like Weligama Bay Marriott, and lively beachside seafood culture. Spread around a scenic horseshoe bay featuring the iconic Taprobane Island, getting around comfortably requires trusted private transport.',

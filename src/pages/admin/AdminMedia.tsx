@@ -17,6 +17,7 @@ import {
 import { useApp } from '../../lib/store';
 import { ImageUploader, SYSTEM_IMAGE_PRESETS } from '../../components/admin/ImageUploader';
 import { PRIVATE_DAY_TOURS } from '../../lib/toursData';
+import { OptimizedImage } from '../../components/OptimizedImage';
 
 interface MediaItem {
   id: string;
@@ -57,7 +58,7 @@ export const AdminMedia: React.FC = () => {
       title: 'Homepage Main Hero Banner',
       category: 'banner',
       categoryLabel: 'Hero Banner',
-      imageUrl: siteSettings.heroImageUrl || '/assets/images/hero_galle_taxi_1793121940996.jpg',
+      imageUrl: siteSettings.heroImageUrl || '/assets/images/hero_galle_taxi_1793121940996.webp',
       subtitle: 'Primary header visual on the customer homepage',
       sourceType: siteSettings.heroImageUrl?.startsWith('data:')
         ? 'Custom Upload'
@@ -71,7 +72,7 @@ export const AdminMedia: React.FC = () => {
       title: 'Down South Season Campaign Banner',
       category: 'banner',
       categoryLabel: 'Campaign Banner',
-      imageUrl: siteSettings.seasonalBannerImageUrl || '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+      imageUrl: siteSettings.seasonalBannerImageUrl || '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
       subtitle: 'Down South season surf & coastal sunset promotional banner',
       sourceType: siteSettings.seasonalBannerImageUrl?.startsWith('data:')
         ? 'Custom Upload'
@@ -311,13 +312,11 @@ export const AdminMedia: React.FC = () => {
           >
             {/* Image Preview with overlay actions */}
             <div className="relative aspect-[16/10] bg-[#0B0B0D] overflow-hidden">
-              <img
+              <OptimizedImage
                 src={item.imageUrl}
+                fallbackSrc="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fm=webp&fit=crop&w=800&q=80"
                 alt={item.title}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src =
-                    'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
-                }}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
 
@@ -454,7 +453,7 @@ export const AdminMedia: React.FC = () => {
           onClick={() => setPreviewModalUrl(null)}
         >
           <div className="relative max-w-4xl w-full bg-[#141416] border border-[#27272A] rounded-2xl overflow-hidden shadow-2xl p-2">
-            <img
+            <OptimizedImage
               src={previewModalUrl}
               alt="High resolution preview"
               className="w-full h-auto max-h-[80vh] object-contain rounded-xl"

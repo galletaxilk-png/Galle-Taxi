@@ -6,6 +6,8 @@ import fs from 'fs';
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
 dotenv.config();
 try {
@@ -1005,12 +1007,103 @@ app.post('/api/test-resend', async (req, res) => {
   }
 });
 
+const execFileAsync = promisify(execFile);
+
+async function saveUploadPreferWebp(
+  targetDir: string,
+  baseName: string,
+  rawImageData: string
+): Promise<{ filename: string; bytes: number; mimeType: string }> {
+  const matches = rawImageData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  let buffer: Buffer;
+  let ext = 'webp';
+
+  if (matches && matches.length === 3) {
+    const mime = matches[1].toLowerCase();
+    if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg';
+    else if (mime.includes('png')) ext = 'png';
+    else if (mime.includes('webp')) ext = 'webp';
+    else if (mime.includes('svg')) ext = 'svg';
+    else if (mime.includes('gif')) ext = 'gif';
+    buffer = Buffer.from(matches[2], 'base64');
+  } else {
+    buffer = Buffer.from(rawImageData.replace(/^data:[^;]+;base64,/, ''), 'base64');
+  }
+
+  const stamp = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  // Already WebP or SVG vector -> write directly
+  if (ext === 'webp' || ext === 'svg') {
+    const finalName = `${baseName}_${stamp}.${ext}`;
+    const finalPath = path.resolve(targetDir, finalName);
+    fs.writeFileSync(finalPath, buffer);
+    return {
+      filename: finalName,
+      bytes: buffer.length,
+      mimeType: ext === 'svg' ? 'image/svg+xml' : 'image/webp',
+    };
+  }
+
+  // Raw PNG/JPG/GIF payload -> convert to optimized WebP on server using ImageMagick
+  const tmpInputPath = path.resolve(targetDir, `.tmp_${baseName}_${stamp}.${ext}`);
+  const webpName = `${baseName}_${stamp}.webp`;
+  const webpPath = path.resolve(targetDir, webpName);
+
+  try {
+    fs.writeFileSync(tmpInputPath, buffer);
+    await execFileAsync('convert', [
+      tmpInputPath,
+      '-auto-orient',
+      '-strip',
+      '-resize',
+      '1600x1000>',
+      '-quality',
+      '85',
+      '-define',
+      'webp:method=6',
+      '-define',
+      'webp:alpha-quality=95',
+      webpPath,
+    ]);
+    try {
+      fs.unlinkSync(tmpInputPath);
+    } catch {}
+    const stat = fs.statSync(webpPath);
+    return {
+      filename: webpName,
+      bytes: stat.size,
+      mimeType: 'image/webp',
+    };
+  } catch (convErr) {
+    console.warn('[Galle Taxi] Server WebP conversion fallback to original format:', convErr);
+    try {
+      if (fs.existsSync(tmpInputPath)) {
+        const fallbackName = `${baseName}_${stamp}.${ext}`;
+        const fallbackPath = path.resolve(targetDir, fallbackName);
+        fs.renameSync(tmpInputPath, fallbackPath);
+        return {
+          filename: fallbackName,
+          bytes: buffer.length,
+          mimeType: ext === 'png' ? 'image/png' : 'image/jpeg',
+        };
+      }
+    } catch {}
+    const finalName = `${baseName}_${stamp}.${ext}`;
+    fs.writeFileSync(path.resolve(targetDir, finalName), buffer);
+    return {
+      filename: finalName,
+      bytes: buffer.length,
+      mimeType: ext === 'png' ? 'image/png' : 'image/jpeg',
+    };
+  }
+}
+
 /**
  * POST /api/upload-tour-image
- * Dedicated tour image upload handler that stores image files safely in /public/uploads/tours
+ * Dedicated tour image upload handler that stores optimized WebP image files safely in /public/uploads/tours
  * and serves them as static URLs (/uploads/tours/...) to eliminate localStorage quota issues.
  */
-app.post('/api/upload-tour-image', (req, res) => {
+app.post('/api/upload-tour-image', async (req, res) => {
   try {
     const { image, filename, folder } = req.body;
     if (!image || typeof image !== 'string') {
@@ -1024,39 +1117,21 @@ app.post('/api/upload-tour-image', (req, res) => {
       fs.mkdirSync(subDir, { recursive: true });
     }
 
-    // Extract mime type and base64 buffer
-    const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    let buffer: Buffer;
-    let ext = 'webp';
-
-    if (matches && matches.length === 3) {
-      const mime = matches[1];
-      if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg';
-      else if (mime.includes('png')) ext = 'png';
-      else if (mime.includes('webp')) ext = 'webp';
-      else if (mime.includes('svg')) ext = 'svg';
-      buffer = Buffer.from(matches[2], 'base64');
-    } else {
-      buffer = Buffer.from(image.replace(/^data:[^;]+;base64,/, ''), 'base64');
-    }
-
     const safeBaseName = (filename || 'tour_image')
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9_-]/g, '_')
       .slice(0, 40) || 'tour_image';
-    const uniqueFilename = `${safeBaseName}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
-    const filePath = path.resolve(subDir, uniqueFilename);
 
-    fs.writeFileSync(filePath, buffer);
-
-    const publicUrl = `/uploads/tours/${targetFolder}/${uniqueFilename}`;
-    console.info(`[Galle Taxi] Tour image successfully uploaded and saved: ${publicUrl} (${buffer.length} bytes)`);
+    const saved = await saveUploadPreferWebp(subDir, safeBaseName, image);
+    const publicUrl = `/uploads/tours/${targetFolder}/${saved.filename}`;
+    console.info(`[Galle Taxi] Tour image successfully uploaded and saved: ${publicUrl} (${saved.bytes} bytes, ${saved.mimeType})`);
 
     return res.json({
       success: true,
       url: publicUrl,
-      size: buffer.length,
-      filename: uniqueFilename,
+      size: saved.bytes,
+      mimeType: saved.mimeType,
+      filename: saved.filename,
     });
   } catch (err: any) {
     console.error('[Galle Taxi] Tour image upload error:', err);
@@ -1066,10 +1141,10 @@ app.post('/api/upload-tour-image', (req, res) => {
 
 /**
  * POST /api/upload-hub-image
- * Dedicated handler that stores Southern Coast Taxi Hub images safely in /public/uploads/hubs
+ * Dedicated handler that stores Southern Coast Taxi Hub images as optimized WebP in /public/uploads/hubs
  * and serves them as static URLs (/uploads/hubs/...) to eliminate base64 and quota issues.
  */
-app.post('/api/upload-hub-image', (req, res) => {
+app.post('/api/upload-hub-image', async (req, res) => {
   try {
     const { image, filename, hubSlug } = req.body;
     if (!image || typeof image !== 'string') {
@@ -1080,39 +1155,21 @@ app.post('/api/upload-hub-image', (req, res) => {
       fs.mkdirSync(hubsUploadsDir, { recursive: true });
     }
 
-    // Extract mime type and base64 buffer
-    const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    let buffer: Buffer;
-    let ext = 'webp';
-
-    if (matches && matches.length === 3) {
-      const mime = matches[1];
-      if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg';
-      else if (mime.includes('png')) ext = 'png';
-      else if (mime.includes('webp')) ext = 'webp';
-      else if (mime.includes('svg')) ext = 'svg';
-      buffer = Buffer.from(matches[2], 'base64');
-    } else {
-      buffer = Buffer.from(image.replace(/^data:[^;]+;base64,/, ''), 'base64');
-    }
-
     const safeBaseName = (hubSlug || filename || 'hub_banner')
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9_-]/g, '_')
       .slice(0, 40) || 'hub_banner';
-    const uniqueFilename = `${safeBaseName}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
-    const filePath = path.resolve(hubsUploadsDir, uniqueFilename);
 
-    fs.writeFileSync(filePath, buffer);
-
-    const publicUrl = `/uploads/hubs/${uniqueFilename}`;
-    console.info(`[Galle Taxi] Hub image successfully uploaded and saved: ${publicUrl} (${buffer.length} bytes)`);
+    const saved = await saveUploadPreferWebp(hubsUploadsDir, safeBaseName, image);
+    const publicUrl = `/uploads/hubs/${saved.filename}`;
+    console.info(`[Galle Taxi] Hub image successfully uploaded and saved: ${publicUrl} (${saved.bytes} bytes, ${saved.mimeType})`);
 
     return res.json({
       success: true,
       url: publicUrl,
-      size: buffer.length,
-      filename: uniqueFilename,
+      size: saved.bytes,
+      mimeType: saved.mimeType,
+      filename: saved.filename,
     });
   } catch (err: any) {
     console.error('[Galle Taxi] Hub image upload error:', err);

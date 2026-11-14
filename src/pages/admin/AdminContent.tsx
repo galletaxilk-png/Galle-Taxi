@@ -18,7 +18,7 @@ import { useApp } from '../../lib/store';
 import { SiteSettings } from '../../types';
 import { ImageUploader } from '../../components/admin/ImageUploader';
 
-const DEFAULT_SEASONAL_BANNER = '/assets/images/regenerated_image_1794057460840.png';
+const DEFAULT_SEASONAL_BANNER = '/assets/images/regenerated_image_1794057460840.webp';
 
 export const AdminContent: React.FC = () => {
   const { siteSettings, updateSiteSettings } = useApp();

@@ -86,12 +86,12 @@ export const PRIVATE_DAY_TOURS: DayTourProduct[] = [
       'Immerse in Dutch colonial history inside UNESCO Galle Fort, panoramic views from Rumassala, relaxing Unawatuna bay, and authentic Koggala stilt fishing.',
     fullDescription:
       'Experience the pinnacle of southern Sri Lanka in a private, unhurried day tour. Wander through cobblestone Dutch colonial alleys lined with 17th-century ramparts, lighthouses, and artisan boutiques. Soak in sweeping ocean panoramas from the Rumassala Peace Pagoda, take a refreshing beach break at Unawatuna, and witness traditional stilt fishermen perched above the breaking surf along Koggala coastline.',
-    heroImage: '/assets/images/service_galle_tour_1793121943026.jpg',
+    heroImage: '/assets/images/service_galle_tour_1793121943026.webp',
     galleryImages: [
-      '/assets/images/service_galle_tour_1793121943026.jpg',
-      '/assets/images/hero_galle_taxi_1793121940996.jpg',
-      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
+      '/assets/images/service_galle_tour_1793121943026.webp',
+      '/assets/images/hero_galle_taxi_1793121940996.webp',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fm=webp&fit=crop&w=1200&q=80',
     ],
     vehiclePrices: [
       {
@@ -242,12 +242,12 @@ export const PRIVATE_DAY_TOURS: DayTourProduct[] = [
       'Ascend to misty highlands: walk the historic Nine Arch Bridge, hike Little Adam’s Peak, witness roaring Ravana Falls, and visit an authentic tea factory.',
     fullDescription:
       'Leave the tropical coast behind as you ascend the scenic mountain passes into the emerald hill country of Ella. Walk atop the world-famous colonial Nine Arch Bridge, take an easy scenic hike up Little Adam’s Peak for 360-degree valley views, feel the cool spray of Ravana Waterfall, and discover the craftsmanship of authentic Ceylon tea.',
-    heroImage: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
+    heroImage: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fm=webp&fit=crop&w=1200&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1546708973-b339540b5162?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
-      '/assets/images/hero_galle_taxi_1793121940996.jpg',
+      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1546708973-b339540b5162?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      '/assets/images/hero_galle_taxi_1793121940996.webp',
     ],
     vehiclePrices: [
       {
@@ -399,12 +399,12 @@ export const PRIVATE_DAY_TOURS: DayTourProduct[] = [
       'Guaranteed wild elephant sightings! Visit the Elephant Transit Home feeding and enjoy a 3-hour open-top 4x4 safari across Udawalawe’s savannah.',
     fullDescription:
       'Udawalawe National Park is celebrated worldwide for its guaranteed wild elephant encounters in open savannah landscapes reminiscent of East Africa. Witness the heartwarming milk-feeding session of rescued orphan calves at the Elephant Transit Home, followed by an exhilarating 3-hour game drive in a customized open-top 4x4 safari jeep along the borders of Udawalawe reservoir.',
-    heroImage: '/assets/images/regenerated_image_1793632543146.png',
+    heroImage: '/assets/images/regenerated_image_1793632543146.webp',
     galleryImages: [
-      '/assets/images/regenerated_image_1793632543146.png',
-      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
-      '/assets/images/service_airport_transfer_1793121941979.jpg',
+      '/assets/images/regenerated_image_1793632543146.webp',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      '/assets/images/service_airport_transfer_1793121941979.webp',
     ],
     vehiclePrices: [
       {
@@ -545,12 +545,12 @@ export const PRIVATE_DAY_TOURS: DayTourProduct[] = [
       'Embark on Sri Lanka’s premier big cat safari: world-highest leopard density, wild elephants, sloth bears, and crocodiles via open 4x4 jeep.',
     fullDescription:
       'Yala National Park Block 1 is globally renowned for possessing the highest recorded leopard density on earth. Travel smoothly along the Southern Expressway directly to the wilderness borders of Tissamaharama. Board an elevated 4x4 open-top safari jeep to track the elusive Sri Lankan leopard (Panthera pardus kotiya), majestic Asian elephants, sloth bears, crocodiles, and painted storks across coastal lagoons and granite rock outcrops.',
-    heroImage: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80',
+    heroImage: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fm=webp&fit=crop&w=1200&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
-      '/assets/images/hero_galle_taxi_1793121940996.jpg',
+      'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      '/assets/images/hero_galle_taxi_1793121940996.webp',
     ],
     vehiclePrices: [
       {
@@ -691,12 +691,12 @@ export const PRIVATE_DAY_TOURS: DayTourProduct[] = [
       'Mangrove boat safari on Madu River, cinnamon island demonstration, sea turtle conservation sanctuary, and watersports at Bentota beach.',
     fullDescription:
       'Discover the tranquil waterways, lush biodiversity, and coastal charms of Sri Lanka’s southwest. Glide through dense mangrove tunnels on a private Madu Ganga boat safari, witness age-old cinnamon peeling on an isolated island, receive fish therapy, release endangered baby sea turtles at a licensed conservation hatchery, and visit historic Brief Garden or relax on golden Bentota beach.',
-    heroImage: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
+    heroImage: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fm=webp&fit=crop&w=1200&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
-      '/assets/images/service_galle_tour_1793121943026.jpg',
-      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
-      '/assets/images/hero_galle_taxi_1793121940996.jpg',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      '/assets/images/service_galle_tour_1793121943026.webp',
+      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fm=webp&fit=crop&w=1200&q=80',
+      '/assets/images/hero_galle_taxi_1793121940996.webp',
     ],
     vehiclePrices: [
       {

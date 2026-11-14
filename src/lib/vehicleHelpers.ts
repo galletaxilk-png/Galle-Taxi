@@ -1,20 +1,20 @@
 import { Vehicle } from '../types';
 
 export const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
-  'mini car': '/assets/images/regenerated_image_1793161723258.png',
-  sedan: '/assets/images/regenerated_image_1793163512211.png',
-  'sedan car': '/assets/images/regenerated_image_1793163512211.png',
-  suv: '/assets/images/regenerated_image_1793464744920.png',
-  'suv car': '/assets/images/regenerated_image_1793464744920.png',
-  'kdh flat roof': '/assets/images/vehicle_premium_van_1793121943671.jpg',
-  van: '/assets/images/vehicle_premium_van_1793121943671.jpg',
-  'kdh high roof': '/assets/images/regenerated_image_1793464621511.png',
-  'mini van': '/assets/images/regenerated_image_1793465213680.png',
-  shuttle: '/assets/images/regenerated_image_1793465213680.png',
-  luxury: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
+  'mini car': '/assets/images/regenerated_image_1793161723258.webp',
+  sedan: '/assets/images/regenerated_image_1793163512211.webp',
+  'sedan car': '/assets/images/regenerated_image_1793163512211.webp',
+  suv: '/assets/images/regenerated_image_1793464744920.webp',
+  'suv car': '/assets/images/regenerated_image_1793464744920.webp',
+  'kdh flat roof': '/assets/images/vehicle_premium_van_1793121943671.webp',
+  van: '/assets/images/vehicle_premium_van_1793121943671.webp',
+  'kdh high roof': '/assets/images/regenerated_image_1793464621511.webp',
+  'mini van': '/assets/images/regenerated_image_1793465213680.webp',
+  shuttle: '/assets/images/regenerated_image_1793465213680.webp',
+  luxury: '/assets/images/vehicle_luxury_sedan_1793121944773.webp',
 };
 
-const DEFAULT_FALLBACK_VEHICLE_IMAGE = '/assets/images/regenerated_image_1793163512211.png';
+const DEFAULT_FALLBACK_VEHICLE_IMAGE = '/assets/images/regenerated_image_1793163512211.webp';
 
 /**
  * Resolves a reliable fallback vehicle image based on category, ID, or name

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Link as LinkIcon, Image as ImageIcon, X, Check, RefreshCw, Eye } from 'lucide-react';
 import { optimizeImageToWebP } from '../../lib/imageOptimizer';
+import { OptimizedImage } from '../OptimizedImage';
 
 export interface ImagePreset {
   label: string;
@@ -11,92 +12,92 @@ export interface ImagePreset {
 export const SYSTEM_IMAGE_PRESETS: ImagePreset[] = [
   {
     label: 'Ahangama Surf Coast Hub (Sunset & Surfboards)',
-    url: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    url: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
     category: 'Hubs',
   },
   {
     label: 'Mirissa Sunset Road Trip with Surfboard',
-    url: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png',
+    url: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp',
     category: 'Hubs',
   },
   {
     label: 'Down South Coastal Adventures & Palm Bays',
-    url: '/assets/images/regenerated_image_1794057460840.png',
+    url: '/assets/images/regenerated_image_1794057460840.webp',
     category: 'Hubs',
   },
   {
     label: 'Budget Mini Car (Wagon R / Alto)',
-    url: '/assets/images/regenerated_image_1793161723258.png',
+    url: '/assets/images/regenerated_image_1793161723258.webp',
     category: 'Vehicles',
   },
   {
     label: 'Executive Sedan (Premio / Prius)',
-    url: '/assets/images/regenerated_image_1793163512211.png',
+    url: '/assets/images/regenerated_image_1793163512211.webp',
     category: 'Vehicles',
   },
   {
     label: 'Toyota KDH High-Roof White Van',
-    url: '/assets/images/regenerated_image_1793464621511.png',
+    url: '/assets/images/regenerated_image_1793464621511.webp',
     category: 'Vehicles',
   },
   {
     label: 'VIP KDH Flat-Roof Van',
-    url: '/assets/images/vehicle_premium_van_1793121943671.jpg',
+    url: '/assets/images/vehicle_premium_van_1793121943671.webp',
     category: 'Vehicles',
   },
   {
     label: 'SUV 4x4 (Prado / CR-V / Fortuner)',
-    url: '/assets/images/regenerated_image_1793464744920.png',
+    url: '/assets/images/regenerated_image_1793464744920.webp',
     category: 'Vehicles',
   },
   {
     label: 'Compact Mini Van / Shuttle',
-    url: '/assets/images/regenerated_image_1793465213680.png',
+    url: '/assets/images/regenerated_image_1793465213680.webp',
     category: 'Vehicles',
   },
   {
     label: 'Luxury Mercedes / BMW Sedan',
-    url: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
+    url: '/assets/images/vehicle_luxury_sedan_1793121944773.webp',
     category: 'Vehicles',
   },
   {
     label: 'Colombo Airport Highway Transfer',
-    url: '/assets/images/service_airport_transfer_1793121941979.jpg',
+    url: '/assets/images/service_airport_transfer_1793121941979.webp',
     category: 'Services',
   },
   {
     label: 'Galle Fort & Coastal Scenic Tour',
-    url: '/assets/images/service_galle_tour_1793121943026.jpg',
+    url: '/assets/images/service_galle_tour_1793121943026.webp',
     category: 'Services',
   },
   {
     label: 'Galle Coastline Main Hero Banner',
-    url: '/assets/images/hero_galle_taxi_1793121940996.jpg',
+    url: '/assets/images/hero_galle_taxi_1793121940996.webp',
     category: 'Banners',
   },
   {
     label: 'Down South Season Surf & Sunset Banner',
-    url: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    url: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
     category: 'Banners',
   },
   {
     label: 'Ella Highlands & Nine Arches Bridge',
-    url: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fm=webp&fit=crop&w=1200&q=80',
     category: 'Services',
   },
   {
     label: 'Udawalawe Elephant Safari',
-    url: '/assets/images/regenerated_image_1793632543146.png',
+    url: '/assets/images/regenerated_image_1793632543146.webp',
     category: 'Services',
   },
   {
     label: 'Yala Leopard & Wilderness Safari',
-    url: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fm=webp&fit=crop&w=1200&q=80',
     category: 'Services',
   },
   {
     label: 'Bentota Beach & Madu River Mangroves',
-    url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fm=webp&fit=crop&w=1200&q=80',
     category: 'Services',
   },
 ];
@@ -190,7 +191,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     e.preventDefault();
     setIsDraggingOver(false);
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && (file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|svg)$/i.test(file.name))) {
       await processAndApplyFile(file);
     }
   };
@@ -273,7 +274,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <div
               className={`relative ${aspectClass} w-full overflow-hidden bg-white flex items-center justify-center p-3 rounded-t-xl`}
             >
-              <img
+              <OptimizedImage
                 src={value}
                 alt={label}
                 className={`w-full h-full object-contain transition-transform duration-300 hover:scale-105 drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] ${
@@ -488,7 +489,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 }`}
               >
                 <div className="w-10 h-8 rounded bg-black overflow-hidden shrink-0">
-                  <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
+                  <OptimizedImage src={preset.url} alt={preset.label} loading="lazy" className="w-full h-full object-cover" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[11px] font-bold truncate leading-tight">{preset.label}</div>
@@ -522,7 +523,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               </button>
             </div>
             <div className="rounded-xl overflow-hidden bg-black max-h-[70vh] flex items-center justify-center">
-              <img src={value} alt={label} className="max-w-full max-h-[65vh] object-contain" />
+              <OptimizedImage src={value} alt={label} className="max-w-full max-h-[65vh] object-contain" />
             </div>
           </div>
         </div>

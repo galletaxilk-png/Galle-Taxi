@@ -2,7 +2,60 @@
  * Client-side automatic image compression & WebP conversion utility.
  * Converts uploaded JPG, PNG, and other raster images into optimized WebP on the fly
  * while preserving PNG alpha transparency and enforcing safe size budgets.
+ * Also provides URL normalization helpers to preferentially serve .webp assets with seamless fallback.
  */
+
+export function normalizeAssetUrl(url?: string | null): string {
+  if (!url || typeof url !== 'string') return '';
+  let trimmed = url.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('/src/assets/images/')) {
+    trimmed = trimmed.replace('/src/assets/images/', '/assets/images/');
+  }
+  return trimmed;
+}
+
+/**
+ * Resolves a local static asset or Unsplash image URL to its optimized WebP version when applicable.
+ * Preserves data URLs, blob URLs, SVGs, and already-.webp URLs unchanged.
+ */
+export function resolvePreferredWebpUrl(url?: string | null): string {
+  const normalized = normalizeAssetUrl(url);
+  if (!normalized) return '';
+
+  // Already data URL, blob URL, SVG, or WebP
+  if (
+    normalized.startsWith('data:') ||
+    normalized.startsWith('blob:') ||
+    /\.webp([?#].*)?$/i.test(normalized) ||
+    /\.svg([?#].*)?$/i.test(normalized)
+  ) {
+    return normalized;
+  }
+
+  // Local bundled static assets & uploaded assets: rewrite .png/.jpg/.jpeg -> .webp
+  if (normalized.startsWith('/assets/') || normalized.startsWith('/uploads/')) {
+    return normalized.replace(/\.(png|jpe?g)([?#].*)?$/i, '.webp$2');
+  }
+
+  // Unsplash CDN images: request optimized WebP format while preserving sizing/quality params
+  if (normalized.includes('images.unsplash.com')) {
+    try {
+      const parsed = new URL(normalized);
+      if (!parsed.searchParams.has('fm')) {
+        parsed.searchParams.set('fm', 'webp');
+      }
+      if (!parsed.searchParams.has('auto')) {
+        parsed.searchParams.set('auto', 'format');
+      }
+      return parsed.toString();
+    } catch {
+      return normalized.includes('?') ? `${normalized}&fm=webp` : `${normalized}?fm=webp`;
+    }
+  }
+
+  return normalized;
+}
 
 export interface OptimizeImageOptions {
   maxWidth?: number;

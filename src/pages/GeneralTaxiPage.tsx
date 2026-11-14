@@ -26,6 +26,7 @@ import {
   getCategoryFallbackImage,
   normalizeVehicleImageUrl,
 } from '../lib/vehicleHelpers';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 interface PopularRoute {
   from: string;
@@ -173,8 +174,8 @@ export const GeneralTaxiPage: React.FC = () => {
         : 'https://galletaxi.lk/general-taxi';
     const ogImage =
       typeof window !== 'undefined'
-        ? `${window.location.origin}/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png`
-        : 'https://galletaxi.lk/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png';
+        ? `${window.location.origin}/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp`
+        : 'https://galletaxi.lk/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp';
 
     // 1. Update Title
     document.title = pageTitle;
@@ -661,16 +662,12 @@ export const GeneralTaxiPage: React.FC = () => {
               >
                 <div className="space-y-4">
                   <div className="relative aspect-[16/10] bg-[#1A1A1E] rounded-xl overflow-hidden border border-[#27272A] p-2 flex items-center justify-center">
-                    <img
+                    <OptimizedImage
                       src={normalizeVehicleImageUrl(veh.imageUrl, veh.category, veh.id, veh.name)}
+                      fallbackSrc={getCategoryFallbackImage(veh.category, veh.id, veh.name)}
                       alt={veh.name}
+                      loading="lazy"
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.dataset.fallbackApplied) return;
-                        target.dataset.fallbackApplied = 'true';
-                        target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
-                      }}
                     />
                     <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-bold text-[#F5B91B] border border-[#27272A]">
                       {veh.category}

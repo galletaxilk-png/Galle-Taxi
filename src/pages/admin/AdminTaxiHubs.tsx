@@ -35,41 +35,42 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../lib/store';
 import { TownTaxiConfig, TownRoute, TownAttraction, TownFaq } from '../../types';
+import { OptimizedImage } from '../../components/OptimizedImage';
 
 export const SOUTHERN_HUB_IMAGE_PRESETS = [
   {
     label: 'Ahangama Surf Coast Hub (Sunset & Surfboards)',
-    url: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    url: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
     town: 'Ahangama',
     tag: 'Uploaded Official',
   },
   {
     label: 'Mirissa Sunset Road Trip with Surfboard',
-    url: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png',
+    url: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp',
     town: 'Mirissa',
     tag: 'Whales & Bay',
   },
   {
     label: 'Down South Coastal Adventures & Palm Bays',
-    url: '/assets/aistudio/Down_South_Season_Coastal_Adventures.png',
+    url: '/assets/aistudio/Down_South_Season_Coastal_Adventures.webp',
     town: 'Unawatuna / Weligama',
     tag: 'Beach Bay',
   },
   {
     label: 'Galle Fort Coastal & Lighthouse Ocean Road',
-    url: '/assets/images/service_galle_tour_1793121943026.jpg',
+    url: '/assets/images/service_galle_tour_1793121943026.webp',
     town: 'Galle / Hikkaduwa',
     tag: 'Heritage Fort',
   },
   {
     label: 'Colombo Highway & Expressway Fleet Transfer',
-    url: '/assets/images/service_airport_transfer_1793121941979.jpg',
+    url: '/assets/images/service_airport_transfer_1793121941979.webp',
     town: 'Bentota / Highway',
     tag: 'Expressway',
   },
   {
     label: 'Galle Oceanfront Palm Beach Highway',
-    url: '/assets/images/hero_galle_taxi_1793121940996.jpg',
+    url: '/assets/images/hero_galle_taxi_1793121940996.webp',
     town: 'Southern Coast',
     tag: 'Ocean Drive',
   },
@@ -382,8 +383,9 @@ export const AdminTaxiHubs: React.FC = () => {
                 <div>
                   {/* Visual Header with Change Photo Action */}
                   <div className="relative h-40 bg-[#1A1A1E] overflow-hidden group/img">
-                    <img
+                    <OptimizedImage
                       src={hub.heroImage}
+                      fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
                       alt={hub.townName}
                       className="w-full h-full object-cover opacity-85 group-hover/img:scale-105 transition-transform duration-300"
                     />
@@ -532,8 +534,9 @@ export const AdminTaxiHubs: React.FC = () => {
 
                   {/* Large 16:9 Image Preview */}
                   <div className="relative h-44 rounded-xl overflow-hidden bg-[#1A1A1E] border border-[#27272A] group">
-                    <img
+                    <OptimizedImage
                       src={hub.heroImage}
+                      fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
                       alt={hub.townName}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
@@ -856,8 +859,9 @@ export const AdminTaxiHubs: React.FC = () => {
                     {/* Preview Thumbnail */}
                     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                       <div className="relative h-24 w-44 rounded-lg overflow-hidden bg-[#1A1A1E] border border-[#27272A] shrink-0">
-                        <img
+                        <OptimizedImage
                           src={editingHub.heroImage}
+                          fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
                           alt={editingHub.townName}
                           className="w-full h-full object-cover"
                         />
@@ -915,7 +919,12 @@ export const AdminTaxiHubs: React.FC = () => {
                                 : 'bg-[#141416] text-slate-300 border-[#27272A] hover:border-slate-500'
                             }`}
                           >
-                            <img src={preset.url} alt={preset.label} className="w-8 h-8 rounded object-cover shrink-0" />
+                            <OptimizedImage
+                              src={preset.url}
+                              fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
+                              alt={preset.label}
+                              className="w-8 h-8 rounded object-cover shrink-0"
+                            />
                             <div className="truncate">
                               <span className="text-[10px] font-bold block truncate">{preset.town}</span>
                               <span className="text-[8.5px] text-slate-400 block truncate">{preset.tag}</span>
@@ -943,8 +952,9 @@ export const AdminTaxiHubs: React.FC = () => {
 
                   {/* Large 16:9 Banner Preview */}
                   <div className="relative h-56 sm:h-64 rounded-2xl overflow-hidden bg-[#1A1A1E] border border-[#27272A] shadow-inner">
-                    <img
+                    <OptimizedImage
                       src={editingHub.heroImage}
+                      fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
                       alt={editingHub.townName}
                       className="w-full h-full object-cover"
                     />
@@ -1034,7 +1044,12 @@ export const AdminTaxiHubs: React.FC = () => {
                           }`}
                         >
                           <div className="h-24 w-full overflow-hidden bg-[#1A1A1E]">
-                            <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
+                            <OptimizedImage
+                              src={preset.url}
+                              fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
+                              alt={preset.label}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                           <div className="p-2">
                             <span className="text-xs font-bold text-white block truncate">{preset.town}</span>
@@ -1505,8 +1520,9 @@ export const AdminTaxiHubs: React.FC = () => {
                   Current Hub Image Preview
                 </label>
                 <div className="relative h-44 rounded-xl overflow-hidden bg-[#1A1A1E] border border-[#27272A] group">
-                  <img
+                  <OptimizedImage
                     src={taxiHubs[quickImageHubKey].heroImage}
+                    fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
                     alt={taxiHubs[quickImageHubKey].townName}
                     className="w-full h-full object-cover"
                   />
@@ -1595,8 +1611,9 @@ export const AdminTaxiHubs: React.FC = () => {
                       className="group relative rounded-lg overflow-hidden border border-[#27272A] hover:border-[#F5B91B] transition-all text-left bg-[#0B0B0D] cursor-pointer"
                     >
                       <div className="h-16 w-full overflow-hidden">
-                        <img
+                        <OptimizedImage
                           src={preset.url}
+                          fallbackSrc="/assets/images/hero_galle_taxi_1793121940996.webp"
                           alt={preset.label}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />

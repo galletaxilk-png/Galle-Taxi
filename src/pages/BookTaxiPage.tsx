@@ -36,6 +36,7 @@ import { dispatchCustomerEmailVoucher } from '../lib/emailService';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { calculateRouteDistance, RouteDistanceResult } from '../lib/routeDistanceService';
 import { CountryPhoneInput } from '../components/CountryPhoneInput';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 export const BookTaxiPage: React.FC = () => {
   const navigate = useNavigate();
@@ -933,16 +934,12 @@ export const BookTaxiPage: React.FC = () => {
                       >
                         <div>
                           <div className="h-11 w-full rounded-lg bg-[#0B0B0D]/70 border border-white/10 flex items-center justify-center p-1 mb-2 overflow-hidden">
-                            <img
+                            <OptimizedImage
                               src={thumbSrc}
+                              fallbackSrc={getCategoryFallbackImage(v.category, v.id, v.name)}
                               alt={v.name}
+                              loading="lazy"
                               className="w-full h-full object-contain"
-                              onError={(e) => {
-                                const target = e.currentTarget;
-                                if (target.dataset.fallbackApplied) return;
-                                target.dataset.fallbackApplied = 'true';
-                                target.src = getCategoryFallbackImage(v.category, v.id, v.name);
-                              }}
                             />
                           </div>
                           <div className="flex items-center justify-between">
@@ -1073,16 +1070,12 @@ export const BookTaxiPage: React.FC = () => {
                     >
                       <div>
                         <div className="h-24 w-full rounded-xl bg-[#0D0D10]/80 border border-white/10 flex items-center justify-center p-2 mb-3 overflow-hidden">
-                          <img
+                          <OptimizedImage
                             src={cardImg}
+                            fallbackSrc={getCategoryFallbackImage(v.category, v.id, v.name)}
                             alt={v.name}
+                            loading="lazy"
                             className="w-full h-full object-contain drop-shadow-[0_4px_10px_rgba(0,0,0,0.45)]"
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              if (target.dataset.fallbackApplied) return;
-                              target.dataset.fallbackApplied = 'true';
-                              target.src = getCategoryFallbackImage(v.category, v.id, v.name);
-                            }}
                           />
                         </div>
                         <div className="flex items-center justify-between gap-2">
@@ -1382,9 +1375,14 @@ export const BookTaxiPage: React.FC = () => {
                   <span>Selected Vehicle</span>
                 </span>
                 <div className="flex items-center gap-3 pt-1">
-                  <img
+                  <OptimizedImage
                     src={normalizeVehicleImageUrl(
                       selectedVehicle?.imageUrl,
+                      selectedVehicle?.category || 'Sedan',
+                      selectedVehicle?.id,
+                      selectedVehicle?.name
+                    )}
+                    fallbackSrc={getCategoryFallbackImage(
                       selectedVehicle?.category || 'Sedan',
                       selectedVehicle?.id,
                       selectedVehicle?.name
@@ -1468,9 +1466,14 @@ export const BookTaxiPage: React.FC = () => {
 
               {/* Vehicle Preview Card */}
               <div className="flex items-center gap-3 sm:gap-4 p-3.5 bg-[#0D0D10]/80 backdrop-blur-md border border-white/20 hover:border-white/35 rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all">
-                <img
+                <OptimizedImage
                   src={normalizeVehicleImageUrl(
                     selectedVehicle?.imageUrl,
+                    selectedVehicle?.category || 'Sedan',
+                    selectedVehicle?.id,
+                    selectedVehicle?.name
+                  )}
+                  fallbackSrc={getCategoryFallbackImage(
                     selectedVehicle?.category || 'Sedan',
                     selectedVehicle?.id,
                     selectedVehicle?.name

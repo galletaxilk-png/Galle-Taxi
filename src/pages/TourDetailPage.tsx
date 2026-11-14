@@ -34,6 +34,7 @@ import { formatCurrency } from '../lib/fareEngine';
 import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomplete';
 import { dispatchCustomerEmailVoucher } from '../lib/emailService';
 import { Booking } from '../types';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 export const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -211,7 +212,7 @@ export const TourDetailPage: React.FC = () => {
 
   const normalizedHero = tour.heroImage?.startsWith('/src/assets/images/')
     ? tour.heroImage.replace('/src/assets/images/', '/assets/images/')
-    : tour.heroImage || '/assets/images/regenerated_image_1794057460840.png';
+    : tour.heroImage || '/assets/images/regenerated_image_1794057460840.webp';
   const rawGallery = tour.galleryImages && tour.galleryImages.length > 0 ? tour.galleryImages : [normalizedHero];
   const gallery = rawGallery.map((g) =>
     g?.startsWith('/src/assets/images/') ? g.replace('/src/assets/images/', '/assets/images/') : g
@@ -292,8 +293,9 @@ export const TourDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-10">
           {/* Main Large Visual: 8 cols */}
           <div className="lg:col-span-8 relative aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden bg-[#141416] border border-[#27272A] shadow-2xl">
-            <img
+            <OptimizedImage
               src={gallery[selectedPhotoIndex] || normalizedHero}
+              fallbackSrc="/assets/images/regenerated_image_1794057460840.webp"
               alt={`${tour.title} photo`}
               className="w-full h-full object-cover transition-all duration-300"
             />
@@ -321,7 +323,13 @@ export const TourDetailPage: React.FC = () => {
                     : 'border-[#27272A] hover:border-slate-500 opacity-70 hover:opacity-100'
                 }`}
               >
-                <img src={imgUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+                <OptimizedImage
+                  src={imgUrl}
+                  fallbackSrc="/assets/images/regenerated_image_1794057460840.webp"
+                  alt="Thumbnail"
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                />
               </button>
             ))}
           </div>

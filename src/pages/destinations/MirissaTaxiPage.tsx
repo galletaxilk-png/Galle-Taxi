@@ -25,7 +25,7 @@ export const MirissaTaxiPage: React.FC = () => {
       typeof window !== 'undefined'
         ? `${window.location.origin}/mirissa-taxi`
         : 'https://galletaxi.lk/mirissa-taxi';
-    const heroImgUrl = town.heroImage || '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png';
+    const heroImgUrl = town.heroImage || '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp';
     const ogImage =
       typeof window !== 'undefined' && heroImgUrl.startsWith('/')
         ? `${window.location.origin}${heroImgUrl}`

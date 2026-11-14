@@ -8,6 +8,7 @@ import {
   getCategoryFallbackImage,
   normalizeVehicleImageUrl,
 } from '../lib/vehicleHelpers';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 export const VehiclesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -70,16 +71,12 @@ export const VehiclesPage: React.FC = () => {
               <div>
                 {/* Image */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#1B1B1F] rounded-t-2xl flex items-center justify-center p-4 border-b border-[#27272A]">
-                  <img
+                  <OptimizedImage
                     src={normalizeVehicleImageUrl(veh.imageUrl, veh.category, veh.id, veh.name)}
+                    fallbackSrc={getCategoryFallbackImage(veh.category, veh.id, veh.name)}
                     alt={veh.name}
+                    loading="lazy"
                     className="w-full h-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition-transform duration-300 hover:scale-105"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (target.dataset.fallbackApplied) return;
-                      target.dataset.fallbackApplied = 'true';
-                      target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
-                    }}
                   />
                   <div className="absolute top-4 left-4 px-3 py-1 rounded bg-black/80 backdrop-blur-md text-xs font-semibold text-[#F5B91B] border border-[#27272A]">
                     {veh.category}

@@ -16,6 +16,7 @@ import {
 import { useApp } from '../lib/store';
 import { formatLKR } from '../lib/fareEngine';
 import { ToursSection } from '../components/ToursSection';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 export const ServicesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -243,9 +244,11 @@ export const ServicesPage: React.FC = () => {
                 {/* Visual */}
                 <div className={`lg:col-span-5 ${isEven ? 'lg:order-1' : 'lg:order-2'}`}>
                   <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-[#1A1A1E] border border-[#27272A]">
-                    <img
+                    <OptimizedImage
                       src={srv.imageUrl}
+                      fallbackSrc="/assets/images/service_airport_transfer_1793121941979.webp"
                       alt={srv.title}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                     />

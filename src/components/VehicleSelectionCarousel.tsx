@@ -31,6 +31,7 @@ import {
   getCategoryFallbackImage,
   normalizeVehicleImageUrl,
 } from '../lib/vehicleHelpers';
+import { OptimizedImage } from './OptimizedImage';
 
 interface VehicleSelectionCarouselProps {
   pickupLocation: string;
@@ -146,7 +147,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 2,
       handLuggage: 1,
       acLabel: 'Fully Air-Conditioned',
-      fallbackImage: '/assets/images/regenerated_image_1793161723258.png',
+      fallbackImage: '/assets/images/regenerated_image_1793161723258.webp',
       category: 'Mini Car' as const,
     },
     {
@@ -158,7 +159,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 3,
       handLuggage: 2,
       acLabel: 'Dual-Zone Climate Control',
-      fallbackImage: '/assets/images/regenerated_image_1793163512211.png',
+      fallbackImage: '/assets/images/regenerated_image_1793163512211.webp',
       category: 'SEDAN CAR' as const,
     },
     {
@@ -170,7 +171,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 5,
       handLuggage: 4,
       acLabel: 'Dual Air-Conditioned',
-      fallbackImage: '/assets/images/regenerated_image_1793465213680.png',
+      fallbackImage: '/assets/images/regenerated_image_1793465213680.webp',
       category: 'Mini Van' as const,
     },
     {
@@ -182,7 +183,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 4,
       handLuggage: 3,
       acLabel: 'Tri-Zone Climate Control',
-      fallbackImage: '/assets/images/regenerated_image_1793464744920.png',
+      fallbackImage: '/assets/images/regenerated_image_1793464744920.webp',
       category: 'SUV CAR' as const,
     },
     {
@@ -194,7 +195,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 6,
       handLuggage: 5,
       acLabel: 'Dual High-Capacity A/C',
-      fallbackImage: '/assets/images/vehicle_premium_van_1793121943671.jpg',
+      fallbackImage: '/assets/images/vehicle_premium_van_1793121943671.webp',
       category: 'KDH FLAT ROOF' as const,
     },
     {
@@ -206,7 +207,7 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
       largeLuggage: 8,
       handLuggage: 6,
       acLabel: 'Rear Climate Control A/C',
-      fallbackImage: '/assets/images/regenerated_image_1793464621511.png',
+      fallbackImage: '/assets/images/regenerated_image_1793464621511.webp',
       category: 'KDH HIGH ROOF' as const,
     },
   ];
@@ -578,16 +579,12 @@ export const VehicleSelectionCarousel: React.FC<VehicleSelectionCarouselProps> =
                 <div className="space-y-3">
                   {/* Vehicle Image Container */}
                   <div className="relative h-[105px] w-full rounded-xl overflow-hidden bg-[#16161A]/80 backdrop-blur-md flex items-center justify-center p-2 border border-white/15">
-                    <img
+                    <OptimizedImage
                       src={veh.imageUrl}
+                      fallbackSrc={getCategoryFallbackImage(veh.category, veh.id, veh.name)}
                       alt={veh.name}
+                      loading="lazy"
                       className="w-full h-full object-contain rounded-lg transition-transform duration-300 hover:scale-105 drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)]"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.dataset.fallbackApplied) return;
-                        target.dataset.fallbackApplied = 'true';
-                        target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
-                      }}
                     />
                     <div className="absolute top-2 right-2">
                       <span className="text-[9px] font-bold text-emerald-300 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-500/40 shadow-sm">

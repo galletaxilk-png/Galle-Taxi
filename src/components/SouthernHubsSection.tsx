@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Navigation, ArrowRight, ShieldCheck, Car } from 'lucide-react';
 import { useApp } from '../lib/store';
+import { OptimizedImage } from './OptimizedImage';
 
 export interface SouthernHubItem {
   id: string;
@@ -31,7 +32,7 @@ export const SOUTHERN_HUBS: SouthernHubItem[] = [
     sedanLkr: 22000,
     vanLkr: 26000,
     features: ['Surfboard Racks Available', 'Expressway Tolls Included', 'Villa Door-to-Door Pickup'],
-    image: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    image: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
   },
   {
     id: 'mirissa',
@@ -45,7 +46,7 @@ export const SOUTHERN_HUBS: SouthernHubItem[] = [
     sedanLkr: 23500,
     vanLkr: 28000,
     features: ['Early Morning Boat Transfers', 'Harbour Meet & Greet', 'Luggage Assistance'],
-    image: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png',
+    image: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp',
   },
   {
     id: 'unawatuna',
@@ -59,7 +60,7 @@ export const SOUTHERN_HUBS: SouthernHubItem[] = [
     sedanLkr: 19500,
     vanLkr: 24000,
     features: ['10 Mins to Galle Fort', 'Nightlife & Dinner Rides', 'Child Seat on Request'],
-    image: '/assets/aistudio/Down_South_Season_Coastal_Adventures.png',
+    image: '/assets/aistudio/Down_South_Season_Coastal_Adventures.webp',
   },
   {
     id: 'hikkaduwa',
@@ -73,7 +74,7 @@ export const SOUTHERN_HUBS: SouthernHubItem[] = [
     sedanLkr: 18500,
     vanLkr: 23000,
     features: ['Direct Highway Access', 'Turtle Sanctuary Stops', 'English-Speaking Drivers'],
-    image: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png',
+    image: '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp',
   },
   {
     id: 'bentota',
@@ -87,7 +88,7 @@ export const SOUTHERN_HUBS: SouthernHubItem[] = [
     sedanLkr: 16500,
     vanLkr: 21000,
     features: ['Fastest CMB Airport Time', 'River Safari Pickups', 'VIP Executive Fleet'],
-    image: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png',
+    image: '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp',
   },
   {
     id: 'weligama',
@@ -101,7 +102,7 @@ export const SOUTHERN_HUBS: SouthernHubItem[] = [
     sedanLkr: 23000,
     vanLkr: 27500,
     features: ['Surf Camp Shuttles', 'Marriott Resort Transfers', 'Board Storage Friendly'],
-    image: '/assets/aistudio/Down_South_Season_Coastal_Adventures.png',
+    image: '/assets/aistudio/Down_South_Season_Coastal_Adventures.webp',
   },
 ];
 
@@ -150,8 +151,8 @@ export const SouthernHubsSection: React.FC = () => {
     const image =
       normalizedImg ||
       (hub.id === 'ahangama-taxi' || hub.id === 'ahangama' || hub.slug === 'ahangama-taxi'
-        ? '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png'
-        : '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png');
+        ? '/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp'
+        : '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp');
 
     return {
       id: hub.id,
@@ -223,13 +224,12 @@ export const SouthernHubsSection: React.FC = () => {
               <div>
                 {/* Visual Header with Image & Badge */}
                 <div className="relative h-44 sm:h-48 overflow-hidden bg-[#1A1A1E]">
-                  <img
+                  <OptimizedImage
                     src={hub.image}
+                    fallbackSrc="/assets/images/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp"
                     alt={`${hub.name} Sri Lanka`}
+                    loading="lazy"
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/assets/images/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.png';
-                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-[#141416]/25 to-transparent pointer-events-none" />
                   

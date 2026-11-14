@@ -31,6 +31,7 @@ import {
 import { useApp } from '../../lib/store';
 import { CurrencySelector } from '../../components/CurrencySelector';
 import { TownTaxiConfig, TOWNS_DATA } from './townData';
+import { OptimizedImage } from '../../components/OptimizedImage';
 
 interface TownTaxiTemplateProps {
   town: TownTaxiConfig;
@@ -69,8 +70,9 @@ export const TownTaxiTemplate: React.FC<TownTaxiTemplateProps> = ({ town: initia
       <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28 border-b border-[#1F1F23]">
         {/* Background photo */}
         <div className="absolute inset-0 z-0">
-          <img
+          <OptimizedImage
             src={normalizedHeroImage}
+            fallbackSrc="/assets/aistudio/Sri_Lanka_Southern_Coast_Surf_Sunset_2549a27a.webp"
             alt={`${town.townName} Taxi Sri Lanka`}
             className="w-full h-full object-cover object-center"
           />

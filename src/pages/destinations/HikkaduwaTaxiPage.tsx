@@ -25,7 +25,7 @@ export const HikkaduwaTaxiPage: React.FC = () => {
       typeof window !== 'undefined'
         ? `${window.location.origin}/hikkaduwa-taxi`
         : 'https://galletaxi.lk/hikkaduwa-taxi';
-    const heroImgUrl = town.heroImage || '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png';
+    const heroImgUrl = town.heroImage || '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp';
     const ogImage =
       typeof window !== 'undefined' && heroImgUrl.startsWith('/')
         ? `${window.location.origin}${heroImgUrl}`

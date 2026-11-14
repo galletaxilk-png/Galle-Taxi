@@ -36,6 +36,7 @@ import { SeasonalBannerSection } from '../components/SeasonalBannerSection';
 import { SouthernHubsSection } from '../components/SouthernHubsSection';
 import { VehicleSelectionCarousel } from '../components/VehicleSelectionCarousel';
 import { RouteDistanceResult } from '../lib/routeDistanceService';
+import { OptimizedImage } from '../components/OptimizedImage';
 
 export type ServiceTabType = 'AIRPORT DROP' | 'AIRPORT PICK UP' | 'TAXI RIDE' | 'TOURS';
 
@@ -238,20 +239,11 @@ export const Home: React.FC = () => {
       <section className="relative overflow-hidden pt-8 pb-20 lg:pt-16 lg:pb-28 border-b border-[#1F1F23]">
         {/* Cinematic Sunset Beach Road Trip Background */}
         <div className="absolute inset-0 z-0">
-          <img
-            src={
-              siteSettings.heroImageUrl?.startsWith('/src/assets/images/')
-                ? siteSettings.heroImageUrl.replace('/src/assets/images/', '/assets/images/')
-                : siteSettings.heroImageUrl || '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png'
-            }
+          <OptimizedImage
+            src={siteSettings.heroImageUrl || '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp'}
+            fallbackSrc="/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp"
             alt="Galle Taxi Sri Lanka Beach Road Trip"
             className="w-full h-full object-cover object-right md:object-center"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (!target.src.includes('Sunset_Beach_Road_Trip_with_Surfboard_19548307.png')) {
-                target.src = '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.png';
-              }
-            }}
           />
           {/* Multi-layered dark gradient overlays for typography contrast */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#0B0B0D] via-[#0B0B0D]/90 to-[#0B0B0D]/40" />
@@ -866,16 +858,12 @@ export const Home: React.FC = () => {
               >
                 <div>
                   <div className="relative aspect-[16/10] overflow-hidden bg-[#1A1A1E] flex items-center justify-center p-3 rounded-t-xl border-b border-[#27272A]">
-                    <img
+                    <OptimizedImage
                       src={normalizeVehicleImageUrl(veh.imageUrl, veh.category, veh.id, veh.name)}
+                      fallbackSrc={getCategoryFallbackImage(veh.category, veh.id, veh.name)}
                       alt={veh.name}
+                      loading="lazy"
                       className="w-full h-full object-contain rounded-lg transition-transform duration-500 hover:scale-105 drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)]"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        if (target.dataset.fallbackApplied) return;
-                        target.dataset.fallbackApplied = 'true';
-                        target.src = getCategoryFallbackImage(veh.category, veh.id, veh.name);
-                      }}
                     />
                     <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-semibold text-[#F5B91B] border border-[#27272A]">
                       {veh.category}
@@ -1186,9 +1174,11 @@ export const Home: React.FC = () => {
             >
               {/* Service Visual */}
               <div className="relative aspect-[16/10] overflow-hidden bg-[#1B1B1F]">
-                <img
+                <OptimizedImage
                   src={srv.imageUrl}
+                  fallbackSrc="/assets/images/service_airport_transfer_1793121941979.webp"
                   alt={srv.title}
+                  loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"
                 />

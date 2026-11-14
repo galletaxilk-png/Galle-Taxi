@@ -4,6 +4,7 @@ import { useApp } from '../../lib/store';
 import { Service } from '../../types';
 import { formatLKR } from '../../lib/fareEngine';
 import { ImageUploader } from '../../components/admin/ImageUploader';
+import { OptimizedImage } from '../../components/OptimizedImage';
 
 export const AdminServices: React.FC = () => {
   const { services, updateService, addService } = useApp();
@@ -26,7 +27,7 @@ export const AdminServices: React.FC = () => {
     setDescription('');
     setStartingFromLkr(25000);
     setFeaturesStr('Expressway Tolls Included, Flight Monitoring, Chauffeur Meet & Greet');
-    setImageUrl('/assets/images/service_airport_transfer_1793121941979.jpg');
+    setImageUrl('/assets/images/service_airport_transfer_1793121941979.webp');
     setShowModal(true);
   };
 
@@ -114,9 +115,11 @@ export const AdminServices: React.FC = () => {
           >
             <div>
               <div className="relative aspect-[16/10] overflow-hidden bg-[#1B1B1F] group/srvimg">
-                <img
+                <OptimizedImage
                   src={srv.imageUrl}
+                  fallbackSrc="/assets/images/service_airport_transfer_1793121941979.webp"
                   alt={srv.title}
+                  loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-300 group-hover/srvimg:scale-105"
                   referrerPolicy="no-referrer"
                 />

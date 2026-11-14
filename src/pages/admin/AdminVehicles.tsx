@@ -38,6 +38,7 @@ import { Vehicle } from '../../types';
 import { formatLKR } from '../../lib/fareEngine';
 import { ImageUploader } from '../../components/admin/ImageUploader';
 import { optimizeImageToWebP } from '../../lib/imageOptimizer';
+import { OptimizedImage } from '../../components/OptimizedImage';
 
 const STANDARD_CATEGORIES = [
   'SEDAN CAR',
@@ -74,47 +75,47 @@ export const VEHICLE_PHOTO_PRESETS = [
   {
     label: 'Hybrid Sedan (Prius / Premio)',
     category: 'Sedan',
-    url: '/assets/images/regenerated_image_1793163512211.png',
+    url: '/assets/images/regenerated_image_1793163512211.webp',
   },
   {
     label: 'Toyota KDH High-Roof White Van',
     category: 'KDH High Roof',
-    url: '/assets/images/regenerated_image_1793464621511.png',
+    url: '/assets/images/regenerated_image_1793464621511.webp',
   },
   {
     label: 'VIP KDH Flat-Roof Executive Van',
     category: 'KDH Flat Roof',
-    url: '/assets/images/vehicle_premium_van_1793121943671.jpg',
+    url: '/assets/images/vehicle_premium_van_1793121943671.webp',
   },
   {
     label: 'Budget Mini Hatchback (Wagon R / Alto)',
     category: 'Mini Car',
-    url: '/assets/images/regenerated_image_1793161723258.png',
+    url: '/assets/images/regenerated_image_1793161723258.webp',
   },
   {
     label: 'SUV 4x4 (Prado / CR-V / Fortuner)',
     category: 'SUV',
-    url: '/assets/images/regenerated_image_1793464744920.png',
+    url: '/assets/images/regenerated_image_1793464744920.webp',
   },
   {
     label: 'Compact Mini Van / Shuttle',
     category: 'Mini Van',
-    url: '/assets/images/regenerated_image_1793465213680.png',
+    url: '/assets/images/regenerated_image_1793465213680.webp',
   },
   {
     label: 'Luxury Executive Sedan (Mercedes / BMW)',
     category: 'Luxury',
-    url: '/assets/images/vehicle_luxury_sedan_1793121944773.jpg',
+    url: '/assets/images/vehicle_luxury_sedan_1793121944773.webp',
   },
   {
     label: 'Tourist Mini Coach / Coaster Bus',
     category: 'Bus',
-    url: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80&fm=webp',
   },
   {
     label: 'Modern Eco Electric EV (Tesla / BYD)',
     category: 'Electric',
-    url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1200&q=80&fm=webp',
   },
 ];
 
@@ -250,7 +251,7 @@ export const AdminVehicles: React.FC = () => {
     setDescription('Modern air-conditioned executive vehicle chauffeured by vetted professionals.');
     setPricePerKm(240);
     setBaseFare(1500);
-    setImageUrl('/assets/images/regenerated_image_1793163512211.png');
+    setImageUrl('/assets/images/regenerated_image_1793163512211.webp');
     setIsAvailable(true);
     setHideCard(false);
     setIsFeatured(false);
@@ -426,7 +427,7 @@ export const AdminVehicles: React.FC = () => {
       description: description.trim(),
       pricePerKm: Number(pricePerKm) || editingVehicle?.pricePerKm || 0,
       baseFare: Number(baseFare) || editingVehicle?.baseFare || 0,
-      imageUrl: imageUrl || editingVehicle?.imageUrl || '/assets/images/regenerated_image_1793163512211.png',
+      imageUrl: imageUrl || editingVehicle?.imageUrl || '/assets/images/regenerated_image_1793163512211.webp',
       isAvailable,
       hideCard,
       isFeatured,
@@ -744,8 +745,9 @@ export const AdminVehicles: React.FC = () => {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="relative w-14 h-10 rounded-lg overflow-hidden bg-white border border-[#27272A] shrink-0 group/img flex items-center justify-center p-1 shadow-sm">
-                              <img
+                              <OptimizedImage
                                 src={veh.imageUrl}
+                                fallbackSrc="/assets/images/regenerated_image_1793163512211.webp"
                                 alt={veh.name}
                                 className="w-full h-full object-contain"
                               />
@@ -914,8 +916,9 @@ export const AdminVehicles: React.FC = () => {
                   <div>
                     {/* Vehicle Photo Container */}
                     <div className="relative aspect-[16/10] overflow-hidden bg-white flex items-center justify-center p-3 border-b border-[#27272A] group/img">
-                      <img
+                      <OptimizedImage
                         src={veh.imageUrl}
+                        fallbackSrc="/assets/images/regenerated_image_1793163512211.webp"
                         alt={veh.name}
                         className="w-full h-full object-contain transition-transform duration-300 group-hover/img:scale-105 drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)]"
                       />
@@ -1461,8 +1464,9 @@ export const AdminVehicles: React.FC = () => {
               </div>
 
               <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-[#121214]">
-                <img
+                <OptimizedImage
                   src={previewVehicle.imageUrl}
+                  fallbackSrc="/assets/images/regenerated_image_1793163512211.webp"
                   alt={previewVehicle.name}
                   className="w-full h-full object-cover"
                 />
@@ -1717,8 +1721,9 @@ export const AdminVehicles: React.FC = () => {
                     className="p-1.5 bg-[#141416] border border-[#27272A] rounded-lg text-center flex flex-col items-center justify-between gap-1 group hover:border-[#F5B91B]/60 transition-colors"
                   >
                     <div className="w-full h-10 bg-white rounded flex items-center justify-center p-0.5 overflow-hidden">
-                      <img
+                      <OptimizedImage
                         src={preset.url}
+                        fallbackSrc="/assets/images/regenerated_image_1793163512211.webp"
                         alt={preset.label}
                         className="w-full h-full object-contain"
                       />
@@ -1784,8 +1789,9 @@ export const AdminVehicles: React.FC = () => {
                       {/* Left: Thumbnail & Core Specs */}
                       <div className="flex items-center gap-3 md:w-64 shrink-0">
                         <div className="relative w-28 h-20 bg-white rounded-xl border border-[#27272A] flex items-center justify-center p-1.5 shrink-0 overflow-hidden shadow-md">
-                          <img
+                          <OptimizedImage
                             src={veh.imageUrl}
+                            fallbackSrc="/assets/images/regenerated_image_1793163512211.webp"
                             alt={veh.name}
                             className="w-full h-full object-contain"
                           />

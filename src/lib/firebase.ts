@@ -97,6 +97,14 @@ export function getStoredFirebaseConfig(): FirebaseWebConfig | null {
       const parsed = JSON.parse(raw);
       if (parsed.apiKey && isValidFirebaseApiKey(parsed.apiKey)) {
         const pId = parsed.projectId || 'galle-taxi';
+        if (parsed.firestoreDatabaseId && parsed.firestoreDatabaseId !== FIRESTORE_DATABASE_ID) {
+          try {
+            localStorage.setItem(
+              STORAGE_KEY,
+              JSON.stringify({ ...parsed, firestoreDatabaseId: FIRESTORE_DATABASE_ID })
+            );
+          } catch {}
+        }
         return {
           apiKey: parsed.apiKey.trim(),
           projectId: pId,
@@ -167,7 +175,7 @@ function initFirebase() {
 
       // Explicitly connect to the standard (default) Cloud Firestore database instance
       // so vehicles, fareRules, siteSettings, tours, taxi_hubs, and bookings share one unified DB.
-      db = getFirestore(app);
+      db = getFirestore(app, FIRESTORE_DATABASE_ID);
 
       try {
         storage = getStorage(app);
@@ -263,7 +271,7 @@ export async function saveFirebaseWebConfig(config: FirebaseWebConfig): Promise<
       appId: sanitized.appId,
     });
     auth = getAuth(app);
-    db = getFirestore(app);
+    db = getFirestore(app, FIRESTORE_DATABASE_ID);
     storage = getStorage(app);
     isConfigured = true;
     configSource = 'storage';

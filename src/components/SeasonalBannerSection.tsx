@@ -12,6 +12,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useApp } from '../lib/store';
+import { OptimizedImage } from './OptimizedImage';
 
 export const SeasonalBannerSection: React.FC = () => {
   const { siteSettings, isAdminLoggedIn } = useApp();
@@ -23,7 +24,7 @@ export const SeasonalBannerSection: React.FC = () => {
 
   const bannerImg =
     siteSettings.seasonalBannerImageUrl ||
-    '/assets/images/regenerated_image_1794057460840.png';
+    '/assets/images/regenerated_image_1794057460840.webp';
   const bannerLink = siteSettings.seasonalBannerLink || '/general-taxi';
   const cleanWhatsApp = siteSettings.whatsappNumber.replace(/[^0-9]/g, '');
 
@@ -86,16 +87,12 @@ export const SeasonalBannerSection: React.FC = () => {
       {/* Full Viewport Edge-to-Edge Banner Image with Gradient Overlays & Crisp Hero Text */}
       <div className="w-full relative overflow-hidden bg-[#141416] group">
         <Link to={bannerLink} className="block relative w-full overflow-hidden">
-          <img
+          <OptimizedImage
             src={bannerImg}
+            fallbackSrc="/assets/images/regenerated_image_1794057460840.webp"
             alt="Down South Season Coastal Adventures Banner"
+            loading="lazy"
             className="w-full h-auto max-h-[85vh] min-h-[320px] object-cover object-center group-hover:scale-[1.01] transition-transform duration-700 ease-out"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (!target.src.includes('regenerated_image_1794057460840.png')) {
-                target.src = '/assets/images/regenerated_image_1794057460840.png';
-              }
-            }}
           />
 
           {/* Multi-layered subtle dark gradient overlays for enhanced contrast across the bright beach image */}

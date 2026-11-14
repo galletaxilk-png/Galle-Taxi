@@ -39,7 +39,7 @@ export const AdminSettings: React.FC = () => {
   const [projectId, setProjectId] = useState(storedConfig?.projectId || 'galle-taxi');
   const [appId, setAppId] = useState(storedConfig?.appId || '');
   const [authDomain, setAuthDomain] = useState(storedConfig?.authDomain || `${firebaseProjectId}.firebaseapp.com`);
-  const [storageBucket, setStorageBucket] = useState(storedConfig?.storageBucket || `${firebaseProjectId}.appspot.com`);
+  const [storageBucket, setStorageBucket] = useState(storedConfig?.storageBucket || `${firebaseProjectId}.firebasestorage.app`);
 
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
@@ -132,7 +132,8 @@ export const AdminSettings: React.FC = () => {
         projectId: (projectId || 'galle-taxi').trim(),
         appId: appId.trim() || undefined,
         authDomain: authDomain.trim() || `${projectId || 'galle-taxi'}.firebaseapp.com`,
-        storageBucket: storageBucket.trim() || `${projectId || 'galle-taxi'}.appspot.com`,
+        storageBucket: storageBucket.trim() || `${projectId || 'galle-taxi'}.firebasestorage.app`,
+        firestoreDatabaseId: FIRESTORE_DATABASE_ID,
       };
 
       await saveWebConfig(config);

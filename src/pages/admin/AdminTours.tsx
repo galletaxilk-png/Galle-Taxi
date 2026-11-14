@@ -46,6 +46,7 @@ import {
 import { useApp } from '../../lib/store';
 import { DayTourProduct, TourVehiclePrice, TourItineraryItem, TourHighlightItem } from '../../types';
 import { formatCurrency } from '../../lib/fareEngine';
+import { OptimizedImage } from '../../components/OptimizedImage';
 
 const DEFAULT_VEHICLE_TEMPLATES: TourVehiclePrice[] = [
   {
@@ -178,10 +179,10 @@ export const AdminTours: React.FC = () => {
     setFormIsPublished(true);
     setFormShortDescription('');
     setFormFullDescription('');
-    setFormHeroImage('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80');
+    setFormHeroImage('https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80&fm=webp');
     setFormGalleryImages([
-      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80&fm=webp',
+      'https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=80&fm=webp',
     ]);
     setFormVehiclePrices(DEFAULT_VEHICLE_TEMPLATES);
     setFormHighlights([
@@ -608,14 +609,11 @@ export const AdminTours: React.FC = () => {
                   <div>
                     {/* Visual */}
                     <div className="relative aspect-[16/10] bg-[#0B0B0D] overflow-hidden">
-                      <img
+                      <OptimizedImage
                         src={tour.heroImage}
+                        fallbackSrc="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80&fm=webp"
                         alt={tour.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
-                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#141416] via-transparent to-black/40" />
 
@@ -1210,7 +1208,7 @@ export const AdminTours: React.FC = () => {
                       <input
                         ref={heroFileInputRef}
                         type="file"
-                        accept="image/*"
+                        accept="image/*,.png,.jpg,.jpeg,.webp"
                         onChange={handleUploadHeroImage}
                         className="hidden"
                       />
@@ -1219,14 +1217,11 @@ export const AdminTours: React.FC = () => {
                     <div className="flex flex-col sm:flex-row gap-4 items-center">
                       <div className="relative aspect-[16/10] w-full sm:w-56 rounded-xl overflow-hidden bg-[#141416] border border-[#27272A] flex items-center justify-center">
                         {formHeroImage ? (
-                          <img
+                          <OptimizedImage
                             src={formHeroImage}
+                            fallbackSrc="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80&fm=webp"
                             alt="Cover preview"
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src =
-                                'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
-                            }}
                           />
                         ) : (
                           <div className="text-center p-3 text-slate-500 text-xs flex flex-col items-center gap-1">
@@ -1247,7 +1242,7 @@ export const AdminTours: React.FC = () => {
                           type="text"
                           value={formHeroImage}
                           onChange={(e) => setFormHeroImage(e.target.value)}
-                          placeholder="https://images.unsplash.com/... or /src/assets/..."
+                          placeholder="https://images.unsplash.com/... or /assets/images/..."
                           className="w-full px-3 py-2 bg-[#141416] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
                         />
                       </div>
@@ -1280,7 +1275,7 @@ export const AdminTours: React.FC = () => {
                         <input
                           ref={galleryFileInputRef}
                           type="file"
-                          accept="image/*"
+                          accept="image/*,.png,.jpg,.jpeg,.webp"
                           multiple
                           onChange={handleUploadGalleryImage}
                           className="hidden"
@@ -1341,14 +1336,11 @@ export const AdminTours: React.FC = () => {
                             key={idx}
                             className="relative aspect-[16/10] rounded-xl overflow-hidden bg-[#141416] border border-[#27272A] group shadow-sm"
                           >
-                            <img
+                            <OptimizedImage
                               src={img}
+                              fallbackSrc="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80&fm=webp"
                               alt={`Gallery ${idx + 1}`}
                               className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src =
-                                  'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
-                              }}
                             />
                             <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-white">
                               #{idx + 1}
