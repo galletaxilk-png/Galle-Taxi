@@ -1,10 +1,21 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart3, Download, Calendar, Filter, Users, DollarSign, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../../lib/store';
 import { formatLKR, formatNumber } from '../../lib/fareEngine';
 
+const formatLocalYMD = (dt: Date): string => {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 export const AdminReports: React.FC = () => {
-  const { bookings, drivers } = useApp();
+  const { bookings, drivers, refreshBookingsAndDrivers } = useApp();
+
+  useEffect(() => {
+    refreshBookingsAndDrivers();
+  }, []);
 
   const [dateRange, setDateRange] = useState<'30' | '90' | '365' | 'all'>('30');
   const [exportNotice, setExportNotice] = useState<string | null>(null);
@@ -14,7 +25,10 @@ export const AdminReports: React.FC = () => {
     if (dateRange === 'all') return bookings;
     const days = parseInt(dateRange, 10);
     const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    return bookings.filter((b) => new Date(b.createdAt) >= cutoff);
+    return bookings.filter((b) => {
+      const parsed = new Date(b.createdAt || b.pickupDate || Date.now());
+      return !Number.isNaN(parsed.getTime()) ? parsed >= cutoff : true;
+    });
   }, [bookings, dateRange]);
 
   // Aggregate numbers
@@ -25,7 +39,10 @@ export const AdminReports: React.FC = () => {
   const pendingTrips = filteredBookings.filter((b) => b.status === 'Pending');
 
   // Revenue strictly from COMPLETED trips
-  const completedRevenue = completedTrips.reduce((acc, b) => acc + (b.finalFare || b.estimatedFare), 0);
+  const completedRevenue = completedTrips.reduce(
+    (acc, b) => acc + Number(b.finalFare && b.finalFare > 0 ? b.finalFare : b.estimatedFare || 0),
+    0
+  );
   const avgTripValue = completedTrips.length > 0 ? Math.round(completedRevenue / completedTrips.length) : 0;
   const completionRate = totalCount > 0 ? Math.round((completedTrips.length / totalCount) * 100) : 0;
 
@@ -33,7 +50,10 @@ export const AdminReports: React.FC = () => {
   const driverStats = drivers.map((d) => {
     const driverTrips = filteredBookings.filter((b) => b.driverId === d.id);
     const driverCompleted = driverTrips.filter((b) => b.status === 'Completed');
-    const driverRevenue = driverCompleted.reduce((acc, b) => acc + (b.finalFare || b.estimatedFare), 0);
+    const driverRevenue = driverCompleted.reduce(
+      (acc, b) => acc + Number(b.finalFare && b.finalFare > 0 ? b.finalFare : b.estimatedFare || 0),
+      0
+    );
     return {
       driver: d,
       assignedCount: driverTrips.length,
@@ -72,7 +92,7 @@ export const AdminReports: React.FC = () => {
       b.status,
       `"${b.driverName || 'Unassigned'}"`,
       b.estimatedFare,
-      b.finalFare || b.estimatedFare,
+      Number(b.finalFare && b.finalFare > 0 ? b.finalFare : b.estimatedFare || 0),
       b.createdAt,
     ]);
 
@@ -80,7 +100,7 @@ export const AdminReports: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `galle_taxi_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `galle_taxi_report_${formatLocalYMD(new Date())}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

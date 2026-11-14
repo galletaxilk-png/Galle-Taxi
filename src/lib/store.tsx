@@ -21,6 +21,8 @@ import {
 import { CURRENCIES, formatCurrency } from './fareEngine';
 import {
   INITIAL_DRIVERS,
+  INITIAL_BOOKINGS,
+  createInitialBookings,
   INITIAL_FARE_RULES,
   INITIAL_SERVICES,
   INITIAL_SERVICE_AREAS,
@@ -35,6 +37,7 @@ import {
   auth,
   db,
   storage,
+  FIRESTORE_DATABASE_ID,
   cleanFirestoreData,
   getStoredFirebaseConfig,
   saveFirebaseWebConfig,
@@ -173,6 +176,7 @@ interface AppContextType {
   uploadHubImage: (file: File, hubSlug?: string) => Promise<string>;
 
   // Maintenance & Cloud Diagnostics
+  refreshBookingsAndDrivers: () => Promise<void>;
   resetToSampleData: () => void;
 }
 
@@ -249,6 +253,72 @@ function normalizeImageUrl(url: string | undefined): string {
     return url.replace('/src/assets/images/', '/assets/images/');
   }
   return url;
+}
+
+function normalizeBookingStatus(rawStatus: unknown): BookingStatus {
+  const raw = String(rawStatus || 'Pending').trim().toLowerCase();
+  if (raw === 'confirmed') return 'Confirmed';
+  if (raw === 'driver assigned' || raw === 'driver_assigned' || raw === 'assigned') return 'Driver Assigned';
+  if (raw === 'driver en route' || raw === 'driver_en_route' || raw === 'en route' || raw === 'enroute') return 'Driver En Route';
+  if (raw === 'picked up' || raw === 'picked_up') return 'Picked Up';
+  if (raw === 'completed' || raw === 'complete' || raw === 'done') return 'Completed';
+  if (raw === 'cancelled' || raw === 'canceled') return 'Cancelled';
+  return 'Pending';
+}
+
+function resolveFirestoreTimestampIso(tsValue: any, fallbackIso?: string): string {
+  if (typeof tsValue === 'string' && tsValue.trim()) {
+    return tsValue;
+  }
+  if (tsValue && typeof tsValue.toDate === 'function') {
+    try {
+      return tsValue.toDate().toISOString();
+    } catch {}
+  }
+  if (tsValue && typeof tsValue.seconds === 'number') {
+    return new Date(tsValue.seconds * 1000).toISOString();
+  }
+  return fallbackIso || new Date().toISOString();
+}
+
+function normalizeFirestoreBooking(docId: string, d: Record<string, any>): Booking {
+  const createdIso = resolveFirestoreTimestampIso(d.createdAtIso || d.createdAt);
+  const updatedIso = resolveFirestoreTimestampIso(d.updatedAt, createdIso);
+  const estimatedFare = Number(d.estimatedFare ?? d.fare ?? d.totalFare ?? d.amount ?? d.price ?? 0) || 0;
+  const parsedFinal =
+    d.finalFare !== undefined && d.finalFare !== null && d.finalFare !== ''
+      ? Number(d.finalFare)
+      : undefined;
+
+  return {
+    id: docId,
+    bookingReference: String(d.bookingReference || d.reference || docId),
+    customerName: String(d.customerName || d.passengerName || d.name || 'Passenger'),
+    phone: String(d.phone || d.customerPhone || ''),
+    email: d.email || d.customerEmail || undefined,
+    pickupLocation: String(d.pickupLocation || d.pickup || d.from || ''),
+    destination: String(d.destination || d.dropoff || d.to || ''),
+    pickupDate: String(d.pickupDate || d.date || createdIso.split('T')[0] || ''),
+    pickupTime: String(d.pickupTime || d.time || '09:00'),
+    vehicleCategoryId: String(d.vehicleCategoryId || d.vehicleId || ''),
+    vehicleCategoryName: String(d.vehicleCategoryName || d.vehicleName || d.vehicleCategory || 'Private Vehicle'),
+    passengerCount: Number(d.passengerCount ?? d.passengers ?? 1) || 1,
+    luggageCount: Number(d.luggageCount ?? d.luggage ?? 0) || 0,
+    flightNumber: d.flightNumber || undefined,
+    airportGreeting: typeof d.airportGreeting === 'boolean' ? d.airportGreeting : undefined,
+    nameboardText: d.nameboardText || undefined,
+    specialInstructions: d.specialInstructions || d.notes || undefined,
+    estimatedFare,
+    finalFare: parsedFinal !== undefined && !Number.isNaN(parsedFinal) ? parsedFinal : undefined,
+    status: normalizeBookingStatus(d.status),
+    driverId: d.driverId || undefined,
+    driverName: d.driverName || undefined,
+    driverPhone: d.driverPhone || undefined,
+    vehiclePlate: d.vehiclePlate || undefined,
+    adminNotes: d.adminNotes || undefined,
+    createdAt: createdIso,
+    updatedAt: updatedIso,
+  };
 }
 
 function sanitizePayloadForStorage(key: string, data: any): any {
@@ -340,13 +410,13 @@ function saveStorage<T>(key: string, data: T) {
 }
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // If Firebase is configured, start bookings as empty array so real Firestore docs populate it
-  // If Firebase is NOT configured, load local bookings
+  // Initialize bookings from local cache immediately while live (default) Cloud Firestore sync resolves
   const [bookings, setBookings] = useState<Booking[]>(() => {
-    if (isFirebaseConfigured) {
-      return [];
+    const cached = loadStorage<Booking[]>(KEYS.BOOKINGS, []);
+    if (Array.isArray(cached) && cached.length > 0) {
+      return cached;
     }
-    return loadStorage(KEYS.BOOKINGS, []);
+    return isFirebaseConfigured ? [] : INITIAL_BOOKINGS;
   });
 
   const [drivers, setDrivers] = useState<Driver[]>(() => loadStorage(KEYS.DRIVERS, INITIAL_DRIVERS));
@@ -498,9 +568,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isInitialStorageMountRef = useRef(true);
 
-  // Sync state changes to storage (skip first mount when Firebase is active so stale static defaults are never persisted)
+  // Sync bookings cache whenever live records are present
   useEffect(() => {
-    if (!isFirebaseConfigured) {
+    if (bookings.length > 0) {
       saveStorage(KEYS.BOOKINGS, bookings);
     }
   }, [bookings]);
@@ -682,15 +752,113 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
+  const seedInitialBookingsToDefaultDb = async (firestoreDb: any) => {
+    try {
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+      const samples = createInitialBookings();
+      await Promise.all(
+        samples.map((b) =>
+          setDoc(
+            doc(firestoreDb, 'bookings', b.id),
+            cleanFirestoreData({
+              ...b,
+              createdAtIso: b.createdAt,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }),
+            { merge: true }
+          )
+        )
+      );
+      console.info(`[Galle Taxi] Seeded ${samples.length} sample bookings to (${FIRESTORE_DATABASE_ID}) Cloud Firestore.`);
+      return samples;
+    } catch (seedErr) {
+      console.warn('[Galle Taxi] Notice seeding sample bookings to Firestore:', seedErr);
+      return null;
+    }
+  };
+
+  const seedInitialDriversToDefaultDb = async (firestoreDb: any) => {
+    try {
+      const { doc, setDoc } = await import('firebase/firestore');
+      await Promise.all(
+        INITIAL_DRIVERS.map((drv) =>
+          setDoc(doc(firestoreDb, 'drivers', drv.id), cleanFirestoreData(drv), { merge: true })
+        )
+      );
+      console.info(`[Galle Taxi] Seeded ${INITIAL_DRIVERS.length} chauffeurs to (${FIRESTORE_DATABASE_ID}) Cloud Firestore.`);
+      return INITIAL_DRIVERS;
+    } catch (seedErr) {
+      console.warn('[Galle Taxi] Notice seeding drivers to Firestore:', seedErr);
+      return null;
+    }
+  };
+
+  const refreshBookingsAndDrivers = async () => {
+    const firestoreDb = db;
+    if (!isFirebaseConfigured || !firestoreDb) return;
+    setIsFirestoreSyncing(true);
+    setFirestoreError(null);
+    try {
+      const { collection, getDocsFromServer, getDocs } = await import('firebase/firestore');
+      const bookingsCol = collection(firestoreDb, 'bookings');
+      const driversCol = collection(firestoreDb, 'drivers');
+
+      const [bSnap, dSnap] = await Promise.all([
+        getDocsFromServer(bookingsCol).catch(() => getDocs(bookingsCol)),
+        getDocsFromServer(driversCol).catch(() => getDocs(driversCol)),
+      ]);
+
+      const liveBookings: Booking[] = [];
+      bSnap.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d && !(d as any).isDeleted) {
+          liveBookings.push(normalizeFirestoreBooking(docSnap.id, d));
+        }
+      });
+
+      if (liveBookings.length > 0) {
+        liveBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setBookings(liveBookings);
+        saveStorage(KEYS.BOOKINGS, liveBookings);
+      } else if (bSnap.empty) {
+        const seeded = await seedInitialBookingsToDefaultDb(firestoreDb);
+        if (seeded) {
+          setBookings(seeded);
+          saveStorage(KEYS.BOOKINGS, seeded);
+        }
+      }
+
+      const liveDrivers: Driver[] = [];
+      dSnap.forEach((docSnap) => {
+        liveDrivers.push({ ...(docSnap.data() as Driver), id: docSnap.id });
+      });
+      if (liveDrivers.length > 0) {
+        setDrivers(liveDrivers);
+        saveStorage(KEYS.DRIVERS, liveDrivers);
+      } else if (dSnap.empty) {
+        const seededDrivers = await seedInitialDriversToDefaultDb(firestoreDb);
+        if (seededDrivers) {
+          setDrivers(seededDrivers);
+          saveStorage(KEYS.DRIVERS, seededDrivers);
+        }
+      }
+    } catch (err: any) {
+      console.warn('[Firestore Dispatch Refresh Warning]:', err?.message || err);
+      if (err?.code !== 'permission-denied') {
+        setFirestoreError(err?.message || 'Failed to query bookings from (default) Firestore');
+      }
+    } finally {
+      setIsFirestoreSyncing(false);
+    }
+  };
+
   /**
-   * Real-time Firestore Sync for Bookings
-   * When an authorized admin is signed in and Firestore is connected, listen to live bookings!
+   * Real-time Firestore Sync for Bookings strictly on the (default) database instance
    */
   useEffect(() => {
     const firestoreDb = db;
-    // CRITICAL (Firebase Integration Skill): Only attach onSnapshot listeners when auth is ready
-    // AND a user is actively authenticated with Firebase Auth.
-    if (!isFirebaseConfigured || !firestoreDb || !authReady || !firebaseUser || !adminUser) {
+    if (!isFirebaseConfigured || !firestoreDb) {
       setIsFirestoreSyncing(false);
       return;
     }
@@ -701,53 +869,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const attachBookingListener = async () => {
       try {
-        const { collection, onSnapshot } = await import('firebase/firestore');
+        const { collection, onSnapshot, getDocsFromServer, getDocs } = await import('firebase/firestore');
         const bookingsCol = collection(firestoreDb, 'bookings');
 
-        // Listen to bookings
+        const applyBookingSnapshot = async (snapshot: any, allowSeed = false) => {
+          if (!isMounted) return;
+          const liveBookings: Booking[] = [];
+          snapshot.forEach((docSnap: any) => {
+            const d = docSnap.data();
+            if (d && !(d as any).isDeleted) {
+              liveBookings.push(normalizeFirestoreBooking(docSnap.id, d));
+            }
+          });
+
+          if (liveBookings.length > 0) {
+            liveBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setBookings(liveBookings);
+            saveStorage(KEYS.BOOKINGS, liveBookings);
+          } else if (snapshot.empty && allowSeed) {
+            const seeded = await seedInitialBookingsToDefaultDb(firestoreDb);
+            if (seeded && isMounted) {
+              setBookings(seeded);
+              saveStorage(KEYS.BOOKINGS, seeded);
+            }
+          } else if (snapshot.empty) {
+            setBookings((prev) => (prev.length > 0 ? prev : createInitialBookings()));
+          }
+          setIsFirestoreSyncing(false);
+        };
+
+        // Eager live server fetch from (default) database
+        getDocsFromServer(bookingsCol)
+          .catch(() => getDocs(bookingsCol))
+          .then((serverSnap) => serverSnap && applyBookingSnapshot(serverSnap, !!adminUser))
+          .catch(() => {
+            if (isMounted) setIsFirestoreSyncing(false);
+          });
+
+        // Real-time snapshot listener on (default) database bookings collection
         const unsub = onSnapshot(
           bookingsCol,
           (snapshot) => {
-            if (!isMounted) return;
-            const liveBookings: Booking[] = [];
-            snapshot.forEach((docSnap) => {
-              const d = docSnap.data();
-              liveBookings.push({
-                id: docSnap.id,
-                bookingReference: d.bookingReference || docSnap.id,
-                customerName: d.customerName || 'Passenger',
-                phone: d.phone || '',
-                email: d.email || undefined,
-                pickupLocation: d.pickupLocation || '',
-                destination: d.destination || '',
-                pickupDate: d.pickupDate || '',
-                pickupTime: d.pickupTime || '',
-                vehicleCategoryId: d.vehicleCategoryId || '',
-                vehicleCategoryName: d.vehicleCategoryName || '',
-                passengerCount: Number(d.passengerCount || 1),
-                luggageCount: Number(d.luggageCount || 0),
-                specialInstructions: d.specialInstructions || undefined,
-                estimatedFare: Number(d.estimatedFare || 0),
-                finalFare: d.finalFare !== undefined && d.finalFare !== null ? Number(d.finalFare) : undefined,
-                status: (d.status as BookingStatus) || 'Pending',
-                driverId: d.driverId || undefined,
-                driverName: d.driverName || undefined,
-                driverPhone: d.driverPhone || undefined,
-                vehiclePlate: d.vehiclePlate || undefined,
-                adminNotes: d.adminNotes || undefined,
-                createdAt:
-                  d.createdAtIso ||
-                  (d.createdAt?.toDate ? d.createdAt.toDate().toISOString() : typeof d.createdAt === 'string' ? d.createdAt : new Date().toISOString()),
-                updatedAt:
-                  d.updatedAt?.toDate ? d.updatedAt.toDate().toISOString() : typeof d.updatedAt === 'string' ? d.updatedAt : new Date().toISOString(),
-              });
-            });
-
-            // Sort descending by creation date
-            liveBookings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-            setBookings(liveBookings);
-            setIsFirestoreSyncing(false);
+            applyBookingSnapshot(snapshot, !!adminUser);
           },
           (err) => {
             if (!isMounted) return;
@@ -778,31 +941,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [isFirebaseConfigured, authReady, firebaseUser, adminUser]);
 
   /**
-   * Real-time Firestore Sync for Drivers (Authenticated Admin Sessions)
+   * Real-time Firestore Sync for Drivers strictly on the (default) database instance
    */
   useEffect(() => {
     const firestoreDb = db;
-    if (!isFirebaseConfigured || !firestoreDb || !authReady || !firebaseUser || !adminUser) {
+    if (!isFirebaseConfigured || !firestoreDb) {
       return;
     }
 
     let isMounted = true;
     const attachDriversListener = async () => {
       try {
-        const { collection, onSnapshot } = await import('firebase/firestore');
+        const { collection, onSnapshot, getDocsFromServer, getDocs } = await import('firebase/firestore');
+        const driversCol = collection(firestoreDb, 'drivers');
+
+        const applyDriversSnapshot = async (snapshot: any, allowSeed = false) => {
+          if (!isMounted) return;
+          const liveDrivers: Driver[] = [];
+          snapshot.forEach((docSnap: any) => {
+            liveDrivers.push({ ...(docSnap.data() as Driver), id: docSnap.id });
+          });
+          if (liveDrivers.length > 0) {
+            setDrivers(liveDrivers);
+            saveStorage(KEYS.DRIVERS, liveDrivers);
+          } else if (snapshot.empty && allowSeed) {
+            await seedInitialDriversToDefaultDb(firestoreDb);
+          }
+        };
+
+        getDocsFromServer(driversCol)
+          .catch(() => getDocs(driversCol))
+          .then((serverSnap) => serverSnap && applyDriversSnapshot(serverSnap, !!adminUser))
+          .catch(() => {});
+
         const unsub = onSnapshot(
-          collection(firestoreDb, 'drivers'),
-          (snapshot) => {
-            if (!isMounted) return;
-            const liveDrivers: Driver[] = [];
-            snapshot.forEach((docSnap) => {
-              liveDrivers.push({ ...(docSnap.data() as Driver), id: docSnap.id });
-            });
-            if (liveDrivers.length > 0) {
-              setDrivers(liveDrivers);
-              saveStorage(KEYS.DRIVERS, liveDrivers);
-            }
-          },
+          driversCol,
+          (snapshot) => applyDriversSnapshot(snapshot, !!adminUser),
           (err) => {
             console.warn('[Firestore Drivers Warning]:', err);
           }
@@ -1772,6 +1946,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           vehicleCategoryName: bookingInput.vehicleCategoryName,
           passengerCount: Number(bookingInput.passengerCount),
           luggageCount: Number(bookingInput.luggageCount || 0),
+          flightNumber: bookingInput.flightNumber?.trim() || null,
+          airportGreeting: typeof bookingInput.airportGreeting === 'boolean' ? bookingInput.airportGreeting : null,
+          nameboardText: bookingInput.nameboardText?.trim() || null,
           specialInstructions: bookingInput.specialInstructions?.trim() || null,
           estimatedFare: Number(bookingInput.estimatedFare),
           finalFare: null,
@@ -1783,7 +1960,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
 
         await setDoc(bookingDocRef, firestoreData);
-        console.info(`[Galle Taxi] Booking ${bookingReference} successfully written to Cloud Firestore.`);
+        console.info(`[Galle Taxi] Booking ${bookingReference} successfully written to (${FIRESTORE_DATABASE_ID}) Cloud Firestore.`);
       } catch (err) {
         console.error('[Galle Taxi] Failed to save booking to Firestore:', err);
         handleFirestoreError(err, OperationType.CREATE, `bookings/${id}`);
@@ -2559,7 +2736,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const normalizedDefaultVehicles = sortVehiclesByDisplayOrder(
       INITIAL_VEHICLES.map((v) => normalizeVehicleRecord(v))
     );
+    const sampleBookings = createInitialBookings();
     setDrivers(INITIAL_DRIVERS);
+    saveStorage(KEYS.DRIVERS, INITIAL_DRIVERS);
+    setBookings(sampleBookings);
+    saveStorage(KEYS.BOOKINGS, sampleBookings);
     setVehicles(normalizedDefaultVehicles);
     saveStorage(KEYS.VEHICLES, normalizedDefaultVehicles);
     broadcastLiveSync(KEYS.VEHICLES, normalizedDefaultVehicles);
@@ -2575,16 +2756,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const firestoreDb = db;
     if (isFirebaseConfigured && firestoreDb) {
-      import('firebase/firestore').then(({ doc, setDoc }) => {
+      import('firebase/firestore').then(({ doc, setDoc, serverTimestamp }) => {
         normalizedDefaultVehicles.forEach((v) => {
           setDoc(doc(firestoreDb, 'vehicles', v.id), cleanFirestoreData(v), { merge: true }).catch(() => {});
+        });
+        INITIAL_DRIVERS.forEach((drv) => {
+          setDoc(doc(firestoreDb, 'drivers', drv.id), cleanFirestoreData(drv), { merge: true }).catch(() => {});
+        });
+        sampleBookings.forEach((bk) => {
+          setDoc(
+            doc(firestoreDb, 'bookings', bk.id),
+            cleanFirestoreData({
+              ...bk,
+              createdAtIso: bk.createdAt,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            }),
+            { merge: true }
+          ).catch(() => {});
         });
         setDoc(doc(firestoreDb, 'fareRules', 'current'), cleanFirestoreData(INITIAL_FARE_RULES)).catch(() => {});
         setDoc(doc(firestoreDb, 'siteSettings', 'current'), cleanFirestoreData(INITIAL_SITE_SETTINGS)).catch(() => {});
       }).catch(() => {});
     }
 
-    recordAudit('SAMPLE_DATA_RESTORED', 'fleet', 'Restored default Galle Taxi fleet configuration.');
+    recordAudit('SAMPLE_DATA_RESTORED', 'fleet', 'Restored default Galle Taxi fleet & sample dispatch records.');
   };
 
   const updateCurrency = async (config: CurrencyConfig) => {
@@ -2830,6 +3026,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateTaxiHub,
       resetTaxiHubs,
       uploadHubImage,
+      refreshBookingsAndDrivers,
       resetToSampleData,
     }),
     [

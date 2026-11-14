@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarCheck,
@@ -16,9 +16,20 @@ import {
 import { useApp } from '../../lib/store';
 import { formatLKR, formatNumber } from '../../lib/fareEngine';
 
+const formatLocalYMD = (dt: Date): string => {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 export const AdminOverview: React.FC = () => {
-  const { bookings, drivers, vehicles } = useApp();
+  const { bookings, drivers, vehicles, refreshBookingsAndDrivers } = useApp();
   const [dateFilter, setDateFilter] = useState<'all' | '30days' | '7days'>('all');
+
+  useEffect(() => {
+    refreshBookingsAndDrivers();
+  }, []);
 
   // Filter bookings based on selected period
   const filteredBookings = React.useMemo(() => {
@@ -26,7 +37,10 @@ export const AdminOverview: React.FC = () => {
     const now = new Date();
     const daysAgo = dateFilter === '7days' ? 7 : 30;
     const cutoff = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-    return bookings.filter((b) => new Date(b.createdAt) >= cutoff);
+    return bookings.filter((b) => {
+      const parsed = new Date(b.createdAt || b.pickupDate || Date.now());
+      return !Number.isNaN(parsed.getTime()) ? parsed >= cutoff : true;
+    });
   }, [bookings, dateFilter]);
 
   // Real statistics
@@ -38,13 +52,13 @@ export const AdminOverview: React.FC = () => {
   const completedTrips = filteredBookings.filter((b) => b.status === 'Completed').length;
   const cancelledBookings = filteredBookings.filter((b) => b.status === 'Cancelled').length;
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = formatLocalYMD(new Date());
   const todayBookings = bookings.filter((b) => b.pickupDate === todayStr).length;
 
   // Real revenue calculated strictly from COMPLETED trips as mandated by requirements
   const completedRevenue = filteredBookings
     .filter((b) => b.status === 'Completed')
-    .reduce((sum, b) => sum + (b.finalFare || b.estimatedFare), 0);
+    .reduce((sum, b) => sum + Number(b.finalFare && b.finalFare > 0 ? b.finalFare : b.estimatedFare || 0), 0);
 
   // Status breakdown percentages
   const statusCounts = {
@@ -277,7 +291,7 @@ export const AdminOverview: React.FC = () => {
                   </td>
                   <td className="py-3 px-4 text-slate-300">{b.vehicleCategoryName}</td>
                   <td className="py-3 px-4 text-right font-mono font-bold text-white">
-                    {formatLKR(b.finalFare || b.estimatedFare)}
+                    {formatLKR(Number(b.finalFare && b.finalFare > 0 ? b.finalFare : b.estimatedFare || 0))}
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span

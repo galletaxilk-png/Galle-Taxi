@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Search,
@@ -40,12 +40,18 @@ export const AdminBookings: React.FC = () => {
   const {
     bookings,
     drivers,
+    vehicles,
     updateBookingStatus,
+    refreshBookingsAndDrivers,
     isFirebaseActive,
     firebaseProjectId,
     isFirestoreSyncing,
     firestoreError,
   } = useApp();
+
+  useEffect(() => {
+    refreshBookingsAndDrivers();
+  }, []);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,8 +85,34 @@ export const AdminBookings: React.FC = () => {
     setActionError(null);
   };
 
+  // Resolve focusedId once async Firestore bookings arrive
+  useEffect(() => {
+    if (focusedId && !selectedBooking) {
+      const match = bookings.find((b) => b.id === focusedId);
+      if (match) {
+        openDetailsModal(match);
+      }
+    }
+  }, [focusedId, bookings]);
+
+  // Dynamic category filter options from live fleet + booking records
+  const categoryOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    vehicles.forEach((v) => {
+      if (v.id && v.name) map.set(v.id, v.name);
+    });
+    bookings.forEach((b) => {
+      if (b.vehicleCategoryId && b.vehicleCategoryName && !map.has(b.vehicleCategoryId)) {
+        map.set(b.vehicleCategoryId, b.vehicleCategoryName);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [vehicles, bookings]);
+
   // Filter & Search logic
   const filteredBookings = useMemo(() => {
+    const selectedOpt =
+      categoryFilter === 'all' ? null : categoryOptions.find((c) => c.id === categoryFilter);
     return bookings.filter((b) => {
       const q = searchQuery.toLowerCase().trim();
       const matchSearch =
@@ -92,11 +124,15 @@ export const AdminBookings: React.FC = () => {
         b.destination.toLowerCase().includes(q);
 
       const matchStatus = statusFilter === 'all' || b.status === statusFilter;
-      const matchCategory = categoryFilter === 'all' || b.vehicleCategoryId === categoryFilter;
+      const matchCategory =
+        categoryFilter === 'all' ||
+        b.vehicleCategoryId === categoryFilter ||
+        (selectedOpt != null &&
+          b.vehicleCategoryName?.toLowerCase().trim() === selectedOpt.name.toLowerCase().trim());
 
       return matchSearch && matchStatus && matchCategory;
     });
-  }, [bookings, searchQuery, statusFilter, categoryFilter]);
+  }, [bookings, searchQuery, statusFilter, categoryFilter, categoryOptions]);
 
   const handleSaveModal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,10 +272,11 @@ export const AdminBookings: React.FC = () => {
             className="w-full px-3 py-2 bg-[#0B0B0D] border border-[#27272A] rounded-xl text-xs text-white focus:outline-none focus:border-[#F5B91B]"
           >
             <option value="all">All Vehicle Categories</option>
-            <option value="veh-sedan-std">Executive Sedan</option>
-            <option value="veh-van-vip">VIP Passenger Van</option>
-            <option value="veh-luxury-exec">Mercedes-Benz E-Class</option>
-            <option value="veh-suv-4wd">Toyota Prado SUV</option>
+            {categoryOptions.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Calendar as CalendarIcon,
@@ -28,12 +28,23 @@ import { BookingReceiptModal } from '../../components/booking/BookingReceiptModa
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
+const formatLocalYMD = (dt: Date): string => {
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 export const AdminAvailability: React.FC = () => {
-  const { bookings, vehicles, drivers, updateBookingStatus } = useApp();
+  const { bookings, vehicles, drivers, updateBookingStatus, refreshBookingsAndDrivers } = useApp();
+
+  useEffect(() => {
+    refreshBookingsAndDrivers();
+  }, []);
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDateStr, setSelectedDateStr] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    return formatLocalYMD(new Date());
   });
 
   // Filters
@@ -62,15 +73,25 @@ export const AdminAvailability: React.FC = () => {
   const goToToday = () => {
     const today = new Date();
     setCurrentDate(today);
-    setSelectedDateStr(today.toISOString().split('T')[0]);
+    setSelectedDateStr(formatLocalYMD(today));
   };
 
   // Filtered bookings based on criteria
   const filteredBookings = useMemo(() => {
+    const selectedVehicleObj =
+      selectedVehicleCategory === 'all'
+        ? null
+        : vehicles.find((v) => v.id === selectedVehicleCategory);
     return bookings.filter((b) => {
       // Vehicle filter
-      if (selectedVehicleCategory !== 'all' && b.vehicleCategoryId !== selectedVehicleCategory) {
-        return false;
+      if (selectedVehicleCategory !== 'all') {
+        const matchesId = b.vehicleCategoryId === selectedVehicleCategory;
+        const matchesName =
+          selectedVehicleObj &&
+          b.vehicleCategoryName?.toLowerCase().trim() === selectedVehicleObj.name?.toLowerCase().trim();
+        if (!matchesId && !matchesName) {
+          return false;
+        }
       }
       // Assignment filter
       if (assignmentFilter === 'unassigned' && b.driverId) return false;
@@ -114,7 +135,10 @@ export const AdminAvailability: React.FC = () => {
     const thisMonthBookings = bookings.filter((b) => b.pickupDate && b.pickupDate.startsWith(monthPrefix));
     const activeTrips = thisMonthBookings.filter((b) => b.status !== 'Cancelled');
     const unassignedCount = activeTrips.filter((b) => !b.driverId).length;
-    const totalRevenue = activeTrips.reduce((sum, b) => sum + (b.finalFare || b.estimatedFare || 0), 0);
+    const totalRevenue = activeTrips.reduce(
+      (sum, b) => sum + Number(b.finalFare && b.finalFare > 0 ? b.finalFare : b.estimatedFare || 0),
+      0
+    );
 
     return {
       totalTrips: activeTrips.length,
@@ -143,13 +167,13 @@ export const AdminAvailability: React.FC = () => {
       isToday: boolean;
     }[] = [];
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = formatLocalYMD(new Date());
 
     // Previous month padding
     for (let i = startingDayIndex - 1; i >= 0; i--) {
       const d = prevMonthLastDay - i;
       const prevDate = new Date(year, month - 1, d);
-      const dateStr = prevDate.toISOString().split('T')[0];
+      const dateStr = formatLocalYMD(prevDate);
       gridCells.push({
         dateStr,
         dayNumber: d,
@@ -174,7 +198,7 @@ export const AdminAvailability: React.FC = () => {
     if (remainingCells > 0 && remainingCells < 7) {
       for (let d = 1; d <= remainingCells; d++) {
         const nextDate = new Date(year, month + 1, d);
-        const dateStr = nextDate.toISOString().split('T')[0];
+        const dateStr = formatLocalYMD(nextDate);
         gridCells.push({
           dateStr,
           dayNumber: d,
@@ -211,7 +235,11 @@ export const AdminAvailability: React.FC = () => {
   const handleAssignDriver = async (bookingId: string, driverId: string) => {
     const booking = bookings.find((b) => b.id === bookingId);
     if (!booking) return;
-    await updateBookingStatus(bookingId, 'Driver Assigned', booking.finalFare, driverId || undefined);
+    try {
+      await updateBookingStatus(bookingId, 'Driver Assigned', booking.finalFare, driverId || undefined);
+    } catch (err) {
+      console.error('Failed to assign driver:', err);
+    }
   };
 
   return (
