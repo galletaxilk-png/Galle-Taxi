@@ -81,8 +81,8 @@ export function getResendApiKey(): string | undefined {
  */
 export function generateVoucherPlainText(data: EmailVoucherData): string {
   const dispatcherEmail = data.dispatcherEmail || OFFICIAL_DISPATCH_EMAIL;
-  const dispatcherPhone = data.dispatcherPhone || '+94 77 123 4567';
-  const dispatcherWhatsapp = data.dispatcherWhatsapp || '+94 77 123 4567';
+  const dispatcherPhone = data.dispatcherPhone || '+94722 885 885';
+  const dispatcherWhatsapp = data.dispatcherWhatsapp || '+94722885885';
   const receiptNo = `REC-${data.bookingReference}`;
   const totalDue = Number(data.finalFare || data.estimatedFare || 0);
   const isTour = Boolean(data.tourTitle || data.tourId || data.destination?.includes('Day Tour'));

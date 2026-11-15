@@ -1305,7 +1305,7 @@ export const Home: React.FC = () => {
               className="px-7 py-3.5 rounded-xl bg-[#171719] hover:bg-[#202024] text-white border border-[#27272A] font-semibold text-sm transition-all flex items-center gap-2"
             >
               <MessageSquare className="w-4 h-4 text-[#25D366]" />
-              <span>WhatsApp Dispatch ({siteSettings.whatsappNumber || '+94 77 123 4567'})</span>
+              <span>WhatsApp Dispatch ({siteSettings.whatsappNumber || '+94722885885'})</span>
             </a>
           </div>
         </div>

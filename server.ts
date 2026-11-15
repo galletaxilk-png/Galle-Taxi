@@ -1,5 +1,5 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
+import { createServer as createViteServer, type ViteDevServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -8,6 +8,10 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { resolveRouteSeo, injectSeoIntoHtml } from './src/lib/seoConfig';
+import type { SiteSettings } from './src/types';
+import type { TownTaxiConfig } from './src/pages/destinations/townData';
+import type { DayTourProduct } from './src/lib/toursData';
 
 dotenv.config();
 try {
@@ -221,7 +225,7 @@ function generateOfficialReceiptHtml(data: ReceiptEmailData): string {
                 <div class="brand-sub">Cabs & Airport Transfers Sri Lanka</div>
                 <div class="brand-contact">
                   Registered Dispatch: Galle Dutch Fort, Southern Province, Sri Lanka<br/>
-                  Hotline: <a href="tel:${(data.dispatcherPhone || '+94771234567').replace(/[^0-9+]/g, '')}" style="color: #ffffff; text-decoration: underline;">${data.dispatcherPhone || '+94 77 123 4567'}</a> &nbsp;|&nbsp; WhatsApp: <a href="https://wa.me/${(data.dispatcherWhatsapp || data.dispatcherPhone || '94771234567').replace(/[^0-9]/g, '')}" style="color: #25d366; text-decoration: underline;" target="_blank">Chat on WhatsApp</a> &nbsp;|&nbsp; Support: <a href="mailto:support@galletaxi.lk" style="color: #f5b91b; text-decoration: underline;">support@galletaxi.lk</a>
+                  Hotline: <a href="tel:${(data.dispatcherPhone || '+94722885885').replace(/[^0-9+]/g, '')}" style="color: #ffffff; text-decoration: underline;">${data.dispatcherPhone || '+94722 885 885'}</a> &nbsp;|&nbsp; WhatsApp: <a href="https://wa.me/${(data.dispatcherWhatsapp || data.dispatcherPhone || '94722885885').replace(/[^0-9]/g, '')}" style="color: #25d366; text-decoration: underline;" target="_blank">Chat on WhatsApp</a> &nbsp;|&nbsp; Support: <a href="mailto:support@galletaxi.lk" style="color: #f5b91b; text-decoration: underline;">support@galletaxi.lk</a>
                 </div>
               </td>
             </tr>
@@ -619,7 +623,7 @@ function generateOfficialReceiptHtml(data: ReceiptEmailData): string {
         <div class="footer">
           <strong>Galle Taxi Operations Central Dispatch Desk</strong><br/>
           Rampart Street, Galle Dutch Fort, Southern Province 80000, Sri Lanka<br/>
-          24/7 Hotline: <a href="tel:${(data.dispatcherPhone || '+94771234567').replace(/[^0-9+]/g, '')}" style="color: #ffffff; text-decoration: underline;">${data.dispatcherPhone || '+94 77 123 4567'}</a> &nbsp;|&nbsp; WhatsApp: <a href="https://wa.me/${(data.dispatcherWhatsapp || data.dispatcherPhone || '94771234567').replace(/[^0-9]/g, '')}" style="color: #25d366; text-decoration: underline;" target="_blank">Chat on WhatsApp</a> &nbsp;|&nbsp; Support: <a href="mailto:support@galletaxi.lk" style="color: #f5b91b; text-decoration: underline;">support@galletaxi.lk</a><br/>
+          24/7 Hotline: <a href="tel:${(data.dispatcherPhone || '+94722885885').replace(/[^0-9+]/g, '')}" style="color: #ffffff; text-decoration: underline;">${data.dispatcherPhone || '+94722 885 885'}</a> &nbsp;|&nbsp; WhatsApp: <a href="https://wa.me/${(data.dispatcherWhatsapp || data.dispatcherPhone || '94722885885').replace(/[^0-9]/g, '')}" style="color: #25d366; text-decoration: underline;" target="_blank">Chat on WhatsApp</a> &nbsp;|&nbsp; Support: <a href="mailto:support@galletaxi.lk" style="color: #f5b91b; text-decoration: underline;">support@galletaxi.lk</a><br/>
           <em>This official confirmation voucher constitutes a confirmed travel contract with Galle Taxi Cabs.</em>
         </div>
       </div>
@@ -973,8 +977,8 @@ app.get('/api/receipt/preview', (req, res) => {
     nameboardText: 'MR. WRIGHT',
     estimatedFare: 15000,
     finalFare: 15000,
-    dispatcherPhone: '+94 77 123 4567',
-    dispatcherWhatsapp: '+94 77 123 4567',
+    dispatcherPhone: '+94722 885 885',
+    dispatcherWhatsapp: '+94722885885',
   };
 
   const html = generateOfficialReceiptHtml(sampleData);
@@ -1256,10 +1260,177 @@ app.get('/robots.txt', (_req, res) => {
 });
 
 /**
+ * Dynamic Server-Side SEO / Open Graph / Schema.org HTML Injection
+ * Ensures WhatsApp, Facebook, X/Twitter, LinkedIn & search crawlers receive
+ * unique per-route meta tags even before client-side React hydration.
+ */
+interface CachedFirestoreSeo {
+  expiresAt: number;
+  siteSettings?: Partial<SiteSettings>;
+  townsMap?: Record<string, TownTaxiConfig>;
+  toursList?: DayTourProduct[];
+}
+
+let cachedFirestoreSeo: CachedFirestoreSeo | null = null;
+
+function decodeFirestoreValue(val: any): any {
+  if (!val || typeof val !== 'object') return undefined;
+  if ('stringValue' in val) return val.stringValue;
+  if ('integerValue' in val) return Number(val.integerValue);
+  if ('doubleValue' in val) return Number(val.doubleValue);
+  if ('booleanValue' in val) return Boolean(val.booleanValue);
+  if ('nullValue' in val) return null;
+  if ('arrayValue' in val) {
+    return Array.isArray(val.arrayValue?.values)
+      ? val.arrayValue.values.map(decodeFirestoreValue)
+      : [];
+  }
+  if ('mapValue' in val) {
+    const out: Record<string, any> = {};
+    const fields = val.mapValue?.fields || {};
+    for (const [k, v] of Object.entries(fields)) {
+      out[k] = decodeFirestoreValue(v);
+    }
+    return out;
+  }
+  return undefined;
+}
+
+function decodeFirestoreDoc(doc: any): Record<string, any> | null {
+  if (!doc || !doc.fields) return null;
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(doc.fields)) {
+    out[k] = decodeFirestoreValue(v);
+  }
+  if (typeof doc.name === 'string') {
+    const id = doc.name.split('/').pop();
+    if (id && !out.id) out.id = id;
+  }
+  return out;
+}
+
+async function getLiveFirestoreSeoContext(): Promise<{
+  siteSettings?: Partial<SiteSettings>;
+  townsMap?: Record<string, TownTaxiConfig>;
+  toursList?: DayTourProduct[];
+}> {
+  const now = Date.now();
+  if (cachedFirestoreSeo && cachedFirestoreSeo.expiresAt > now) {
+    return cachedFirestoreSeo;
+  }
+
+  try {
+    const cfgPath = path.resolve(__dirname, 'firebase-applet-config.json');
+    if (!fs.existsSync(cfgPath)) return {};
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
+    if (!cfg?.projectId || !cfg?.apiKey) return {};
+
+    // Strictly target (default) Cloud Firestore database matching src/lib/firebase.ts
+    const dbBase = `https://firestore.googleapis.com/v1/projects/${cfg.projectId}/databases/(default)/documents`;
+    const keyParam = `key=${encodeURIComponent(cfg.apiKey)}`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 700);
+
+    const [settingsRes, hubsRes, toursRes] = await Promise.all([
+      fetch(`${dbBase}/siteSettings/current?${keyParam}`, { signal: controller.signal }).catch(() => null),
+      fetch(`${dbBase}/taxi_hubs?pageSize=50&${keyParam}`, { signal: controller.signal }).catch(() => null),
+      fetch(`${dbBase}/tours?pageSize=50&${keyParam}`, { signal: controller.signal }).catch(() => null),
+    ]);
+    clearTimeout(timeout);
+
+    let siteSettings: Partial<SiteSettings> | undefined;
+    if (settingsRes?.ok) {
+      const json = await settingsRes.json();
+      siteSettings = (decodeFirestoreDoc(json) as Partial<SiteSettings>) || undefined;
+    }
+
+    const townsMap: Record<string, TownTaxiConfig> = {};
+    if (hubsRes?.ok) {
+      const json = await hubsRes.json();
+      if (Array.isArray(json?.documents)) {
+        for (const doc of json.documents) {
+          const decoded = decodeFirestoreDoc(doc) as TownTaxiConfig | null;
+          if (decoded) {
+            if (decoded.slug) townsMap[decoded.slug] = decoded;
+            if (decoded.id) townsMap[decoded.id] = decoded;
+          }
+        }
+      }
+    }
+
+    const toursList: DayTourProduct[] = [];
+    if (toursRes?.ok) {
+      const json = await toursRes.json();
+      if (Array.isArray(json?.documents)) {
+        for (const doc of json.documents) {
+          const decoded = decodeFirestoreDoc(doc) as (DayTourProduct & { isDeleted?: boolean }) | null;
+          if (decoded && !decoded.isDeleted) {
+            toursList.push(decoded);
+          }
+        }
+      }
+    }
+
+    cachedFirestoreSeo = {
+      expiresAt: now + 30_000,
+      siteSettings,
+      townsMap: Object.keys(townsMap).length > 0 ? townsMap : undefined,
+      toursList: toursList.length > 0 ? toursList : undefined,
+    };
+    return cachedFirestoreSeo;
+  } catch {
+    return cachedFirestoreSeo || {};
+  }
+}
+
+function getRequestOrigin(req: express.Request): string {
+  const fwdProto = (req.headers['x-forwarded-proto'] as string)?.split(',')[0]?.trim();
+  const fwdHost = (req.headers['x-forwarded-host'] as string)?.split(',')[0]?.trim();
+  const host = fwdHost || req.get('host');
+  if (host) {
+    const isLocal =
+      host.includes('localhost') || host.startsWith('127.') || host.startsWith('0.0.0.0');
+    const proto = fwdProto || (isLocal ? 'http' : 'https');
+    return `${proto}://${host}`;
+  }
+  return cleanEnvValue(process.env.APP_URL) || 'https://galletaxi.lk';
+}
+
+function shouldInjectPageSeo(req: express.Request): boolean {
+  if (req.method !== 'GET') return false;
+  const reqPath = req.path || '/';
+  if (
+    reqPath.startsWith('/api/') ||
+    reqPath.startsWith('/uploads/') ||
+    reqPath.startsWith('/assets/') ||
+    reqPath.startsWith('/src/') ||
+    reqPath.startsWith('/@') ||
+    reqPath.startsWith('/node_modules/') ||
+    reqPath.startsWith('/admin') ||
+    reqPath === '/sitemap.xml' ||
+    reqPath === '/robots.txt'
+  ) {
+    return false;
+  }
+  const lastSegment = reqPath.split('/').pop() || '';
+  if (lastSegment.includes('.')) return false;
+
+  const accept = String(req.headers.accept || '').toLowerCase();
+  const ua = String(req.headers['user-agent'] || '').toLowerCase();
+  const isCrawler =
+    /whatsapp|facebookexternalhit|facebot|twitterbot|linkedinbot|slackbot|telegrambot|discordbot|googlebot|bingbot|applebot|pinterest|curl|wget|petalbot|yandex/i.test(
+      ua
+    );
+  return isCrawler || accept.includes('text/html') || accept === '*/*' || !accept;
+}
+
+/**
  * Launch Server: Mount Vite in development, static files in production
  */
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
+    let viteServer: ViteDevServer | null = null;
     let viteMiddlewares: express.RequestHandler | null = null;
     let viteInitError: Error | null = null;
 
@@ -1272,12 +1443,36 @@ async function startServer() {
       appType: 'spa',
     })
       .then((vite) => {
+        viteServer = vite;
         viteMiddlewares = vite.middlewares;
       })
       .catch((err) => {
         viteInitError = err instanceof Error ? err : new Error(String(err));
         console.error('[Galle Taxi] Failed to initialize Vite dev middleware:', viteInitError);
       });
+
+    // Dynamic SSR-style SEO meta / OG / Schema.org injection for page routes & social crawlers
+    app.use(async (req, res, next) => {
+      if (!shouldInjectPageSeo(req)) return next();
+      try {
+        await viteReady;
+        if (viteInitError || !viteServer) return next(viteInitError || undefined);
+
+        const templatePath = path.resolve(__dirname, 'index.html');
+        const rawHtml = fs.readFileSync(templatePath, 'utf-8');
+        const transformedHtml = await viteServer.transformIndexHtml(req.originalUrl, rawHtml);
+        const liveContext = await getLiveFirestoreSeoContext();
+        const seo = resolveRouteSeo(req.path, {
+          origin: getRequestOrigin(req),
+          ...liveContext,
+        });
+        const finalHtml = injectSeoIntoHtml(transformedHtml, seo);
+
+        res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).end(finalHtml);
+      } catch (err) {
+        return next(err);
+      }
+    });
 
     app.use(async (req, res, next) => {
       await viteReady;
@@ -1286,9 +1481,22 @@ async function startServer() {
       return next();
     });
   } else {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+    const distDir = path.resolve(__dirname, 'dist');
+    app.use(express.static(distDir, { index: false }));
+    app.get('*', async (req, res) => {
+      try {
+        const indexPath = path.resolve(distDir, 'index.html');
+        const rawHtml = fs.readFileSync(indexPath, 'utf-8');
+        const liveContext = await getLiveFirestoreSeoContext();
+        const seo = resolveRouteSeo(req.path, {
+          origin: getRequestOrigin(req),
+          ...liveContext,
+        });
+        const finalHtml = injectSeoIntoHtml(rawHtml, seo);
+        res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).send(finalHtml);
+      } catch {
+        res.sendFile(path.resolve(distDir, 'index.html'));
+      }
     });
   }
 

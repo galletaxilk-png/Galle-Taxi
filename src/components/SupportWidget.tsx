@@ -8,9 +8,9 @@ export const SupportWidget: React.FC = () => {
   const widgetRef = useRef<HTMLDivElement>(null);
   const { siteSettings } = useApp();
 
-  const cleanWhatsApp = (siteSettings?.whatsappNumber || '+94771234567').replace(/[^0-9]/g, '');
-  const cleanPhone = (siteSettings?.phone || '+94 77 123 4567').replace(/[^0-9+]/g, '');
-  const displayPhone = siteSettings?.phone || '+94 77 123 4567';
+  const cleanWhatsApp = (siteSettings?.whatsappNumber || '+94722885885').replace(/[^0-9]/g, '');
+  const cleanPhone = (siteSettings?.phone || '+94722885885').replace(/[^0-9+]/g, '');
+  const displayPhone = siteSettings?.phone || '+94722 885 885';
   const displayEmail = siteSettings?.email || 'support@galletaxi.lk';
   const whatsappPreFilledText = encodeURIComponent(
     'Hello Galle Taxi, I would like 24/7 assistance with a taxi booking / airport transfer.'

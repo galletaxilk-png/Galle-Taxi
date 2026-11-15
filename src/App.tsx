@@ -10,6 +10,7 @@ import { AppProvider, useApp } from './lib/store';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { SupportWidget } from './components/SupportWidget';
+import { PageSeo } from './components/PageSeo';
 
 // Customer Pages
 import { Home } from './pages/Home';
@@ -69,6 +70,7 @@ const ScrollToTop: React.FC = () => {
 const CustomerLayout: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-[#0B0B0D] text-slate-100 w-full max-w-full overflow-x-hidden">
+      <PageSeo />
       <Navbar />
       <main className="flex-1 w-full max-w-full overflow-x-hidden">
         <Outlet />

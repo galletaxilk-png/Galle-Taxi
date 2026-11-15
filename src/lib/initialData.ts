@@ -71,10 +71,10 @@ export const DEFAULT_CATEGORY_TIERS: Record<string, PricingTier[]> = {
 export const INITIAL_SITE_SETTINGS: SiteSettings = {
   businessName: 'Galle Taxi',
   tagline: 'Safe, Comfortable & Reliable Taxi Services in Galle, Sri Lanka',
-  phone: '+94 77 123 4567',
-  whatsappNumber: '+94771234567',
+  phone: '+94722 885 885',
+  whatsappNumber: '+94722885885',
   email: 'support@galletaxi.lk',
-  address: 'Rampart Street, Galle Dutch Fort, Galle 80000, Sri Lanka',
+  address: 'No. 03 Rampart Street, Galle Dutch Fort, Galle 80000, Sri Lanka',
   operatingHours: '24 Hours / 7 Days a Week',
   heroHeadline: 'Your Journey, Our Priority',
   heroSubtitle: 'Safe, Comfortable & Reliable Taxi Services in Galle, Sri Lanka.',

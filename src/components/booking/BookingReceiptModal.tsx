@@ -122,8 +122,8 @@ export const BookingReceiptModal: React.FC<BookingReceiptModalProps> = ({ bookin
 
   const cleanCustomerPhone = (booking.phone || '').replace(/[^0-9+]/g, '');
   const cleanCustomerWhatsapp = (booking.phone || '').replace(/[^0-9]/g, '');
-  const cleanDispatcherPhone = (siteSettings.phone || '+94771234567').replace(/[^0-9+]/g, '');
-  const cleanDispatcherWhatsapp = (siteSettings.whatsappNumber || siteSettings.phone || '+94771234567').replace(/[^0-9]/g, '');
+  const cleanDispatcherPhone = (siteSettings.phone || '+94722885885').replace(/[^0-9+]/g, '');
+  const cleanDispatcherWhatsapp = (siteSettings.whatsappNumber || siteSettings.phone || '+94722885885').replace(/[^0-9]/g, '');
   const cleanDriverPhone = (booking.driverPhone || '').replace(/[^0-9+]/g, '');
   const cleanDriverWhatsapp = (booking.driverPhone || '').replace(/[^0-9]/g, '');
 

@@ -916,8 +916,8 @@ export const SouthCoastTourSection: React.FC = () => {
           estimatedFare: fareInLkr,
           specialInstructions: specialDetails,
           dispatcherEmail: siteSettings?.email || 'galletaxi.lk@gmail.com',
-          dispatcherPhone: siteSettings?.phone || '+94 77 123 4567',
-          dispatcherWhatsapp: siteSettings?.whatsappNumber || '+94771234567',
+          dispatcherPhone: siteSettings?.phone || '+94722 885 885',
+          dispatcherWhatsapp: siteSettings?.whatsappNumber || '+94722885885',
         });
       } catch (emailErr) {
         console.warn('Voucher email notice:', emailErr);
@@ -957,7 +957,7 @@ export const SouthCoastTourSection: React.FC = () => {
 
   // WhatsApp chauffeur dispatch link
   const generateWhatsAppDispatchLink = (booking: Booking) => {
-    const rawWa = siteSettings?.whatsappNumber || '94771234567';
+    const rawWa = siteSettings?.whatsappNumber || '94722885885';
     const cleanWa = rawWa.replace(/[^0-9]/g, '');
     const message = encodeURIComponent(
       `Hello Galle Taxi Dispatch! 🚖\n\nI have confirmed my Private Day Tour reservation:\n\n• Reference: *${booking.bookingReference}*\n• Tour: *${activeTour.title}*\n• Date: *${booking.pickupDate}* at *${booking.pickupTime}*\n• Vehicle: *${selectedVehicle.name}* ($${selectedVehicle.priceUsd} USD)\n• Pickup Location: *${booking.pickupLocation}*\n• Passenger: *${booking.customerName}* (${booking.phone})\n\nPlease confirm our dedicated chauffeur assignment. Thank you!`

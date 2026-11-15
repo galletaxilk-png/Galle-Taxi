@@ -79,12 +79,6 @@ export const TourDetailPage: React.FC = () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       setTravelDate(tomorrow.toISOString().split('T')[0]);
-      // Update document title for SEO
-      document.title = tour.seo?.title || `${tour.title} | Galle Taxi`;
-      const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) {
-        metaDesc.setAttribute('content', tour.seo?.description || tour.shortDescription || '');
-      }
     }
   }, [tour]);
 
