@@ -28,6 +28,7 @@ import {
   normalizeVehicleImageUrl,
 } from '../lib/vehicleHelpers';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 interface FaqItem {
   question: string;
@@ -96,6 +97,17 @@ export const AirportPickupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-slate-100">
+      <PageSeo
+        pathnameOverride="/airport-pickup"
+        title="Colombo Airport Pick Up Taxi | Meet & Greet CMB to Galle"
+        description="Book 24/7 Colombo Airport (CMB) pick up taxis to Galle & Southern Coast. Arrival lobby meet & greet nameboard, live flight tracking & free waiting included."
+        keywords="colombo airport pickup taxi, cmb to galle taxi, colombo airport to unawatuna taxi, cmb airport meet and greet taxi, airport arrival taxi sri lanka"
+        image="/assets/images/service_airport_transfer_1793121941979.webp"
+        schemaType="TaxiService"
+        serviceType="Private Airport Arrival Meet & Greet Transfer"
+        areaServed={['Colombo Airport (CMB)', 'Galle', 'Unawatuna', 'Ahangama', 'Weligama', 'Mirissa', 'Hikkaduwa', 'Bentota']}
+        faqs={AIRPORT_PICKUP_FAQS}
+      />
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden border-b border-[#1F1F23] py-16 sm:py-24">
         {/* Ambient luxury glow */}

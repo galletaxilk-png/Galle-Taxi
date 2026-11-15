@@ -35,6 +35,7 @@ import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomple
 import { dispatchCustomerEmailVoucher } from '../lib/emailService';
 import { Booking } from '../types';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 export const TourDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -85,6 +86,12 @@ export const TourDetailPage: React.FC = () => {
   if (!tour && isFirebaseActive && !isPublicDataLoaded) {
     return (
       <div className="min-h-screen bg-[#0B0B0D] py-24 px-4 text-center text-slate-100 flex flex-col items-center justify-center">
+        <PageSeo
+          pathnameOverride={slug ? `/tours/${slug}` : undefined}
+          title="Private Sri Lanka Day Tour | Galle Taxi"
+          description="Explore private air-conditioned day tours from Galle across Sri Lanka with an English-speaking chauffeur."
+          keywords="galle private day tour, sri lanka chauffeur excursion, galle taxi tours"
+        />
         <div className="w-8 h-8 border-2 border-[#F5B91B] border-t-transparent rounded-full animate-spin" />
         <p className="text-xs text-slate-400 font-mono mt-4">Loading tour details...</p>
       </div>
@@ -94,6 +101,12 @@ export const TourDetailPage: React.FC = () => {
   if (!tour || (!isAdminLoggedIn && tour.isPublished === false)) {
     return (
       <div className="min-h-screen bg-[#0B0B0D] py-20 px-4 text-center text-slate-100 flex flex-col items-center justify-center">
+        <PageSeo
+          pathnameOverride={slug ? `/tours/${slug}` : undefined}
+          title="Private Day Tours from Galle | Galle Taxi Sri Lanka"
+          description="Discover custom private day tours from Galle, Unawatuna, and Mirissa to Ella, Yala, Udawalawe, and Bentota with Galle Taxi."
+          keywords="galle day tours, sri lanka private tours, galle to ella day tour, galle to yala safari"
+        />
         <h1 className="text-3xl font-extrabold text-white font-['Outfit']">Tour Currently Unavailable</h1>
         <p className="text-slate-400 text-sm mt-2 max-w-md">
           This private day tour is currently unpublished or undergoing seasonal updates. Browse our other available tours below.
@@ -214,6 +227,18 @@ export const TourDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-slate-100 pb-24">
+      <PageSeo
+        pathnameOverride={`/tours/${tour.slug || slug}`}
+        title={tour.seo?.title || `${tour.title} Private Day Tour | Galle Taxi`}
+        description={
+          tour.seo?.description ||
+          tour.shortDescription ||
+          `Book our private ${tour.title} day tour from Galle with air-conditioned vehicle and English-speaking chauffeur.`
+        }
+        keywords={tour.seo?.keywords || `${tour.title}, ${tour.startingLocation} day tour, galle taxi tours`}
+        image={tour.seo?.ogImage || normalizedHero}
+        tour={tour}
+      />
       {/* Breadcrumb Navigation Bar */}
       <div className="bg-[#121214] border-b border-[#27272A] sticky top-16 z-30">
         <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 py-3 flex items-center justify-between text-xs">

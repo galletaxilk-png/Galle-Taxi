@@ -17,6 +17,7 @@ import { useApp } from '../lib/store';
 import { formatLKR } from '../lib/fareEngine';
 import { ToursSection } from '../components/ToursSection';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 export const ServicesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +26,16 @@ export const ServicesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
+      <PageSeo
+        pathnameOverride="/services"
+        title="Taxi & Chauffeur Services in Galle Sri Lanka | Galle Taxi"
+        description="Explore CMB airport transfers, Galle Fort sightseeing tours, coastal taxi hubs, hotel villa transfers & private chauffeur car hire across Sri Lanka."
+        keywords="galle taxi services, sri lanka private chauffeur services, galle sightseeing taxi, hotel transfers galle fort, long distance cab sri lanka"
+        image="/assets/images/service_galle_tour_1793121943026.webp"
+        schemaType="CollectionPage"
+        serviceType="Airport Transfers, City Cabs & Private Island Chauffeur Services"
+        areaServed={['Galle', 'Southern Province', 'Colombo Airport (CMB)', 'Sri Lanka']}
+      />
       <div className="max-w-7xl mx-auto space-y-14">
         
         {/* Navigation Back Button */}

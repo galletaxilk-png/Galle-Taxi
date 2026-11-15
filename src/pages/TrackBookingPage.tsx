@@ -22,6 +22,7 @@ import { useApp } from '../lib/store';
 import { Booking, BookingStatus } from '../types';
 import { formatLKR } from '../lib/fareEngine';
 import { BookingReceiptModal } from '../components/booking/BookingReceiptModal';
+import { PageSeo } from '../components/PageSeo';
 
 const STATUS_STEPS: BookingStatus[] = [
   'Pending',
@@ -97,6 +98,14 @@ export const TrackBookingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8">
+      <PageSeo
+        pathnameOverride="/track-booking"
+        title="Track Your Taxi Booking Live | Dispatch Status – Galle Taxi"
+        description="Check live dispatch status, assigned chauffeur details, vehicle plate number, and official trip receipt for your Galle Taxi reservation anytime."
+        keywords="track galle taxi booking, check cab dispatch status, galle taxi receipt lookup"
+        image="/assets/images/regenerated_image_1793163512211.webp"
+        schemaType="WebPage"
+      />
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Navigation Back Button */}

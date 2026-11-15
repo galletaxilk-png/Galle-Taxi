@@ -1,12 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { PageSeo } from '../components/PageSeo';
 
 export const TermsPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
+      <PageSeo
+        pathnameOverride="/terms"
+        title="Terms & Conditions | Booking, Tolls & Cancellation – Galle Taxi"
+        description="Review Galle Taxi terms for fixed expressway fares, complimentary airport flight delay waiting time, multi-currency cash payments, and free cancellation."
+        keywords="galle taxi terms and conditions, sri lanka taxi cancellation policy, expressway toll policy"
+        schemaType="WebPage"
+      />
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Navigation Back Button */}

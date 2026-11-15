@@ -34,6 +34,7 @@ import {
   dispatchCustomerEmailVoucher,
   EmailVoucherData,
 } from '../lib/emailService';
+import { PageSeo } from '../components/PageSeo';
 
 export const BookingSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -202,6 +203,14 @@ WhatsApp: ${siteSettings.whatsappNumber}`;
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8">
+      <PageSeo
+        pathnameOverride="/booking-success"
+        title="Booking Confirmed & Dispatch Voucher | Galle Taxi Sri Lanka"
+        description="Your Galle Taxi booking is confirmed. View your reference ID, route summary, multi-currency fare breakdown, and downloadable receipt."
+        keywords="galle taxi booking confirmation, official travel voucher, taxi receipt sri lanka"
+        image="/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp"
+        schemaType="WebPage"
+      />
       <div className="max-w-2xl mx-auto space-y-8 text-center">
         
         {/* Navigation Back Button */}

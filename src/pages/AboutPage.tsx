@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Award, Users, HeartHandshake, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useApp } from '../lib/store';
+import { PageSeo } from '../components/PageSeo';
 
 export const AboutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,6 +10,14 @@ export const AboutPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
+      <PageSeo
+        pathnameOverride="/about"
+        title="About Galle Taxi | Licensed Southern Coast Chauffeur Network"
+        description="Learn about Galle Taxi inside Galle Dutch Fort. 12+ years of Sri Lankan hospitality, vetted English-speaking drivers, and zero hidden highway toll fees."
+        keywords="about galle taxi, galle fort chauffeur company, licensed sri lanka taxi service, southern province tourism transport"
+        image="/assets/images/hero_galle_taxi_1793121940996.webp"
+        schemaType="AboutPage"
+      />
       <div className="max-w-5xl mx-auto space-y-12">
         
         {/* Navigation Back Button */}

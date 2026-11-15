@@ -26,6 +26,7 @@ import {
   normalizeVehicleImageUrl,
 } from '../lib/vehicleHelpers';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 interface FaqItem {
   question: string;
@@ -93,6 +94,17 @@ export const AirportDropPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-slate-100">
+      <PageSeo
+        pathnameOverride="/airport-drop"
+        title="Galle to Colombo Airport Drop Taxi | Private CMB Transfers"
+        description="Book reliable 24/7 airport drop taxi from Galle & South Coast to Colombo Airport (CMB). Fixed rates, E01 highway tolls included, AC fleet & chauffeurs."
+        keywords="galle to colombo airport taxi, airport drop galle, colombo airport transfer cmb, southern expressway taxi sri lanka, unawatuna to airport taxi, weligama to cmb transfer"
+        image="/assets/images/service_airport_transfer_1793121941979.webp"
+        schemaType="TaxiService"
+        serviceType="Private Airport Departure Transfer"
+        areaServed={['Galle', 'Unawatuna', 'Ahangama', 'Weligama', 'Mirissa', 'Hikkaduwa', 'Koggala', 'Bentota', 'Colombo Airport (CMB)']}
+        faqs={AIRPORT_DROP_FAQS}
+      />
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden border-b border-[#1F1F23] py-16 sm:py-24">
         {/* Ambient luxury glow */}

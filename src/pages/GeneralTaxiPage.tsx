@@ -27,6 +27,7 @@ import {
   normalizeVehicleImageUrl,
 } from '../lib/vehicleHelpers';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 interface PopularRoute {
   from: string;
@@ -177,6 +178,17 @@ export const GeneralTaxiPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-slate-100">
+      <PageSeo
+        pathnameOverride="/general-taxi"
+        title="Galle Taxi Service | Private Coastal Rides & Island Transfers"
+        description="Book 24/7 point-to-point taxis from Galle to Unawatuna, Mirissa, Ahangama, Ella & Yala. Instant local pickups, fixed fares & licensed AC chauffeur fleet."
+        keywords="galle taxi service, taxi ride galle, galle to mirissa taxi, galle to ella taxi, galle to yala taxi, coastal cab sri lanka, private driver galle fort"
+        image="/assets/images/regenerated_image_1793163512211.webp"
+        schemaType="TaxiService"
+        serviceType="Point-to-Point Coastal Taxi and Intercity Chauffeur Service"
+        areaServed={['Galle', 'Unawatuna', 'Ahangama', 'Weligama', 'Mirissa', 'Hikkaduwa', 'Bentota', 'Ella', 'Yala', 'Kandy']}
+        faqs={GENERAL_TAXI_FAQS}
+      />
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden border-b border-[#1F1F23] py-16 sm:py-24">
         {/* Ambient luxury glow */}

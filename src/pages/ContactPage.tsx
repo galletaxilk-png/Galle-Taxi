@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Phone, Mail, Clock, MessageSquare, CheckCircle2, Send, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useApp } from '../lib/store';
+import { PageSeo } from '../components/PageSeo';
 
 export const ContactPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,6 +46,15 @@ export const ContactPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
+      <PageSeo
+        pathnameOverride="/contact"
+        title="Contact Galle Taxi | 24/7 WhatsApp & Airport Dispatch Desk"
+        description="Reach Galle Taxi 24/7 at No. 03 Rampart Street, Galle Fort or via WhatsApp & phone for urgent airport pickups, custom Sri Lanka tours, and corporate transfers."
+        keywords="contact galle taxi, galle taxi phone number, galle taxi whatsapp, galle fort taxi office"
+        image="/assets/images/hero_galle_taxi_1793121940996.webp"
+        schemaType="ContactPage"
+        faqs={faqs.map((f) => ({ question: f.q, answer: f.a }))}
+      />
       <div className="max-w-7xl mx-auto space-y-12">
         
         {/* Navigation Back Button */}

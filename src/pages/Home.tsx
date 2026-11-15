@@ -37,6 +37,7 @@ import { SouthernHubsSection } from '../components/SouthernHubsSection';
 import { VehicleSelectionCarousel } from '../components/VehicleSelectionCarousel';
 import { RouteDistanceResult } from '../lib/routeDistanceService';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 export type ServiceTabType = 'AIRPORT DROP' | 'AIRPORT PICK UP' | 'TAXI RIDE' | 'TOURS';
 
@@ -235,6 +236,16 @@ export const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-slate-100">
+      <PageSeo
+        pathnameOverride="/"
+        title="Galle Taxi | Airport Transfers, Coastal Cabs & Private Tours Sri Lanka"
+        description="Book 24/7 private taxis in Galle & Southern Sri Lanka. Instant fare quotes for Colombo Airport (CMB) transfers, KDH vans, sedans, coastal hubs & day tours."
+        keywords="galle taxi, galle airport taxi, colombo airport to galle transfer, southern expressway taxi, private driver sri lanka, galletaxi.lk"
+        image={siteSettings.heroImageUrl || '/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp'}
+        schemaType="TaxiService"
+        serviceType="Private Taxi, Airport Transfers & Island Day Tours"
+        areaServed={['Galle', 'Unawatuna', 'Ahangama', 'Weligama', 'Mirissa', 'Hikkaduwa', 'Bentota', 'Colombo Airport (CMB)']}
+      />
       {/* 1. HERO SECTION */}
       <section className="relative overflow-hidden pt-8 pb-20 lg:pt-16 lg:pb-28 border-b border-[#1F1F23]">
         {/* Cinematic Sunset Beach Road Trip Background */}

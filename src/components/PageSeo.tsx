@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../lib/store';
 import { DayTourProduct } from '../lib/toursData';
 import { TownTaxiConfig } from '../pages/destinations/townData';
-import { FaqEntry, resolveRouteSeo } from '../lib/seoConfig';
+import { FaqEntry, RouteSeoEntry, resolveRouteSeo } from '../lib/seoConfig';
 
 interface PageSeoProps {
   pathnameOverride?: string;
@@ -11,13 +11,21 @@ interface PageSeoProps {
   description?: string;
   keywords?: string;
   image?: string;
+  schemaType?: RouteSeoEntry['schemaType'];
+  serviceType?: string;
+  areaServed?: string[];
   town?: TownTaxiConfig;
   tour?: DayTourProduct;
   faqs?: FaqEntry[];
 }
 
 function upsertMeta(attrName: 'name' | 'property', key: string, content: string) {
-  let el = document.querySelector(`meta[${attrName}="${key}"]`);
+  const matches = Array.from(document.head.querySelectorAll(`meta[${attrName}="${key}"]`));
+  let el = matches[0] as HTMLMetaElement | undefined;
+  // Deduplicate any stale meta tags so document.querySelector always reads the active page value
+  for (let i = 1; i < matches.length; i++) {
+    matches[i].remove();
+  }
   if (!el) {
     el = document.createElement('meta');
     el.setAttribute(attrName, key);
@@ -27,7 +35,11 @@ function upsertMeta(attrName: 'name' | 'property', key: string, content: string)
 }
 
 function upsertCanonical(href: string) {
-  let link = document.querySelector('link[rel="canonical"]');
+  const links = Array.from(document.head.querySelectorAll('link[rel="canonical"]'));
+  let link = links[0] as HTMLLinkElement | undefined;
+  for (let i = 1; i < links.length; i++) {
+    links[i].remove();
+  }
   if (!link) {
     link = document.createElement('link');
     link.setAttribute('rel', 'canonical');
@@ -37,7 +49,6 @@ function upsertCanonical(href: string) {
 }
 
 function upsertJsonLd(schema: Record<string, unknown>) {
-  // Remove any legacy duplicate per-page script tags so only one authoritative JSON-LD block exists
   document
     .querySelectorAll('script[type="application/ld+json"]')
     .forEach((node) => {
@@ -62,6 +73,9 @@ export const PageSeo: React.FC<PageSeoProps> = ({
   description,
   keywords,
   image,
+  schemaType,
+  serviceType,
+  areaServed,
   town,
   tour,
   faqs,
@@ -69,7 +83,7 @@ export const PageSeo: React.FC<PageSeoProps> = ({
   const { pathname } = useLocation();
   const { siteSettings, taxiHubs, tours } = useApp();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const targetPath = pathnameOverride || pathname || '/';
     const origin =
       typeof window !== 'undefined' && window.location?.origin
@@ -93,6 +107,9 @@ export const PageSeo: React.FC<PageSeoProps> = ({
       customDescription: description,
       customKeywords: keywords,
       customImage: image,
+      customSchemaType: schemaType,
+      customServiceType: serviceType,
+      customAreaServed: areaServed,
       extraFaqs: faqs,
     });
 
@@ -122,6 +139,9 @@ export const PageSeo: React.FC<PageSeoProps> = ({
     description,
     keywords,
     image,
+    schemaType,
+    serviceType,
+    areaServed,
     town,
     tour,
     faqs,

@@ -9,6 +9,7 @@ import {
   normalizeVehicleImageUrl,
 } from '../lib/vehicleHelpers';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 export const VehiclesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,16 @@ export const VehiclesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
+      <PageSeo
+        pathnameOverride="/vehicles"
+        title="Our Luxury Taxi Fleet & Chauffeurs | Galle Taxi Sri Lanka"
+        description="Compare our air-conditioned sedans, KDH Flat & High Roof VIP vans, budget mini cars & 4WD SUVs in Galle. View passenger capacity, luggage space & per-km rates."
+        keywords="galle taxi fleet, kdh van hire galle, sedan taxi galle, suv private driver sri lanka, mini car cab galle fort"
+        image="/assets/images/vehicle_premium_van_1793121943671.webp"
+        schemaType="CollectionPage"
+        serviceType="Air-Conditioned Private Taxi Fleet & Chauffeurs"
+        areaServed={['Galle', 'Southern Province', 'Sri Lanka']}
+      />
       <div className="max-w-7xl mx-auto space-y-12">
         
         {/* Navigation Back Button */}

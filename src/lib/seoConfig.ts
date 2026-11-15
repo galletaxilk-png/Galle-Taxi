@@ -57,6 +57,9 @@ export interface ResolveSeoOptions {
   customDescription?: string;
   customKeywords?: string;
   customImage?: string;
+  customSchemaType?: RouteSeoEntry['schemaType'];
+  customServiceType?: string;
+  customAreaServed?: string[];
   extraFaqs?: FaqEntry[];
 }
 
@@ -614,6 +617,12 @@ export function resolveRouteSeo(rawPathname: string, options: ResolveSeoOptions 
   const title = options.customTitle || staticEntry.title;
   const description = options.customDescription || staticEntry.description;
   const keywords = options.customKeywords || staticEntry.keywords;
+  const effectiveSchemaType = options.customSchemaType || staticEntry.schemaType || 'TaxiService';
+  const effectiveServiceType = options.customServiceType || staticEntry.serviceType || 'Private Taxi & Airport Transfers';
+  const effectiveAreaServed =
+    options.customAreaServed && options.customAreaServed.length > 0
+      ? options.customAreaServed
+      : staticEntry.areaServed;
   const defaultRouteImage =
     pathname === '/'
       ? siteHeroImage
@@ -621,16 +630,16 @@ export function resolveRouteSeo(rawPathname: string, options: ResolveSeoOptions 
   const ogImage = toAbsoluteUrl(normalizeMediaUrl(options.customImage || defaultRouteImage, DEFAULT_OG_IMAGE_PATH), origin);
 
   const primaryEntity: Record<string, unknown> = {
-    '@type': staticEntry.schemaType || 'TaxiService',
+    '@type': effectiveSchemaType,
     '@id': `${canonicalUrl}#primary`,
-    name: staticEntry.schemaType === 'TaxiService' ? `${businessName} - ${title.split('|')[0].trim()}` : title,
+    name: effectiveSchemaType === 'TaxiService' ? `${businessName} - ${title.split('|')[0].trim()}` : title,
     description,
     url: canonicalUrl,
   };
 
-  if (staticEntry.schemaType === 'TaxiService' || pathname === '/') {
+  if (effectiveSchemaType === 'TaxiService' || pathname === '/') {
     primaryEntity['@type'] = 'TaxiService';
-    primaryEntity.serviceType = staticEntry.serviceType || 'Private Taxi & Airport Transfers';
+    primaryEntity.serviceType = effectiveServiceType;
     primaryEntity.telephone = telephone;
     primaryEntity.priceRange = '$$';
     primaryEntity.currenciesAccepted = 'LKR, USD, EUR, GBP, INR';
@@ -644,8 +653,8 @@ export function resolveRouteSeo(rawPathname: string, options: ResolveSeoOptions 
         closes: '23:59',
       },
     ];
-    if (staticEntry.areaServed?.length) {
-      primaryEntity.areaServed = staticEntry.areaServed.map((name) => ({
+    if (effectiveAreaServed?.length) {
+      primaryEntity.areaServed = effectiveAreaServed.map((name) => ({
         '@type': 'AdministrativeArea',
         name,
       }));

@@ -1,12 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Eye, FileText, ArrowLeft } from 'lucide-react';
+import { PageSeo } from '../components/PageSeo';
 
 export const PrivacyPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
+      <PageSeo
+        pathnameOverride="/privacy"
+        title="Privacy Policy | Data Protection & Security – Galle Taxi"
+        description="Read the official Galle Taxi Privacy Policy explaining how passenger booking details, flight numbers, and contact data are protected and secured."
+        keywords="galle taxi privacy policy, passenger data protection sri lanka"
+        schemaType="WebPage"
+      />
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Navigation Back Button */}

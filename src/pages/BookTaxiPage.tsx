@@ -37,6 +37,7 @@ import { GoogleAddressAutocomplete } from '../components/GoogleAddressAutocomple
 import { calculateRouteDistance, RouteDistanceResult } from '../lib/routeDistanceService';
 import { CountryPhoneInput } from '../components/CountryPhoneInput';
 import { OptimizedImage } from '../components/OptimizedImage';
+import { PageSeo } from '../components/PageSeo';
 
 export const BookTaxiPage: React.FC = () => {
   const navigate = useNavigate();
@@ -390,6 +391,16 @@ export const BookTaxiPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0B0B0D] py-6 sm:py-8 px-4 sm:px-6 lg:px-8 xl:px-10 w-full">
+      <PageSeo
+        pathnameOverride="/book"
+        title="Book a Taxi Online | Instant Fare Calculator – Galle Taxi"
+        description="Calculate fixed fares and book your private taxi or CMB airport transfer in Galle online in under 60 seconds. Instant email voucher & 24/7 dispatch support."
+        keywords="book galle taxi online, sri lanka taxi fare calculator, reserve airport transfer cmb, galle cab booking"
+        image="/assets/aistudio/Sunset_Beach_Road_Trip_with_Surfboard_19548307.webp"
+        schemaType="TaxiService"
+        serviceType="Online Taxi & Airport Transfer Reservation"
+        areaServed={['Galle', 'Colombo Airport (CMB)', 'Unawatuna', 'Ahangama', 'Weligama', 'Mirissa', 'Hikkaduwa', 'Bentota']}
+      />
       <div className="w-full space-y-6">
         
         {/* Navigation Back Button */}
