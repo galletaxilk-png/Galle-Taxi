@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   Car,
@@ -107,14 +107,17 @@ export const BookTaxiPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Synchronize vehicle if query param or public fleet updates
+  const lastSyncedVParamRef = useRef<string | null>(null);
+
+  // Synchronize vehicle from URL query param once per param change, or fallback if current ID is unavailable
   useEffect(() => {
     const vParam = searchParams.get('vehicleId');
-    if (vParam && vehicles.some((v) => v.id === vParam)) {
+    if (vParam && lastSyncedVParamRef.current !== vParam && vehicles.some((v) => v.id === vParam)) {
+      lastSyncedVParamRef.current = vParam;
       setVehicleId(vParam);
       return;
     }
-    if (publicVehicles.length > 0 && !publicVehicles.some((v) => v.id === vehicleId)) {
+    if (publicVehicles.length > 0 && !vehicles.some((v) => v.id === vehicleId)) {
       setVehicleId((publicVehicles.find((v) => v.isDefaultSelected) || publicVehicles[0]).id);
     }
   }, [searchParams, vehicles, publicVehicles, vehicleId]);
@@ -938,7 +941,11 @@ export const BookTaxiPage: React.FC = () => {
                       <button
                         key={v.id}
                         type="button"
-                        onClick={() => setVehicleId(v.id)}
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          setVehicleId(v.id);
+                          setValidationError(null);
+                        }}
                         className={`shrink-0 w-[145px] sm:w-auto snap-start p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between backdrop-blur-md ${
                           isSelected
                             ? 'bg-[#F5B91B]/20 border-white/40 ring-2 ring-[#F5B91B]/70 shadow-[0_4px_16px_rgba(245,185,27,0.25),inset_0_1px_0_rgba(255,255,255,0.3)]'
