@@ -22,6 +22,8 @@ import {
   Mail,
   Send,
   ArrowUpDown,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import { useApp } from '../lib/store';
 import { formatLKR, calculateAuthoritativeFare, CURRENCIES } from '../lib/fareEngine';
@@ -1136,27 +1138,81 @@ export const BookTaxiPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="space-y-1.5">
                   <label htmlFor="book-passenger-count" className="text-xs font-semibold text-slate-300">Passenger Count</label>
-                  <input
-                    id="book-passenger-count"
-                    type="number"
-                    min={1}
-                    max={selectedVehicle?.passengers || 14}
-                    value={passengerCount}
-                    onChange={(e) => setPassengerCount(parseInt(e.target.value) || 1)}
-                    className="w-full min-h-[44px] px-3.5 py-2 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
-                  />
+                  <div className="flex items-center w-full min-h-[44px] bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 focus-within:border-[#F5B91B] focus-within:ring-1 focus-within:ring-[#F5B91B]/40 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setPassengerCount((prev) => Math.max(1, prev - 1))}
+                      disabled={passengerCount <= 1}
+                      aria-label="Decrease passenger count"
+                      className="w-10 sm:w-11 h-[44px] shrink-0 flex items-center justify-center text-slate-300 hover:text-[#F5B91B] hover:bg-white/5 active:bg-[#F5B91B]/15 disabled:opacity-35 disabled:pointer-events-none border-r border-white/10 transition-colors cursor-pointer"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input
+                      id="book-passenger-count"
+                      type="number"
+                      min={1}
+                      max={selectedVehicle?.passengers || 14}
+                      value={passengerCount}
+                      onChange={(e) => {
+                        const parsed = parseInt(e.target.value, 10);
+                        const maxPassengers = selectedVehicle?.passengers || 14;
+                        setPassengerCount(Number.isNaN(parsed) ? 1 : Math.max(1, Math.min(maxPassengers, parsed)));
+                      }}
+                      className="w-full min-w-0 h-[44px] px-1 py-2 bg-transparent text-center text-sm font-bold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const maxPassengers = selectedVehicle?.passengers || 14;
+                        setPassengerCount((prev) => Math.min(maxPassengers, prev + 1));
+                      }}
+                      disabled={passengerCount >= (selectedVehicle?.passengers || 14)}
+                      aria-label="Increase passenger count"
+                      className="w-10 sm:w-11 h-[44px] shrink-0 flex items-center justify-center text-[#F5B91B] hover:bg-[#F5B91B]/15 active:bg-[#F5B91B]/25 disabled:opacity-35 disabled:pointer-events-none border-l border-white/10 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="book-luggage-count" className="text-xs font-semibold text-slate-300">Luggage Items</label>
-                  <input
-                    id="book-luggage-count"
-                    type="number"
-                    min={0}
-                    max={selectedVehicle?.luggage || 12}
-                    value={luggageCount}
-                    onChange={(e) => setLuggageCount(parseInt(e.target.value) || 0)}
-                    className="w-full min-h-[44px] px-3.5 py-2 bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 rounded-xl text-sm text-white focus:outline-none focus:border-[#F5B91B] focus:ring-1 focus:ring-[#F5B91B]/40 shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all"
-                  />
+                  <div className="flex items-center w-full min-h-[44px] bg-[#141418]/80 backdrop-blur-md border border-white/25 hover:border-white/40 focus-within:border-[#F5B91B] focus-within:ring-1 focus-within:ring-[#F5B91B]/40 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setLuggageCount((prev) => Math.max(0, prev - 1))}
+                      disabled={luggageCount <= 0}
+                      aria-label="Decrease luggage items"
+                      className="w-10 sm:w-11 h-[44px] shrink-0 flex items-center justify-center text-slate-300 hover:text-[#F5B91B] hover:bg-white/5 active:bg-[#F5B91B]/15 disabled:opacity-35 disabled:pointer-events-none border-r border-white/10 transition-colors cursor-pointer"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input
+                      id="book-luggage-count"
+                      type="number"
+                      min={0}
+                      max={selectedVehicle?.luggage || 12}
+                      value={luggageCount}
+                      onChange={(e) => {
+                        const parsed = parseInt(e.target.value, 10);
+                        const maxLuggage = selectedVehicle?.luggage || 12;
+                        setLuggageCount(Number.isNaN(parsed) ? 0 : Math.max(0, Math.min(maxLuggage, parsed)));
+                      }}
+                      className="w-full min-w-0 h-[44px] px-1 py-2 bg-transparent text-center text-sm font-bold text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const maxLuggage = selectedVehicle?.luggage || 12;
+                        setLuggageCount((prev) => Math.min(maxLuggage, prev + 1));
+                      }}
+                      disabled={luggageCount >= (selectedVehicle?.luggage || 12)}
+                      aria-label="Increase luggage items"
+                      className="w-10 sm:w-11 h-[44px] shrink-0 flex items-center justify-center text-[#F5B91B] hover:bg-[#F5B91B]/15 active:bg-[#F5B91B]/25 disabled:opacity-35 disabled:pointer-events-none border-l border-white/10 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
